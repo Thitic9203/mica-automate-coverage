@@ -167,8 +167,54 @@ tr:hover td { background: rgba(255,255,255,0.02); }
     <div class="auth-error" id="auth-error"></div>
   </div>
 </div>
-  <div id="app" class="hidden"></div>
+  <div id="app" class="hidden">
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <h1>Mica Coverage</h1>
+        <p>NDLP · Plan 5</p>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Views</div>
+        <div class="nav-item active" data-view="overview">
+          <span class="nav-dot" style="background:var(--teal)"></span>
+          Overview
+        </div>
+        <div class="nav-item" data-view="suites">
+          <span class="nav-dot" style="background:var(--blue)"></span>
+          By Suite
+        </div>
+        <div class="nav-item" data-view="table">
+          <span class="nav-dot" style="background:var(--amber)"></span>
+          All Test Cases
+        </div>
+      </div>
+      <div class="nav-section" style="margin-top:auto;padding-bottom:16px">
+        <div class="nav-item" id="logout-btn" style="cursor:pointer">
+          <span>⎋</span> Disconnect
+        </div>
+      </div>
+    </aside>
+    <div class="main">
+      <header class="topbar">
+        <div style="display:flex;align-items:center;gap:12px">
+          <button id="hamburger" style="display:none;background:none;border:none;color:var(--text);cursor:pointer;font-size:1.2rem">☰</button>
+          <h2 id="view-title">Overview</h2>
+        </div>
+        <div class="live-pill" id="live-pill">
+          <span class="live-dot"></span>
+          <span id="last-updated">Loading…</span>
+        </div>
+      </header>
+      <div class="content" id="content">
+        <div class="loading"><div class="spinner"></div> Loading test cases…</div>
+      </div>
+    </div>
+  </div>
+</div>
   <script type="module">
+import Chart from 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/auto/+esm'
+
 const AUTH_KEY = 'qase_token_mica'
 
 function getSavedToken() {
@@ -291,9 +337,333 @@ function computeStats(cases) {
   return { total, counts, automatedPct, suites }
 }
 
-// placeholder — Tasks 5–8 will add showApp and render functions
+let appToken = ''
+let appData = []
+let appStats = {}
+let activeView = 'overview'
+let tableFilter = 'All'
+let tableSort = { col: 'id', dir: 'asc' }
+let tableSearch = ''
+let tablePage = 1
+let tablePageSize = 20
+
 function showApp(token) {
-  console.log('showApp called, token validated. Tasks 5–8 will implement rendering.')
+  appToken = token
+  document.getElementById('app').classList.remove('hidden')
+  setupNav()
+  setupHamburger()
+  document.getElementById('logout-btn').addEventListener('click', () => {
+    localStorage.removeItem(AUTH_KEY)
+    location.reload()
+  })
+  fetchAndRender()
+  setInterval(fetchAndRender, 60 * 60 * 1000)
+}
+
+async function fetchAndRender() {
+  try {
+    appData = await loadData(appToken)
+    appStats = computeStats(appData)
+    document.getElementById('last-updated').textContent =
+      `Updated ${new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}`
+    const pill = document.getElementById('live-pill')
+    pill.style.animation = 'none'
+    requestAnimationFrame(() => { pill.style.animation = 'pillFlash 1.5s ease' })
+    renderView()
+  } catch (e) {
+    document.getElementById('content').innerHTML =
+      `<div class="error-msg">Failed to load data: ${e.message}</div>`
+  }
+}
+
+function setupNav() {
+  document.querySelectorAll('.nav-item[data-view]').forEach(el => {
+    el.addEventListener('click', () => {
+      activeView = el.dataset.view
+      document.querySelectorAll('.nav-item[data-view]').forEach(n => n.classList.remove('active'))
+      el.classList.add('active')
+      const titles = { overview: 'Overview', suites: 'By Suite', table: 'All Test Cases' }
+      document.getElementById('view-title').textContent = titles[activeView]
+      document.getElementById('sidebar').classList.remove('open')
+      renderView()
+    })
+  })
+}
+
+function setupHamburger() {
+  const btn = document.getElementById('hamburger')
+  if (window.innerWidth <= 1023) btn.style.display = 'block'
+  window.addEventListener('resize', () => {
+    btn.style.display = window.innerWidth <= 1023 ? 'block' : 'none'
+  })
+  btn.addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('open')
+  })
+}
+
+function renderView() {
+  if (activeView === 'overview') renderOverview()
+  else if (activeView === 'suites') renderSuites()
+  else renderTable()
+}
+
+function renderOverview() {
+  const { total, counts, automatedPct } = appStats
+  const content = document.getElementById('content')
+  content.innerHTML = `
+    <div class="cards-grid">
+      <div class="card"><div class="card-label">Total TCs</div><div class="card-value">${total}</div><div class="card-sub">in NDLP Plan 5</div></div>
+      <div class="card"><div class="card-label">Automated</div><div class="card-value teal">${counts.Automated}</div><div class="card-sub">${automatedPct}% of total</div></div>
+      <div class="card"><div class="card-label">To be Automated</div><div class="card-value amber">${counts['To be Automated']}</div><div class="card-sub">${total > 0 ? Math.round(counts['To be Automated']/total*100) : 0}% of total</div></div>
+      <div class="card"><div class="card-label">Manual</div><div class="card-value blue">${counts.Manual}</div><div class="card-sub">${total > 0 ? Math.round(counts.Manual/total*100) : 0}% of total</div></div>
+    </div>
+    <div class="chart-section">
+      <div class="chart-card">
+        <h3>Automation Coverage</h3>
+        <div class="donut-wrap"><canvas id="donut-chart"></canvas><div class="donut-center"><span class="donut-pct">${automatedPct}%</span><span class="donut-lbl">Automated</span></div></div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-dot" style="background:var(--teal)"></span><span class="legend-label">Automated</span><span class="legend-val teal">${counts.Automated}</span></div>
+          <div class="legend-item"><span class="legend-dot" style="background:var(--amber)"></span><span class="legend-label">To be Automated</span><span class="legend-val amber">${counts['To be Automated']}</span></div>
+          <div class="legend-item"><span class="legend-dot" style="background:var(--blue)"></span><span class="legend-label">Manual</span><span class="legend-val blue">${counts.Manual}</span></div>
+        </div>
+      </div>
+      <div class="chart-card" id="suite-summary-card">
+        <h3>Coverage by Suite</h3>
+        <div id="suite-summary-content"></div>
+      </div>
+    </div>
+  `
+  renderDonut()
+  renderSuiteSummary()
+}
+
+let donutChart = null
+
+function renderDonut() {
+  const { counts } = appStats
+  const ctx = document.getElementById('donut-chart')
+  if (!ctx) return
+  if (donutChart) { donutChart.destroy(); donutChart = null }
+  donutChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Automated', 'To be Automated', 'Manual'],
+      datasets: [{
+        data: [counts.Automated, counts['To be Automated'], counts.Manual],
+        backgroundColor: ['#00A693', '#E8894A', '#4BA3C3'],
+        borderWidth: 0,
+        hoverOffset: 6
+      }]
+    },
+    options: {
+      cutout: '70%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const total = ctx.dataset.data.reduce((a, b) => a + b, 0)
+              const pct = total > 0 ? Math.round(ctx.parsed / total * 100) : 0
+              return ` ${ctx.label}: ${ctx.parsed} (${pct}%)`
+            }
+          }
+        }
+      },
+      animation: { animateScale: true, duration: 600 }
+    }
+  })
+}
+
+function renderSuiteSummary() {
+  const { suites } = appStats
+  const container = document.getElementById('suite-summary-content')
+  if (!container) return
+  const entries = Object.entries(suites).sort((a, b) => b[1].total - a[1].total)
+  if (entries.length === 0) { container.innerHTML = '<p style="color:var(--muted);font-size:0.82rem">No suites found.</p>'; return }
+  container.innerHTML = `
+    <table style="width:100%">
+      <thead><tr>
+        <th style="text-align:left;padding:6px 0;font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)">Suite</th>
+        <th style="text-align:right;padding:6px 8px;font-size:0.72rem;color:var(--muted);border-bottom:1px solid var(--border)">Coverage</th>
+        <th style="padding:6px 0 6px 8px;border-bottom:1px solid var(--border);min-width:100px"></th>
+      </tr></thead>
+      <tbody>
+        ${entries.map(([suite, s]) => {
+          const pct = s.total > 0 ? Math.round(s.Automated / s.total * 100) : 0
+          const aPct = (s.Automated / s.total * 100).toFixed(1)
+          const tPct = (s['To be Automated'] / s.total * 100).toFixed(1)
+          const mPct = (s.Manual / s.total * 100).toFixed(1)
+          return `<tr>
+            <td style="padding:9px 0;font-size:0.82rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${suite}">${suite}</td>
+            <td style="text-align:right;padding:9px 8px;font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--teal)">${pct}%</td>
+            <td style="padding:9px 0 9px 8px">
+              <div class="mini-stacked">
+                <div class="mini-seg" style="background:var(--teal);width:${aPct}%"></div>
+                <div class="mini-seg" style="background:var(--amber);width:${tPct}%"></div>
+                <div class="mini-seg" style="background:var(--blue);width:${mPct}%"></div>
+              </div>
+            </td>
+          </tr>`
+        }).join('')}
+      </tbody>
+    </table>
+  `
+}
+
+function renderSuites() {
+  const { suites, counts } = appStats
+  const entries = Object.entries(suites).sort((a, b) => b[1].total - a[1].total)
+  const content = document.getElementById('content')
+  content.innerHTML = `
+    <div class="cards-grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="card"><div class="card-label">Total Suites</div><div class="card-value">${entries.length}</div></div>
+      <div class="card"><div class="card-label">Automated TCs</div><div class="card-value teal">${counts.Automated}</div><div class="card-sub">across all suites</div></div>
+      <div class="card"><div class="card-label">Automation Rate</div><div class="card-value teal">${appStats.automatedPct}%</div></div>
+    </div>
+    <div class="table-card">
+      <div class="table-head"><h3>Suite Breakdown</h3></div>
+      <table>
+        <thead><tr>
+          <th>Suite</th>
+          <th>Total TCs</th>
+          <th style="color:var(--teal)">Automated</th>
+          <th style="color:var(--amber)">To be Automated</th>
+          <th style="color:var(--blue)">Manual</th>
+          <th>Coverage</th>
+          <th>Progress</th>
+        </tr></thead>
+        <tbody>
+          ${entries.map(([suite, s]) => {
+            const pct = s.total > 0 ? Math.round(s.Automated / s.total * 100) : 0
+            return `<tr class="suite-row">
+              <td><span class="suite-tag">${suite}</span></td>
+              <td style="font-family:'JetBrains Mono',monospace">${s.total}</td>
+              <td style="color:var(--teal);font-family:'JetBrains Mono',monospace">${s.Automated}</td>
+              <td style="color:var(--amber);font-family:'JetBrains Mono',monospace">${s['To be Automated']}</td>
+              <td style="color:var(--blue);font-family:'JetBrains Mono',monospace">${s.Manual}</td>
+              <td style="font-family:'JetBrains Mono',monospace;color:var(--teal)">${pct}%</td>
+              <td style="min-width:120px">
+                <div class="progress-bar">
+                  <div class="progress-fill" style="background:var(--teal);width:${pct}%"></div>
+                </div>
+                <div style="font-size:0.7rem;color:var(--muted);margin-top:2px">${pct}% automated</div>
+              </td>
+            </tr>`
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `
+}
+
+function statusBadge(status) {
+  const cls = { Automated: 'automated', 'To be Automated': 'to-be-automated', Manual: 'manual' }
+  return `<span class="badge ${cls[status] || 'manual'}">${status}</span>`
+}
+
+function renderTable() {
+  const content = document.getElementById('content')
+  content.innerHTML = `
+    <div class="table-card">
+      <div class="table-head">
+        <h3>All Test Cases</h3>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <input class="search-input" id="tc-search" placeholder="Search by title or suite…" value="${tableSearch}">
+          <div class="filter-tabs">
+            ${['All', 'Automated', 'To be Automated', 'Manual'].map(f =>
+              `<button class="filter-tab${tableFilter === f ? ' active' : ''}" data-filter="${f}">${f}</button>`
+            ).join('')}
+          </div>
+        </div>
+      </div>
+      <div id="table-body-wrap"></div>
+    </div>
+  `
+  document.getElementById('tc-search').addEventListener('input', e => {
+    tableSearch = e.target.value; tablePage = 1; refreshTableBody()
+  })
+  document.querySelectorAll('.filter-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      tableFilter = btn.dataset.filter; tablePage = 1; refreshTableBody()
+    })
+  })
+  refreshTableBody()
+}
+
+function refreshTableBody() {
+  let filtered = appData.filter(tc => {
+    const matchFilter = tableFilter === 'All' || tc.automationStatus === tableFilter
+    const q = tableSearch.toLowerCase()
+    const matchSearch = !q || tc.title.toLowerCase().includes(q) || tc.suite.toLowerCase().includes(q)
+    return matchFilter && matchSearch
+  })
+  filtered.sort((a, b) => {
+    const dir = tableSort.dir === 'asc' ? 1 : -1
+    if (tableSort.col === 'id') return (a.id - b.id) * dir
+    if (tableSort.col === 'title') return a.title.localeCompare(b.title) * dir
+    if (tableSort.col === 'suite') return a.suite.localeCompare(b.suite) * dir
+    if (tableSort.col === 'status') return a.automationStatus.localeCompare(b.automationStatus) * dir
+    return 0
+  })
+  const total = filtered.length
+  const start = (tablePage - 1) * tablePageSize
+  const page = filtered.slice(start, start + tablePageSize)
+  const totalPages = Math.max(1, Math.ceil(total / tablePageSize))
+
+  const arrow = col => {
+    if (tableSort.col !== col) return '<span class="sort-arrow">⇅</span>'
+    return `<span class="sort-arrow">${tableSort.dir === 'asc' ? '↑' : '↓'}</span>`
+  }
+  const sortCls = col => tableSort.col === col ? ' sort-active' : ''
+
+  const wrap = document.getElementById('table-body-wrap')
+  if (!wrap) return
+  wrap.innerHTML = `
+    <table>
+      <thead><tr>
+        <th class="${sortCls('id')}" data-col="id">ID${arrow('id')}</th>
+        <th class="${sortCls('title')}" data-col="title">Title${arrow('title')}</th>
+        <th class="${sortCls('suite')}" data-col="suite">Suite${arrow('suite')}</th>
+        <th class="${sortCls('status')}" data-col="status">Automation Status${arrow('status')}</th>
+      </tr></thead>
+      <tbody>
+        ${page.length === 0 ? `<tr><td colspan="4" style="text-align:center;padding:32px;color:var(--muted)">No test cases found</td></tr>` :
+          page.map(tc => `<tr>
+            <td><a class="tc-id" href="${tc.link}" target="_blank" style="color:var(--muted);text-decoration:none">NDLP-${tc.id}</a></td>
+            <td style="max-width:360px"><a href="${tc.link}" target="_blank" style="color:var(--text);text-decoration:none">${tc.title}</a></td>
+            <td><span class="suite-tag">${tc.suite}</span></td>
+            <td>${statusBadge(tc.automationStatus)}</td>
+          </tr>`).join('')
+        }
+      </tbody>
+    </table>
+    <div class="pagination">
+      <span>${total} test case${total !== 1 ? 's' : ''} · Page ${tablePage} of ${totalPages}</span>
+      <div class="pagination-btns">
+        <select class="page-size-select" id="page-size">
+          ${[10,20,50,100].map(n => `<option value="${n}"${tablePageSize===n?' selected':''}>${n}/page</option>`).join('')}
+        </select>
+        <button class="pg-btn" id="pg-prev" ${tablePage <= 1 ? 'disabled' : ''}>‹</button>
+        <button class="pg-btn" id="pg-next" ${tablePage >= totalPages ? 'disabled' : ''}>›</button>
+      </div>
+    </div>
+  `
+  wrap.querySelectorAll('th[data-col]').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.col
+      if (tableSort.col === col) tableSort.dir = tableSort.dir === 'asc' ? 'desc' : 'asc'
+      else { tableSort.col = col; tableSort.dir = 'asc' }
+      refreshTableBody()
+    })
+  })
+  wrap.querySelector('#pg-prev')?.addEventListener('click', () => { tablePage--; refreshTableBody() })
+  wrap.querySelector('#pg-next')?.addEventListener('click', () => { tablePage++; refreshTableBody() })
+  wrap.querySelector('#page-size')?.addEventListener('change', e => {
+    tablePageSize = Number(e.target.value); tablePage = 1; refreshTableBody()
+  })
+  document.querySelectorAll('.filter-tab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.filter === tableFilter)
+  })
 }
 
 initAuth()
