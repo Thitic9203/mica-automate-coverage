@@ -1,2 +1,8 @@
 [build]
   publish = "public"
+
+[[redirects]]
+  from = "/api/qase/*"
+  to = "https://api.qase.io/v1/:splat"
+  status = 200
+  force = true

@@ -222,7 +222,7 @@ function getSavedToken() {
 }
 
 async function validateToken(token) {
-  const res = await fetch('https://api.qase.io/v1/project/NDLP', {
+  const res = await fetch('/api/qase/project/NDLP', {
     headers: { 'Token': token, 'Accept': 'application/json' }
   })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -264,7 +264,7 @@ async function initAuth() {
 
 // ── TASK 4: Qase API Module ──────────────────────────────────────────────────
 
-const QASE_BASE = 'https://api.qase.io/v1'
+const QASE_BASE = '/api/qase'
 const PROJECT = 'NDLP'
 const PLAN_ID = 5
 const AUTOMATION_FIELD = 'Automation Status'
