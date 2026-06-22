@@ -157,8 +157,146 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 </style>
 </head>
 <body>
-  <div id="auth-gate" class="hidden"></div>
+  <div id="auth-gate" class="auth-wrap">
+  <div class="auth-card">
+    <h1>Mica · Automate Coverage</h1>
+    <p>Enter your Qase API token to load automation coverage data for NDLP Plan 5. Your token is saved in this browser only.</p>
+    <label for="token-input">Qase API Token</label>
+    <input type="password" id="token-input" placeholder="api-token-xxxxxxxxxxxx" autocomplete="off">
+    <button id="token-submit">Connect to Qase →</button>
+    <div class="auth-error" id="auth-error"></div>
+  </div>
+</div>
   <div id="app" class="hidden"></div>
-  <script type="module">/* JS — Tasks 3–8 */</script>
+  <script type="module">
+const AUTH_KEY = 'qase_token_mica'
+
+function getSavedToken() {
+  return localStorage.getItem(AUTH_KEY) || ''
+}
+
+async function validateToken(token) {
+  const res = await fetch('https://api.qase.io/v1/project/NDLP', {
+    headers: { 'Token': token, 'Accept': 'application/json' }
+  })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const data = await res.json()
+  if (!data.status) throw new Error('Invalid token or no access to NDLP')
+}
+
+async function initAuth() {
+  const saved = getSavedToken()
+  if (saved) {
+    try {
+      await validateToken(saved)
+      showApp(saved)
+      return
+    } catch (_) {
+      localStorage.removeItem(AUTH_KEY)
+    }
+  }
+  document.getElementById('auth-gate').classList.remove('hidden')
+  document.getElementById('token-submit').addEventListener('click', async () => {
+    const token = document.getElementById('token-input').value.trim()
+    const errEl = document.getElementById('auth-error')
+    errEl.style.display = 'none'
+    if (!token) { errEl.textContent = 'Please enter your API token.'; errEl.style.display = 'block'; return }
+    const btn = document.getElementById('token-submit')
+    btn.textContent = 'Connecting…'; btn.disabled = true
+    try {
+      await validateToken(token)
+      localStorage.setItem(AUTH_KEY, token)
+      document.getElementById('auth-gate').classList.add('hidden')
+      showApp(token)
+    } catch (e) {
+      errEl.textContent = `Connection failed: ${e.message}. Check your token and try again.`
+      errEl.style.display = 'block'
+      btn.textContent = 'Connect to Qase →'; btn.disabled = false
+    }
+  })
+}
+
+// ── TASK 4: Qase API Module ──────────────────────────────────────────────────
+
+const QASE_BASE = 'https://api.qase.io/v1'
+const PROJECT = 'NDLP'
+const PLAN_ID = 5
+const AUTOMATION_FIELD = 'Automation Status'
+const STATUS_VALUES = ['Automated', 'To be Automated', 'Manual']
+
+async function qaseFetch(path, token) {
+  const res = await fetch(`${QASE_BASE}${path}`, {
+    headers: { 'Token': token, 'Accept': 'application/json' }
+  })
+  if (!res.ok) throw new Error(`Qase API error ${res.status}: ${path}`)
+  return res.json()
+}
+
+async function fetchPlanCaseIds(token) {
+  const data = await qaseFetch(`/plan/${PROJECT}/${PLAN_ID}`, token)
+  if (!data.status || !data.result) throw new Error('Failed to fetch plan')
+  return new Set(data.result.cases.map(c => c.case_id))
+}
+
+async function fetchAllCases(token) {
+  const limit = 100
+  let offset = 0
+  let all = []
+  while (true) {
+    const data = await qaseFetch(`/case/${PROJECT}?limit=${limit}&offset=${offset}`, token)
+    if (!data.status || !data.result) break
+    all = all.concat(data.result.entities)
+    if (all.length >= data.result.total || data.result.entities.length < limit) break
+    offset += limit
+  }
+  return all
+}
+
+function extractAutomationStatus(tc) {
+  if (!tc.custom_fields) return 'Manual'
+  const field = tc.custom_fields.find(f => f.name === AUTOMATION_FIELD)
+  if (!field || !field.value) return 'Manual'
+  const raw = String(field.value).split(',')[0].trim()
+  const match = STATUS_VALUES.find(s => s.toLowerCase() === raw.toLowerCase())
+  return match || 'Manual'
+}
+
+async function loadData(token) {
+  const [caseIds, allCases] = await Promise.all([
+    fetchPlanCaseIds(token),
+    fetchAllCases(token)
+  ])
+  const planCases = allCases.filter(tc => caseIds.has(tc.id))
+  return planCases.map(tc => ({
+    id: tc.id,
+    title: tc.title,
+    suite: tc.suite_title || 'Uncategorized',
+    priority: tc.priority,
+    automationStatus: extractAutomationStatus(tc),
+    link: `https://app.qase.io/case/${PROJECT}-${tc.id}`
+  }))
+}
+
+function computeStats(cases) {
+  const total = cases.length
+  const counts = { Automated: 0, 'To be Automated': 0, Manual: 0 }
+  cases.forEach(c => { counts[c.automationStatus] = (counts[c.automationStatus] || 0) + 1 })
+  const automatedPct = total > 0 ? Math.round((counts.Automated / total) * 100) : 0
+  const suites = {}
+  cases.forEach(c => {
+    if (!suites[c.suite]) suites[c.suite] = { Automated: 0, 'To be Automated': 0, Manual: 0, total: 0 }
+    suites[c.suite][c.automationStatus]++
+    suites[c.suite].total++
+  })
+  return { total, counts, automatedPct, suites }
+}
+
+// placeholder — Tasks 5–8 will add showApp and render functions
+function showApp(token) {
+  console.log('showApp called, token validated. Tasks 5–8 will implement rendering.')
+}
+
+initAuth()
+</script>
 </body>
 </html>
