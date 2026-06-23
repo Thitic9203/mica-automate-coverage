@@ -68,7 +68,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica
 @keyframes pillFlash { 0%,100%{background:transparent} 30%{background:rgba(15,118,110,0.07)} }
 
 /* SUMMARY CARDS */
-.cards-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+.cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
 .card { background: var(--card); border: 0.5px solid rgba(0,0,0,0.07); border-radius: var(--radius); padding: 22px 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
 .card-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; font-weight: 500; }
 .card-value { font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace; font-size: 2.2rem; font-weight: 500; line-height: 1; color: var(--text); }
@@ -492,7 +492,6 @@ function renderOverview() {
       <div class="card"><div class="card-label">Total TCs</div><div class="card-value">${total}</div><div class="card-sub">in Mica Plan 5</div></div>
       <div class="card"><div class="card-label">Automated</div><div class="card-value teal">${counts.Automated}</div><div class="card-sub">${automatedPct}% of total</div></div>
       <div class="card"><div class="card-label">To be Automated</div><div class="card-value amber">${counts['To be Automated']}</div><div class="card-sub">${total > 0 ? Math.round(counts['To be Automated']/total*100) : 0}% of total</div></div>
-      <div class="card"><div class="card-label">Manual</div><div class="card-value blue">${counts.Manual}</div><div class="card-sub">${total > 0 ? Math.round(counts.Manual/total*100) : 0}% of total</div></div>
     </div>
     <div class="chart-section">
       <div class="chart-card">
@@ -501,7 +500,6 @@ function renderOverview() {
         <div class="legend">
           <div class="legend-item"><span class="legend-dot" style="background:var(--teal)"></span><span class="legend-label">Automated</span><span class="legend-val teal">${counts.Automated}</span></div>
           <div class="legend-item"><span class="legend-dot" style="background:var(--amber)"></span><span class="legend-label">To be Automated</span><span class="legend-val amber">${counts['To be Automated']}</span></div>
-          <div class="legend-item"><span class="legend-dot" style="background:var(--blue)"></span><span class="legend-label">Manual</span><span class="legend-val blue">${counts.Manual}</span></div>
         </div>
       </div>
       <div class="chart-card" id="suite-summary-card">
@@ -597,7 +595,6 @@ function renderSuites() {
           <th>Total TCs</th>
           <th style="color:var(--teal)">Automated</th>
           <th style="color:var(--amber)">To be Automated</th>
-          <th style="color:var(--blue)">Manual</th>
           <th>Coverage</th>
           <th>Progress</th>
         </tr></thead>
@@ -609,7 +606,6 @@ function renderSuites() {
               <td style="font-family:'JetBrains Mono',monospace">${s.total}</td>
               <td style="color:var(--teal);font-family:'JetBrains Mono',monospace">${s.Automated}</td>
               <td style="color:var(--amber);font-family:'JetBrains Mono',monospace">${s['To be Automated']}</td>
-              <td style="color:var(--blue);font-family:'JetBrains Mono',monospace">${s.Manual}</td>
               <td style="font-family:'JetBrains Mono',monospace;color:var(--teal)">${pct}%</td>
               <td style="min-width:120px">
                 <div class="progress-bar">
@@ -639,7 +635,7 @@ function renderTable() {
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <input class="search-input" id="tc-search" placeholder="Search by title or suite…" value="${tableSearch}">
           <div class="filter-tabs">
-            ${['All', 'Automated', 'To be Automated', 'Manual'].map(f =>
+            ${['All', 'Automated', 'To be Automated'].map(f =>
               `<button class="filter-tab${tableFilter === f ? ' active' : ''}" data-filter="${f}">${f}</button>`
             ).join('')}
           </div>
