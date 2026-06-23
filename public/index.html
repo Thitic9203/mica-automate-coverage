@@ -333,66 +333,67 @@ async function fetchPlanCaseIds() {
   return new Set(data.result.cases.map(c => c.case_id))
 }
 
-async function fetchAllCases() {
-  const limit = 100
+async function fetchSuiteMap() {
+  const map = {}
   let offset = 0
-  let all = []
   while (true) {
-    const data = await qaseFetch(`/case/${PROJECT}?limit=${limit}&offset=${offset}`)
+    const data = await qaseFetch(`/suite/${PROJECT}?limit=100&offset=${offset}`)
     if (!data.status || !data.result) break
-    all = all.concat(data.result.entities)
-    if (all.length >= data.result.total || data.result.entities.length < limit) break
-    offset += limit
+    data.result.entities.forEach(s => { map[s.id] = s.title })
+    if (data.result.entities.length < 100) break
+    offset += 100
   }
-  return all
+  return map
 }
 
 async function fetchFieldOptions() {
   try {
-    const data = await qaseFetch(`/custom_field?limit=50`)
-    if (!data.status || !data.result) return {}
-    const fields = data.result.entities || []
-    const field = fields.find(f => f.title === AUTOMATION_FIELD)
-    if (!field || !field.options) return {}
+    const data = await qaseFetch(`/custom_field/97`)
+    if (!data.status || !data.result || !data.result.value) return {}
+    const options = JSON.parse(data.result.value)
     const map = {}
-    field.options.forEach(o => { map[String(o.id)] = o.title })
+    options.forEach(o => { map[String(o.id)] = o.title })
     return map
   } catch { return {} }
 }
 
+async function fetchCaseDetail(id) {
+  const data = await qaseFetch(`/case/${PROJECT}/${id}`)
+  return (data.status && data.result) ? data.result : null
+}
+
 function extractAutomationStatus(tc, fieldOptions) {
-  if (!tc.custom_fields) return 'Manual'
-  const field = tc.custom_fields.find(f =>
-    f.name === AUTOMATION_FIELD || String(f.id) === '97'
-  )
+  if (!tc.custom_fields || !tc.custom_fields.length) return 'Manual'
+  const field = tc.custom_fields.find(f => String(f.id) === '97')
   if (!field || field.value == null || field.value === '') return 'Manual'
   const rawValues = Array.isArray(field.value)
     ? field.value
     : String(field.value).split(',')
   for (const raw of rawValues) {
     const r = raw.toString().trim()
+    if (fieldOptions[r]) {
+      const text = fieldOptions[r]
+      const match = STATUS_VALUES.find(s => s.toLowerCase() === text.toLowerCase())
+      if (match) return match
+    }
     const textMatch = STATUS_VALUES.find(s => s.toLowerCase() === r.toLowerCase())
     if (textMatch) return textMatch
-    if (fieldOptions && fieldOptions[r]) {
-      const mapped = fieldOptions[r]
-      const m2 = STATUS_VALUES.find(s => s.toLowerCase() === mapped.toLowerCase())
-      if (m2) return m2
-    }
   }
   return 'Manual'
 }
 
 async function loadData() {
-  const [caseIds, allCases, fieldOptions] = await Promise.all([
+  const [caseIds, suiteMap, fieldOptions] = await Promise.all([
     fetchPlanCaseIds(),
-    fetchAllCases(),
+    fetchSuiteMap(),
     fetchFieldOptions()
   ])
-  const planCases = allCases.filter(tc => caseIds.has(tc.id))
-  return planCases.map(tc => ({
+  const ids = Array.from(caseIds)
+  const cases = await Promise.all(ids.map(id => fetchCaseDetail(id)))
+  return cases.filter(Boolean).map(tc => ({
     id: tc.id,
     title: tc.title,
-    suite: tc.suite_title || 'Uncategorized',
+    suite: suiteMap[tc.suite_id] || 'Uncategorized',
     priority: tc.priority,
     automationStatus: extractAutomationStatus(tc, fieldOptions),
     link: `https://app.qase.io/case/${PROJECT}-${tc.id}`
