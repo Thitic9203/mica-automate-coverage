@@ -347,19 +347,46 @@ async function fetchAllCases() {
   return all
 }
 
-function extractAutomationStatus(tc) {
+async function fetchFieldOptions() {
+  try {
+    const data = await qaseFetch(`/custom_field?limit=50`)
+    if (!data.status || !data.result) return {}
+    const fields = data.result.entities || []
+    const field = fields.find(f => f.title === AUTOMATION_FIELD)
+    if (!field || !field.options) return {}
+    const map = {}
+    field.options.forEach(o => { map[String(o.id)] = o.title })
+    return map
+  } catch { return {} }
+}
+
+function extractAutomationStatus(tc, fieldOptions) {
   if (!tc.custom_fields) return 'Manual'
-  const field = tc.custom_fields.find(f => f.name === AUTOMATION_FIELD)
-  if (!field || !field.value) return 'Manual'
-  const raw = String(field.value).split(',')[0].trim()
-  const match = STATUS_VALUES.find(s => s.toLowerCase() === raw.toLowerCase())
-  return match || 'Manual'
+  const field = tc.custom_fields.find(f =>
+    f.name === AUTOMATION_FIELD || String(f.id) === '97'
+  )
+  if (!field || field.value == null || field.value === '') return 'Manual'
+  const rawValues = Array.isArray(field.value)
+    ? field.value
+    : String(field.value).split(',')
+  for (const raw of rawValues) {
+    const r = raw.toString().trim()
+    const textMatch = STATUS_VALUES.find(s => s.toLowerCase() === r.toLowerCase())
+    if (textMatch) return textMatch
+    if (fieldOptions && fieldOptions[r]) {
+      const mapped = fieldOptions[r]
+      const m2 = STATUS_VALUES.find(s => s.toLowerCase() === mapped.toLowerCase())
+      if (m2) return m2
+    }
+  }
+  return 'Manual'
 }
 
 async function loadData() {
-  const [caseIds, allCases] = await Promise.all([
+  const [caseIds, allCases, fieldOptions] = await Promise.all([
     fetchPlanCaseIds(),
-    fetchAllCases()
+    fetchAllCases(),
+    fetchFieldOptions()
   ])
   const planCases = allCases.filter(tc => caseIds.has(tc.id))
   return planCases.map(tc => ({
@@ -367,7 +394,7 @@ async function loadData() {
     title: tc.title,
     suite: tc.suite_title || 'Uncategorized',
     priority: tc.priority,
-    automationStatus: extractAutomationStatus(tc),
+    automationStatus: extractAutomationStatus(tc, fieldOptions),
     link: `https://app.qase.io/case/${PROJECT}-${tc.id}`
   }))
 }
@@ -472,7 +499,7 @@ function renderOverview() {
         </div>
       </div>
       <div class="chart-card" id="suite-summary-card">
-        <h3>Coverage by Suite</h3>
+        <h3>Progress by Module</h3>
         <div id="suite-summary-content"></div>
       </div>
     </div>
