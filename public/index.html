@@ -537,15 +537,7 @@ function renderDonut() {
       cutout: '70%',
       plugins: {
         legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: ctx => {
-              const total = ctx.dataset.data.reduce((a, b) => a + b, 0)
-              const pct = total > 0 ? Math.round(ctx.parsed / total * 100) : 0
-              return ` ${ctx.label}: ${ctx.parsed} (${pct}%)`
-            }
-          }
-        }
+        tooltip: { enabled: false }
       },
       animation: { animateScale: true, duration: 600 }
     }
