@@ -179,8 +179,7 @@ tr:hover td { background: rgba(0,0,0,0.015); }
   <div class="layout">
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-logo">
-        <h1>Mica Coverage</h1>
-        <p>NDLP · Plan 5</p>
+        <h1>Mica Automation Coverage</h1>
       </div>
       <div class="nav-section">
         <div class="nav-label">Views</div>
@@ -199,7 +198,7 @@ tr:hover td { background: rgba(0,0,0,0.015); }
       </div>
       <div class="nav-section" style="margin-top:auto;padding-bottom:16px">
         <div class="nav-item" id="logout-btn" style="cursor:pointer">
-          <span>⎋</span> Disconnect
+          <span>⎋</span> Logout
         </div>
       </div>
     </aside>
@@ -434,8 +433,15 @@ async function fetchAndRender() {
   try {
     appData = await loadData()
     appStats = computeStats(appData)
+    const now = new Date()
+    const bkk = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Bangkok',
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', hour12: true
+    }).formatToParts(now)
+    const p = Object.fromEntries(bkk.map(x => [x.type, x.value]))
     document.getElementById('last-updated').textContent =
-      `Updated ${new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}`
+      `Updated Date: ${p.day}/${p.month}/${p.year} ${p.hour}:${p.minute} ${p.dayPeriod.toUpperCase()}`
     const pill = document.getElementById('live-pill')
     pill.style.animation = 'none'
     requestAnimationFrame(() => { pill.style.animation = 'pillFlash 1.5s ease' })
