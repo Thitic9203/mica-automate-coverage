@@ -420,13 +420,25 @@ let tableSort = { col: 'id', dir: 'asc' }
 let tableSearch = ''
 let tablePage = 1
 let tablePageSize = 20
+let qaseLoggedIn = false
+
+async function checkQaseSession() {
+  try {
+    const resp = await fetch('https://app.qase.io/api/v1/user', {
+      credentials: 'include', mode: 'cors'
+    })
+    qaseLoggedIn = resp.ok
+  } catch {
+    qaseLoggedIn = false
+  }
+}
 
 function showApp() {
   document.getElementById('app').classList.remove('hidden')
   setupNav()
   setupHamburger()
   document.getElementById('logout-btn').addEventListener('click', () => signOut(auth))
-  fetchAndRender()
+  checkQaseSession().then(() => fetchAndRender())
   setInterval(fetchAndRender, 60 * 60 * 1000)
 }
 
@@ -694,8 +706,8 @@ function refreshTableBody() {
       <tbody>
         ${page.length === 0 ? `<tr><td colspan="4" style="text-align:center;padding:32px;color:var(--muted)">No test cases found</td></tr>` :
           page.map(tc => `<tr>
-            <td><a class="tc-id" href="${tc.link}" target="_blank" style="color:var(--muted);text-decoration:none">Mica-${tc.id}</a></td>
-            <td style="max-width:360px"><a href="${tc.link}" target="_blank" style="color:var(--text);text-decoration:none">${tc.title}</a></td>
+            <td>${qaseLoggedIn ? `<a class="tc-id" href="${tc.link}" target="_blank" style="color:var(--muted);text-decoration:none">Mica-${tc.id}</a>` : `<span style="color:var(--muted);font-family:'JetBrains Mono','SF Mono',monospace;font-size:0.8rem">Mica-${tc.id}</span>`}</td>
+            <td style="max-width:360px">${qaseLoggedIn ? `<a href="${tc.link}" target="_blank" style="color:var(--text);text-decoration:none">${tc.title}</a>` : `<span>${tc.title}</span>`}</td>
             <td><span class="suite-tag">${tc.suite}</span></td>
             <td>${statusBadge(tc.automationStatus)}</td>
           </tr>`).join('')
