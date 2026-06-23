@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mica · Automate Coverage</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230F766E'/%3E%3Ctext x='16' y='23' text-anchor='middle' font-family='system-ui,sans-serif' font-size='18' font-weight='700' fill='white'%3EM%3C/text%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -23,7 +24,8 @@
   --radius: 12px;
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+html, body { height: 100%; overflow: hidden; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif; background: var(--bg); color: var(--text); }
 
 /* AUTH GATE */
 #auth-gate { position: fixed; inset: 0; z-index: 9999; display: none; align-items: center; justify-content: center; overflow: hidden; }
@@ -41,12 +43,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica
 .auth-note { font-size: 11px; color: var(--muted); margin-top: 20px; opacity: 0.55; }
 
 /* LAYOUT */
-.layout { display: flex; min-height: 100vh; }
-.sidebar { width: 240px; background: var(--sidebar); border-right: 0.5px solid rgba(0,0,0,0.08); display: flex; flex-direction: column; position: fixed; height: 100vh; overflow-y: auto; z-index: 10; }
-.main { margin-left: 240px; flex: 1; display: flex; flex-direction: column; }
-.topbar { position: sticky; top: 0; background: rgba(255,255,255,0.80); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border-bottom: 0.5px solid rgba(0,0,0,0.08); padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; z-index: 5; }
+.layout { display: flex; height: 100vh; overflow: hidden; }
+.sidebar { width: 240px; background: var(--sidebar); border-right: 0.5px solid rgba(0,0,0,0.08); display: flex; flex-direction: column; height: 100vh; overflow-y: auto; flex-shrink: 0; z-index: 10; }
+.main { margin-left: 0; flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+.topbar { background: rgba(255,255,255,0.80); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border-bottom: 0.5px solid rgba(0,0,0,0.08); padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; z-index: 5; }
 .topbar h2 { font-size: 1rem; font-weight: 600; color: var(--text); }
-.content { padding: 28px; flex: 1; }
+.content { padding: 28px; flex: 1; overflow-y: auto; }
 
 /* SIDEBAR */
 .sidebar-logo { padding: 22px 20px 16px; border-bottom: 0.5px solid rgba(0,0,0,0.08); }
