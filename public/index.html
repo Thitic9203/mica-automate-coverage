@@ -489,7 +489,7 @@ function renderOverview() {
   const content = document.getElementById('content')
   content.innerHTML = `
     <div class="cards-grid">
-      <div class="card"><div class="card-label">Total TCs</div><div class="card-value">${total}</div><div class="card-sub">in NDLP Plan 5</div></div>
+      <div class="card"><div class="card-label">Total TCs</div><div class="card-value">${total}</div><div class="card-sub">in Mica Plan 5</div></div>
       <div class="card"><div class="card-label">Automated</div><div class="card-value teal">${counts.Automated}</div><div class="card-sub">${automatedPct}% of total</div></div>
       <div class="card"><div class="card-label">To be Automated</div><div class="card-value amber">${counts['To be Automated']}</div><div class="card-sub">${total > 0 ? Math.round(counts['To be Automated']/total*100) : 0}% of total</div></div>
       <div class="card"><div class="card-label">Manual</div><div class="card-value blue">${counts.Manual}</div><div class="card-sub">${total > 0 ? Math.round(counts.Manual/total*100) : 0}% of total</div></div>
@@ -698,7 +698,7 @@ function refreshTableBody() {
       <tbody>
         ${page.length === 0 ? `<tr><td colspan="4" style="text-align:center;padding:32px;color:var(--muted)">No test cases found</td></tr>` :
           page.map(tc => `<tr>
-            <td><a class="tc-id" href="${tc.link}" target="_blank" style="color:var(--muted);text-decoration:none">NDLP-${tc.id}</a></td>
+            <td><a class="tc-id" href="${tc.link}" target="_blank" style="color:var(--muted);text-decoration:none">Mica-${tc.id}</a></td>
             <td style="max-width:360px"><a href="${tc.link}" target="_blank" style="color:var(--text);text-decoration:none">${tc.title}</a></td>
             <td><span class="suite-tag">${tc.suite}</span></td>
             <td>${statusBadge(tc.automationStatus)}</td>
