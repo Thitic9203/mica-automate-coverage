@@ -775,6 +775,16 @@ function showApp() {
 const CACHE_KEY = 'mica-ac-data'
 const CACHE_TTL = 5 * 60 * 1000
 
+function formatBkkTime(date) {
+  const bkk = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Bangkok',
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', hour12: true
+  }).formatToParts(date)
+  const p = Object.fromEntries(bkk.map(x => [x.type, x.value]))
+  return `${p.day}/${p.month}/${p.year} ${p.hour}:${p.minute} ${p.dayPeriod.toUpperCase()}`
+}
+
 function loadFromCacheThenRefresh() {
   try {
     const raw = localStorage.getItem(CACHE_KEY)
@@ -784,7 +794,7 @@ function loadFromCacheThenRefresh() {
         appData = data
         appStats = computeStats(appData)
         renderView()
-        document.getElementById('last-updated').textContent = 'cached · refreshing…'
+        document.getElementById('last-updated').textContent = formatBkkTime(new Date(ts))
         if (Date.now() - ts < CACHE_TTL) return
       }
     }
@@ -797,15 +807,7 @@ async function fetchAndRender() {
     appData = await loadData()
     appStats = computeStats(appData)
     try { localStorage.setItem(CACHE_KEY, JSON.stringify({ data: appData, ts: Date.now() })) } catch {}
-    const now = new Date()
-    const bkk = new Intl.DateTimeFormat('en-GB', {
-      timeZone: 'Asia/Bangkok',
-      day: '2-digit', month: 'short', year: 'numeric',
-      hour: '2-digit', minute: '2-digit', hour12: true
-    }).formatToParts(now)
-    const p = Object.fromEntries(bkk.map(x => [x.type, x.value]))
-    document.getElementById('last-updated').textContent =
-      `${p.day}/${p.month}/${p.year} ${p.hour}:${p.minute} ${p.dayPeriod.toUpperCase()}`
+    document.getElementById('last-updated').textContent = formatBkkTime(new Date())
     const pill = document.getElementById('live-pill')
     pill.style.animation = 'none'
     requestAnimationFrame(() => { pill.style.animation = 'pillFlash 1.5s ease' })
@@ -963,7 +965,7 @@ function renderSuiteSummary() {
     <table style="width:100%">
       <thead><tr>
         <th style="${thStyle}text-align:left">Suite</th>
-        <th style="${thStyle}padding-left:12px;width:160px">Completion</th>
+        <th style="${thStyle}padding-left:8px;width:80px">Completion</th>
         <th style="${thStyle}text-align:right;padding-right:8px;width:44px">%</th>
         <th style="${thStyle}text-align:right;width:80px">Automated</th>
       </tr></thead>
@@ -972,9 +974,9 @@ function renderSuiteSummary() {
           const pct = s.total > 0 ? Math.round(s.Automated / s.total * 100) : 0
           const pctColor = pct === 100 ? 'var(--green)' : pct === 0 ? 'var(--muted)' : 'var(--text)'
           return `<tr>
-            <td style="padding:9px 0;font-size:12px;line-height:1.4;border-bottom:1px solid var(--border)">${suite}</td>
-            <td style="padding:9px 12px;border-bottom:1px solid var(--border);width:160px">
-              <div class="suite-prog-bar" style="min-width:100px"><div class="suite-prog-fill" style="width:${pct}%"></div></div>
+            <td style="padding:9px 6px 9px 0;font-size:12px;line-height:1.4;border-bottom:1px solid var(--border)">${suite}</td>
+            <td style="padding:9px 8px;border-bottom:1px solid var(--border);width:80px">
+              <div class="suite-prog-bar" style="min-width:60px"><div class="suite-prog-fill" style="width:${pct}%"></div></div>
             </td>
             <td style="padding:9px 8px 9px 0;text-align:right;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:${pctColor};border-bottom:1px solid var(--border);white-space:nowrap">${pct}%</td>
             <td style="padding:9px 0;text-align:right;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap">${s.Automated}/${s.total}</td>
