@@ -339,7 +339,12 @@ body::-webkit-scrollbar { display: none; }
 .filter-tab[data-filter="Automated"].active     { background: rgba(62,122,94,0.11); color: var(--green); border-color: rgba(62,122,94,0.28); }
 .filter-tab[data-filter="To be Automated"].active { background: rgba(138,96,32,0.11); color: var(--amber); border-color: rgba(138,96,32,0.28); }
 
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+th:nth-child(1) { width: 90px; }
+th:nth-child(3) { width: 220px; }
+th:nth-child(4) { width: 150px; }
+td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 0; }
+td:nth-child(2) { white-space: normal; }
 th {
   position: sticky; top: 0; z-index: 10;
   text-align: left; padding: 9px 16px;
