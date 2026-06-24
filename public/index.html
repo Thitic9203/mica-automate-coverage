@@ -326,8 +326,8 @@ body::-webkit-scrollbar { display: none; }
 .table-head h3 { font-size: 13px; font-weight: 600; color: var(--text); }
 .search-input {
   background: #FFFFFF; border: 1px solid var(--border);
-  border-radius: 6px; padding: 6px 12px;
-  color: var(--text); font-size: 13px; outline: none;
+  border-radius: 5px; padding: 5px 10px;
+  color: var(--text); font-size: 12px; outline: none;
   width: 220px; transition: border-color .12s, box-shadow .12s;
   font-family: inherit;
 }
@@ -1112,7 +1112,7 @@ function renderTable() {
       <div class="table-head">
         <h3>All Test Cases</h3>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <input class="search-input" id="tc-search" placeholder="Search by title or suite…" value="${tableSearch}">
+          <input class="search-input" id="tc-search" placeholder="Search test cases" value="${tableSearch}">
           <div class="filter-tabs">
             ${['All', 'Automated', 'To be Automated'].map(f =>
               `<button class="filter-tab${tableFilter === f ? ' active' : ''}" data-filter="${f}">${f}</button>`
