@@ -407,6 +407,10 @@ tr:hover td { background: rgba(0,0,0,0.013); }
 }
 .pg-btn:hover { border-color: var(--teal); color: var(--teal); }
 .pg-btn:disabled { opacity: 0.3; cursor: default; }
+#suite-summary-card { display: flex; flex-direction: column; }
+#suite-summary-content { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.module-table-wrap { flex: 0 0 auto; overflow: hidden; }
+.module-pagination { flex: 0 0 auto; margin-top: auto; padding: 10px 0 0; }
 .page-size-select {
   background: #FFFFFF; border: 1px solid var(--border);
   color: var(--text); border-radius: 5px; padding: 3px 8px;
@@ -761,6 +765,8 @@ let tableSearch = ''
 let tablePage = 1
 let tablePageSize = 20
 let suiteSort = { col: 'automated', dir: 'desc' }
+let modulePage = 1
+const MODULE_PAGE_SIZE = 6
 let qaseLoggedIn = false
 
 async function checkQaseSession() {
@@ -981,31 +987,47 @@ function renderSuiteSummary() {
     container.innerHTML = '<p style="color:var(--muted);font-size:13px">No suites found.</p>'
     return
   }
-  const thStyle = `padding:7px 6px;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--card-border);position:sticky;top:44px;z-index:10;`
+  const totalPages = Math.max(1, Math.ceil(entries.length / MODULE_PAGE_SIZE))
+  if (modulePage > totalPages) modulePage = totalPages
+  if (modulePage < 1) modulePage = 1
+  const pageEntries = entries.slice((modulePage - 1) * MODULE_PAGE_SIZE, modulePage * MODULE_PAGE_SIZE)
+  const thStyle = `padding:7px 6px;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--card-border);`
   container.innerHTML = `
-    <table style="width:100%">
-      <thead><tr>
-        <th style="${thStyle}text-align:left">Suite</th>
-        <th style="${thStyle}padding-left:8px;width:80px">Completion</th>
-        <th style="${thStyle}text-align:right;padding-right:8px;width:44px">%</th>
-        <th style="${thStyle}text-align:right;width:80px">Automated</th>
-      </tr></thead>
-      <tbody>
-        ${entries.map(([suite, s]) => {
-          const pct = s.total > 0 ? Math.round(s.Automated / s.total * 100) : 0
-          const pctColor = pct === 100 ? 'var(--green)' : pct === 0 ? 'var(--muted)' : 'var(--text)'
-          return `<tr>
-            <td style="padding:9px 6px 9px 0;font-size:12px;line-height:1.4;border-bottom:1px solid var(--border)">${suite}</td>
-            <td style="padding:9px 8px;border-bottom:1px solid var(--border);width:80px">
-              <div class="suite-prog-bar" style="min-width:60px"><div class="suite-prog-fill" style="width:${pct}%"></div></div>
-            </td>
-            <td style="padding:9px 8px 9px 0;text-align:right;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:${pctColor};border-bottom:1px solid var(--border);white-space:nowrap">${pct}%</td>
-            <td style="padding:9px 0;text-align:right;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap">${s.Automated}/${s.total}</td>
-          </tr>`
-        }).join('')}
-      </tbody>
-    </table>
+    <div class="module-table-wrap">
+      <table style="width:100%">
+        <thead><tr>
+          <th style="${thStyle}text-align:left">Suite</th>
+          <th style="${thStyle}padding-left:8px;width:80px">Completion</th>
+          <th style="${thStyle}text-align:right;padding-right:8px;width:44px">%</th>
+          <th style="${thStyle}text-align:right;width:80px">Automated</th>
+        </tr></thead>
+        <tbody>
+          ${pageEntries.map(([suite, s]) => {
+            const pct = s.total > 0 ? Math.round(s.Automated / s.total * 100) : 0
+            const pctColor = pct === 100 ? 'var(--green)' : pct === 0 ? 'var(--muted)' : 'var(--text)'
+            return `<tr>
+              <td style="padding:9px 6px 9px 0;font-size:12px;line-height:1.4;border-bottom:1px solid var(--border)">${suite}</td>
+              <td style="padding:9px 8px;border-bottom:1px solid var(--border);width:80px">
+                <div class="suite-prog-bar" style="min-width:60px"><div class="suite-prog-fill" style="width:${pct}%"></div></div>
+              </td>
+              <td style="padding:9px 8px 9px 0;text-align:right;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:${pctColor};border-bottom:1px solid var(--border);white-space:nowrap">${pct}%</td>
+              <td style="padding:9px 0;text-align:right;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap">${s.Automated}/${s.total}</td>
+            </tr>`
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+    ${entries.length > MODULE_PAGE_SIZE ? `
+    <div class="pagination module-pagination">
+      <span>${entries.length} modules · Page ${modulePage} of ${totalPages}</span>
+      <div class="pagination-btns">
+        <button class="pg-btn" id="module-prev" ${modulePage <= 1 ? 'disabled' : ''}>‹</button>
+        <button class="pg-btn" id="module-next" ${modulePage >= totalPages ? 'disabled' : ''}>›</button>
+      </div>
+    </div>` : ''}
   `
+  container.querySelector('#module-prev')?.addEventListener('click', () => { modulePage--; renderSuiteSummary() })
+  container.querySelector('#module-next')?.addEventListener('click', () => { modulePage++; renderSuiteSummary() })
 }
 
 function renderSuites() {
