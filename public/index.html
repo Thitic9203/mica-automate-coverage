@@ -764,7 +764,7 @@ let tableFilter = 'All'
 let tableSort = { col: 'status', dir: 'asc' }
 let tableSearch = ''
 let tablePage = 1
-let tablePageSize = 20
+let tablePageSize = 10
 let suiteSort = { col: 'automated', dir: 'desc' }
 let modulePage = 1
 const MODULE_PAGE_SIZE = 6
@@ -837,8 +837,8 @@ function setupNav() {
 function renderView() {
   const c = document.getElementById('content')
   if (activeView === 'overview') { c.className = 'view-scroll'; renderOverview() }
-  else if (activeView === 'suites') { c.className = 'view-fill'; renderSuites() }
-  else { c.className = 'view-fill'; renderTable() }
+  else if (activeView === 'suites') { c.className = 'view-scroll'; renderSuites() }
+  else { c.className = 'view-scroll'; renderTable() }
 }
 
 function renderOverview() {
@@ -1171,9 +1171,9 @@ function refreshTableBody() {
     <table style="table-layout:fixed">
       <colgroup>
         <col style="width:90px">
-        <col style="width:350px">
         <col>
-        <col style="width:160px">
+        <col style="width:300px">
+        <col style="width:180px">
       </colgroup>
       <thead><tr>
         <th class="${sortCls('id')}" data-col="id">ID${arrow('id')}</th>
