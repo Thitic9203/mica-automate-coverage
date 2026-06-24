@@ -3,8 +3,10 @@
 ## Deployment
 
 - **Platform: Cloudflare Pages** — NOT Netlify
-- Auto-deploys from `main` branch
-- `netlify.toml` exists but is legacy/unused — do not reference Netlify in any messaging
+- **Manual deploy** — no git auto-deploy configured
+- Deploy command: `wrangler pages deploy public/ --project-name mica-automate-coverage`
+- Always deploy after pushing to main
+- `netlify.toml` exists but is legacy/unused — do not reference Netlify
 - Cloudflare Pages Functions in `functions/` directory
 - `.wrangler/` is Cloudflare local dev tooling
 
