@@ -351,6 +351,7 @@ body::-webkit-scrollbar { display: none; }
 
 table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: auto; }
 th {
+  position: sticky; top: 0; z-index: 10;
   text-align: left; padding: 9px 16px;
   font-size: 11px; text-transform: uppercase;
   letter-spacing: .07em; color: var(--muted); font-weight: 600;
@@ -358,18 +359,14 @@ th {
   cursor: pointer; user-select: none; white-space: nowrap;
   background: var(--card-border);
 }
-#table-header-wrap, #table-pagination { flex: 0 0 auto; }
-#table-header-wrap {
-  overflow-y: scroll;
-  overflow-x: hidden;
-}
-#table-header-wrap::-webkit-scrollbar { background: var(--card); }
-#table-header-wrap::-webkit-scrollbar-thumb { background: transparent; }
 #table-body-wrap, #suite-table-wrap {
   flex: 1 1 auto; min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
+  scrollbar-width: none;
 }
+#table-body-wrap::-webkit-scrollbar,
+#suite-table-wrap::-webkit-scrollbar { display: none; }
 th:hover { color: var(--text); }
 th .sort-arrow { margin-left: 4px; opacity: 0.4; font-size: 10px; display: inline-block; width: 12px; text-align: center; }
 th.sort-active .sort-arrow { opacity: 1; color: var(--teal); }
@@ -1126,9 +1123,7 @@ function renderTable() {
           </div>
         </div>
       </div>
-      <div id="table-header-wrap"></div>
       <div id="table-body-wrap"></div>
-      <div id="table-pagination"></div>
     </div>
   `
   document.getElementById('tc-search').addEventListener('input', e => {
@@ -1171,26 +1166,22 @@ function refreshTableBody() {
   }
   const sortCls = col => tableSort.col === col ? ' sort-active' : ''
 
-  const colgroup = `<colgroup><col style="width:90px"><col><col style="width:260px"><col style="width:160px"></colgroup>`
-
-  const headerWrap = document.getElementById('table-header-wrap')
-  if (headerWrap) headerWrap.innerHTML = `
+  const wrap = document.getElementById('table-body-wrap')
+  if (!wrap) return
+  wrap.innerHTML = `
     <table style="table-layout:fixed">
-      ${colgroup}
+      <colgroup>
+        <col style="width:90px">
+        <col>
+        <col style="width:260px">
+        <col style="width:160px">
+      </colgroup>
       <thead><tr>
         <th class="${sortCls('id')}" data-col="id">ID${arrow('id')}</th>
         <th class="${sortCls('title')}" data-col="title">Title${arrow('title')}</th>
         <th class="${sortCls('suite')}" data-col="suite">Suite${arrow('suite')}</th>
         <th class="${sortCls('status')}" data-col="status">Automation Status${arrow('status')}</th>
       </tr></thead>
-    </table>
-  `
-
-  const wrap = document.getElementById('table-body-wrap')
-  if (!wrap) return
-  wrap.innerHTML = `
-    <table style="table-layout:fixed">
-      ${colgroup}
       <tbody>
         ${page.length === 0
           ? `<tr><td colspan="4" style="text-align:center;padding:32px;color:var(--muted)">No test cases found</td></tr>`
@@ -1203,10 +1194,6 @@ function refreshTableBody() {
         }
       </tbody>
     </table>
-  `
-
-  const pagWrap = document.getElementById('table-pagination')
-  if (pagWrap) pagWrap.innerHTML = `
     <div class="pagination">
       <span>${total} test case${total !== 1 ? 's' : ''} · Page ${tablePage} of ${totalPages}</span>
       <div class="pagination-btns">
@@ -1218,8 +1205,7 @@ function refreshTableBody() {
       </div>
     </div>
   `
-
-  headerWrap.querySelectorAll('th[data-col]').forEach(th => {
+  wrap.querySelectorAll('th[data-col]').forEach(th => {
     th.addEventListener('click', () => {
       const col = th.dataset.col
       if (tableSort.col === col) tableSort.dir = tableSort.dir === 'asc' ? 'desc' : 'asc'
@@ -1227,9 +1213,9 @@ function refreshTableBody() {
       refreshTableBody()
     })
   })
-  pagWrap.querySelector('#pg-prev')?.addEventListener('click', () => { tablePage--; refreshTableBody() })
-  pagWrap.querySelector('#pg-next')?.addEventListener('click', () => { tablePage++; refreshTableBody() })
-  pagWrap.querySelector('#page-size')?.addEventListener('change', e => {
+  wrap.querySelector('#pg-prev')?.addEventListener('click', () => { tablePage--; refreshTableBody() })
+  wrap.querySelector('#pg-next')?.addEventListener('click', () => { tablePage++; refreshTableBody() })
+  wrap.querySelector('#page-size')?.addEventListener('change', e => {
     tablePageSize = Number(e.target.value); tablePage = 1; refreshTableBody()
   })
   document.querySelectorAll('.filter-tab').forEach(btn => {
