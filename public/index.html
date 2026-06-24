@@ -234,8 +234,15 @@ body::-webkit-scrollbar { display: none; }
 .card:nth-child(4){animation-delay:0.18s}
 .env-table { width:100%; margin-top:12px; border-collapse:collapse; }
 .env-table td { padding:3px 0; font-size:12px; border-bottom:none; vertical-align:top; color:var(--text); }
-.env-k { color:var(--muted); white-space:nowrap; padding-right:10px; width:52px; font-size:11px; padding-top:4px; }
+.env-k { color:var(--muted); white-space:nowrap; padding-right:12px; width:56px; font-size:11px; padding-top:4px; }
 .env-v { font-family:'JetBrains Mono',monospace; font-size:11px; word-break:break-all; line-height:1.5; }
+.roles-table { width:100%; border-collapse:collapse; margin-top:4px; table-layout:fixed; }
+.roles-table th { cursor:default; font-size:10px; padding:6px 10px; position:static; }
+.roles-table th:first-child { width:100px; }
+.roles-table td { padding:6px 10px; font-size:12px; border-bottom:1px solid var(--border); vertical-align:middle; color:var(--text); overflow:hidden; }
+.roles-table tr:last-child td { border-bottom:none; }
+.roles-table td:first-child { white-space:nowrap; font-weight:500; width:80px; }
+.roles-table td:last-child { color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:10px; word-break:break-all; }
 @keyframes cardIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
 .card-label {
   font-size: 11px; color: var(--muted);
@@ -258,7 +265,7 @@ body::-webkit-scrollbar { display: none; }
 /* ── Chart section ── */
 .chart-section {
   display: grid;
-  grid-template-columns: 290px 1fr;
+  grid-template-columns: 290px 1fr 420px;
   gap: 10px;
   margin-bottom: 20px;
 }
@@ -295,8 +302,9 @@ body::-webkit-scrollbar { display: none; }
   background: var(--card);
   border: 1px solid var(--card-border);
   border-radius: var(--radius);
-  overflow: hidden;
+  overflow: clip;
 }
+.page-table th { top: 44px; }
 .table-head {
   padding: 14px 18px 12px;
   border-bottom: 1px solid var(--border);
@@ -394,12 +402,10 @@ tr:hover td { background: rgba(0,0,0,0.013); }
 
 /* ── Suite breakdown bars ── */
 .suite-row td:first-child { font-weight: 500; }
-.mini-stacked {
-  display: flex; height: 4px; border-radius: 99px;
-  overflow: hidden; gap: 1px; min-width: 100px;
-  background: rgba(0,0,0,0.05);
-}
-.mini-seg { height: 100%; transition: width 0.6s ease; }
+.suite-prog-wrap { display:flex; align-items:center; gap:10px; }
+.suite-prog-bar { flex:1; height:6px; background:var(--border); border-radius:99px; overflow:hidden; min-width:80px; position:relative; }
+.suite-prog-fill { height:100%; border-radius:99px; background:#62A88A; transition:width 0.8s ease; }
+.suite-prog-fill::after { content:''; position:absolute; right:0; top:0; width:4px; height:100%; background:#6899B8; border-radius:99px; }
 
 /* ── Utility ── */
 .hidden { display: none !important; }
@@ -818,10 +824,7 @@ function renderOverview() {
       <div class="card">
         <div class="card-label">Environment</div>
         <table class="env-table">
-          <tr><td class="env-k">URL</td><td class="env-v">${window.location.origin}</td></tr>
-          <tr><td class="env-k">Project</td><td class="env-v">Mica / Plan 5</td></tr>
-          <tr><td class="env-k">User</td><td class="env-v">${auth.currentUser?.email ?? '—'}</td></tr>
-          <tr><td class="env-k">Role</td><td class="env-v">QA Team</td></tr>
+          <tr><td class="env-k">URL</td><td class="env-v"><a href="https://www.ndlp68.ndlp.go.th" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;text-underline-offset:2px;">https://www.ndlp68.ndlp.go.th</a></td></tr>
         </table>
       </div>
     </div>
@@ -856,6 +859,19 @@ function renderOverview() {
       <div class="chart-card" id="suite-summary-card">
         <h3>Progress by Module</h3>
         <div id="suite-summary-content"></div>
+      </div>
+      <div class="chart-card">
+        <h3>Role</h3>
+        <table class="roles-table">
+          <thead><tr><th>Role</th><th>Email</th></tr></thead>
+          <tbody>
+            <tr><td>Student</td><td>carroll.kup9516_stg68@ndlp.go.th</td></tr>
+            <tr><td>Teacher</td><td>sorat.won0071_stg68@ndlp.go.th</td></tr>
+            <tr><td>School Admin</td><td>automatekrit.tha658372_stg68@ndlp.go.th</td></tr>
+            <tr><td>Central Admin</td><td>automatetanapoom.int0909_stg68@ndlp.go.th</td></tr>
+            <tr><td>Region Admin</td><td>automatebawonwit.cha6587_stg68@ndlp.go.th</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
   `
@@ -898,29 +914,26 @@ function renderSuiteSummary() {
     container.innerHTML = '<p style="color:var(--muted);font-size:13px">No suites found.</p>'
     return
   }
+  const thStyle = `padding:7px 6px;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--card-border);position:sticky;top:44px;z-index:10;`
   container.innerHTML = `
     <table style="width:100%">
       <thead><tr>
-        <th style="text-align:left;padding:6px 0;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border);background:transparent">Suite</th>
-        <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--muted);border-bottom:1px solid var(--border);background:transparent">Coverage</th>
-        <th style="padding:6px 0 6px 8px;border-bottom:1px solid var(--border);min-width:96px;background:transparent"></th>
+        <th style="${thStyle}text-align:left">Suite</th>
+        <th style="${thStyle}padding-left:12px;width:160px">Completion</th>
+        <th style="${thStyle}text-align:right;padding-right:8px;width:44px">%</th>
+        <th style="${thStyle}text-align:right;width:80px">Automated</th>
       </tr></thead>
       <tbody>
         ${entries.map(([suite, s]) => {
           const pct = s.total > 0 ? Math.round(s.Automated / s.total * 100) : 0
-          const aPct = (s.Automated / s.total * 100).toFixed(1)
-          const tPct = (s['To be Automated'] / s.total * 100).toFixed(1)
-          const mPct = (s.Manual / s.total * 100).toFixed(1)
+          const pctColor = pct === 100 ? 'var(--green)' : pct === 0 ? 'var(--muted)' : 'var(--text)'
           return `<tr>
-            <td style="padding:9px 0;font-size:13px;word-break:break-word;line-height:1.4;border-bottom:1px solid var(--border)">${suite}</td>
-            <td style="text-align:right;padding:9px 8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--green);white-space:nowrap;border-bottom:1px solid var(--border)">${pct}%</td>
-            <td style="padding:9px 0 9px 8px;white-space:nowrap;border-bottom:1px solid var(--border)">
-              <div class="mini-stacked">
-                <div class="mini-seg" style="background:#62A88A;width:${aPct}%"></div>
-                <div class="mini-seg" style="background:#C4913A;width:${tPct}%"></div>
-                <div class="mini-seg" style="background:#6899B8;width:${mPct}%"></div>
-              </div>
+            <td style="padding:9px 0;font-size:12px;line-height:1.4;border-bottom:1px solid var(--border)">${suite}</td>
+            <td style="padding:9px 12px;border-bottom:1px solid var(--border);width:160px">
+              <div class="suite-prog-bar" style="min-width:100px"><div class="suite-prog-fill" style="width:${pct}%"></div></div>
             </td>
+            <td style="padding:9px 8px 9px 0;text-align:right;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:${pctColor};border-bottom:1px solid var(--border);white-space:nowrap">${pct}%</td>
+            <td style="padding:9px 0;text-align:right;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap">${s.Automated}/${s.total}</td>
           </tr>`
         }).join('')}
       </tbody>
@@ -940,7 +953,7 @@ function renderSuites() {
     </div>
     <div class="table-card">
       <div class="table-head"><h3>Suite Breakdown</h3></div>
-      <table>
+      <table class="page-table">
         <thead><tr>
           <th>Suite</th>
           <th>Total TCs</th>
@@ -1050,7 +1063,7 @@ function refreshTableBody() {
                 ? `<a class="tc-id" href="${tc.link}" target="_blank" style="color:var(--muted);text-decoration:none">Mica-${tc.id}</a>`
                 : `<span class="tc-id">Mica-${tc.id}</span>`
               }</td>
-              <td style="max-width:360px">${qaseLoggedIn
+              <td>${qaseLoggedIn
                 ? `<a href="${tc.link}" target="_blank" style="color:var(--text);text-decoration:none">${tc.title}</a>`
                 : `<span>${tc.title}</span>`
               }</td>
