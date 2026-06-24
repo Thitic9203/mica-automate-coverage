@@ -1102,14 +1102,22 @@ function refreshSuiteTable() {
   const sortCls = col => suiteSort.col === col ? ' sort-active' : ''
 
   wrap.innerHTML = `
-    <table>
+    <table style="table-layout:fixed">
+      <colgroup>
+        <col style="width:36%">
+        <col style="width:10%">
+        <col style="width:12%">
+        <col style="width:16%">
+        <col style="width:10%">
+        <col style="width:16%">
+      </colgroup>
       <thead><tr>
-        <th class="${sortCls('suite')}" data-scol="suite" style="min-width:260px">Suite${arrow('suite')}</th>
-        <th class="${sortCls('total')}" data-scol="total" style="width:80px">Total TCs${arrow('total')}</th>
-        <th class="${sortCls('automated')}" data-scol="automated" style="color:var(--green);width:90px">Automated${arrow('automated')}</th>
-        <th class="${sortCls('tba')}" data-scol="tba" style="color:var(--amber);width:130px">To be Automated${arrow('tba')}</th>
-        <th class="${sortCls('coverage')}" data-scol="coverage" style="width:80px">Coverage${arrow('coverage')}</th>
-        <th style="width:140px;cursor:default">Progress</th>
+        <th class="${sortCls('suite')}" data-scol="suite">Suite${arrow('suite')}</th>
+        <th class="${sortCls('total')}" data-scol="total">Total TCs${arrow('total')}</th>
+        <th class="${sortCls('automated')}" data-scol="automated" style="color:var(--green)">Automated${arrow('automated')}</th>
+        <th class="${sortCls('tba')}" data-scol="tba" style="color:var(--amber)">To be Automated${arrow('tba')}</th>
+        <th class="${sortCls('coverage')}" data-scol="coverage">Coverage${arrow('coverage')}</th>
+        <th style="cursor:default">Progress</th>
       </tr></thead>
       <tbody>
         ${entries.map(s => `<tr class="suite-row">
@@ -1118,7 +1126,7 @@ function refreshSuiteTable() {
           <td style="color:var(--green);font-family:'JetBrains Mono',monospace">${s.Automated}</td>
           <td style="color:var(--amber);font-family:'JetBrains Mono',monospace">${s['To be Automated']}</td>
           <td style="font-family:'JetBrains Mono',monospace;color:var(--green)">${s.pct}%</td>
-          <td style="min-width:120px">
+          <td>
             <div class="progress-bar">
               <div class="progress-fill" style="background:#62A88A;width:${s.pct}%"></div>
             </div>
