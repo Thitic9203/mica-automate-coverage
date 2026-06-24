@@ -17,7 +17,8 @@ export async function onRequest(context) {
     status: response.status,
     headers: {
       'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*'
+      'Access-Control-Allow-Origin': '*',
+      'Cache-Control': 'public, max-age=300, s-maxage=300'
     }
   })
 }

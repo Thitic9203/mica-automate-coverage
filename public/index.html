@@ -767,14 +767,36 @@ function showApp() {
   document.getElementById('app').classList.remove('hidden')
   setupNav()
   document.getElementById('logout-btn').addEventListener('click', () => signOut(auth))
-  checkQaseSession().then(() => fetchAndRender())
+  checkQaseSession()
+  loadFromCacheThenRefresh()
   setInterval(fetchAndRender, 60 * 60 * 1000)
+}
+
+const CACHE_KEY = 'mica-ac-data'
+const CACHE_TTL = 5 * 60 * 1000
+
+function loadFromCacheThenRefresh() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY)
+    if (raw) {
+      const { data, ts } = JSON.parse(raw)
+      if (data && data.length) {
+        appData = data
+        appStats = computeStats(appData)
+        renderView()
+        document.getElementById('last-updated').textContent = 'cached · refreshing…'
+        if (Date.now() - ts < CACHE_TTL) return
+      }
+    }
+  } catch {}
+  fetchAndRender()
 }
 
 async function fetchAndRender() {
   try {
     appData = await loadData()
     appStats = computeStats(appData)
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify({ data: appData, ts: Date.now() })) } catch {}
     const now = new Date()
     const bkk = new Intl.DateTimeFormat('en-GB', {
       timeZone: 'Asia/Bangkok',
