@@ -4,8 +4,9 @@
 
 - **Platform: Cloudflare Pages** — NOT Netlify
 - **Manual deploy** — no git auto-deploy configured
-- Deploy command: `wrangler pages deploy public/ --project-name mica-automate-coverage`
-- Always deploy after pushing to main
+- Deploy command: `wrangler pages deploy public/ --project-name mica-automate-coverage --branch main`
+- `--branch main` = production deploy → stable production URL (not per-deploy hash URL)
+- Always commit + push + deploy when user says "ดีพอย"
 - `netlify.toml` exists but is legacy/unused — do not reference Netlify
 - Cloudflare Pages Functions in `functions/` directory
 - `.wrangler/` is Cloudflare local dev tooling
