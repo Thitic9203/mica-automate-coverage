@@ -1166,12 +1166,18 @@ function refreshTableBody() {
   const wrap = document.getElementById('table-body-wrap')
   if (!wrap) return
   wrap.innerHTML = `
-    <table>
+    <table style="table-layout:fixed">
+      <colgroup>
+        <col style="width:90px">
+        <col>
+        <col style="width:260px">
+        <col style="width:160px">
+      </colgroup>
       <thead><tr>
-        <th class="${sortCls('id')}" data-col="id" style="width:90px">ID${arrow('id')}</th>
+        <th class="${sortCls('id')}" data-col="id">ID${arrow('id')}</th>
         <th class="${sortCls('title')}" data-col="title">Title${arrow('title')}</th>
-        <th class="${sortCls('suite')}" data-col="suite" style="min-width:260px">Suite${arrow('suite')}</th>
-        <th class="${sortCls('status')}" data-col="status" style="width:150px">Automation Status${arrow('status')}</th>
+        <th class="${sortCls('suite')}" data-col="suite">Suite${arrow('suite')}</th>
+        <th class="${sortCls('status')}" data-col="status">Automation Status${arrow('status')}</th>
       </tr></thead>
       <tbody>
         ${page.length === 0
