@@ -747,11 +747,11 @@ let appData = []
 let appStats = {}
 let activeView = 'overview'
 let tableFilter = 'All'
-let tableSort = { col: 'id', dir: 'asc' }
+let tableSort = { col: 'status', dir: 'asc' }
 let tableSearch = ''
 let tablePage = 1
 let tablePageSize = 20
-let suiteSort = { col: 'total', dir: 'desc' }
+let suiteSort = { col: 'automated', dir: 'desc' }
 let qaseLoggedIn = false
 
 async function checkQaseSession() {
@@ -957,7 +957,11 @@ function renderSuiteSummary() {
   const { suites } = appStats
   const container = document.getElementById('suite-summary-content')
   if (!container) return
-  const entries = Object.entries(suites).sort((a, b) => b[1].total - a[1].total)
+  const entries = Object.entries(suites).sort((a, b) => {
+    const cmp = b[1].Automated - a[1].Automated
+    if (cmp !== 0) return cmp
+    return a[0].localeCompare(b[0])
+  })
   if (entries.length === 0) {
     container.innerHTML = '<p style="color:var(--muted);font-size:13px">No suites found.</p>'
     return
@@ -1018,12 +1022,14 @@ function refreshSuiteTable() {
 
   const dir = suiteSort.dir === 'asc' ? 1 : -1
   entries.sort((a, b) => {
-    if (suiteSort.col === 'suite') return a.name.localeCompare(b.name) * dir
-    if (suiteSort.col === 'total') return (a.total - b.total) * dir
-    if (suiteSort.col === 'automated') return (a.Automated - b.Automated) * dir
-    if (suiteSort.col === 'tba') return (a['To be Automated'] - b['To be Automated']) * dir
-    if (suiteSort.col === 'coverage') return (a.pct - b.pct) * dir
-    return 0
+    let cmp = 0
+    if (suiteSort.col === 'suite') cmp = a.name.localeCompare(b.name) * dir
+    else if (suiteSort.col === 'total') cmp = (a.total - b.total) * dir
+    else if (suiteSort.col === 'automated') cmp = (a.Automated - b.Automated) * dir
+    else if (suiteSort.col === 'tba') cmp = (a['To be Automated'] - b['To be Automated']) * dir
+    else if (suiteSort.col === 'coverage') cmp = (a.pct - b.pct) * dir
+    if (cmp !== 0) return cmp
+    return a.name.localeCompare(b.name)
   })
 
   const arrow = col => {
@@ -1110,13 +1116,16 @@ function refreshTableBody() {
     const matchSearch = !q || tc.title.toLowerCase().includes(q) || tc.suite.toLowerCase().includes(q)
     return matchFilter && matchSearch
   })
+  const STATUS_ORDER = { 'Automated': 0, 'To be Automated': 1, 'Manual': 2 }
   filtered.sort((a, b) => {
     const dir = tableSort.dir === 'asc' ? 1 : -1
-    if (tableSort.col === 'id')     return (a.id - b.id) * dir
-    if (tableSort.col === 'title')  return a.title.localeCompare(b.title) * dir
-    if (tableSort.col === 'suite')  return a.suite.localeCompare(b.suite) * dir
-    if (tableSort.col === 'status') return a.automationStatus.localeCompare(b.automationStatus) * dir
-    return 0
+    let cmp = 0
+    if (tableSort.col === 'id')     cmp = (a.id - b.id) * dir
+    else if (tableSort.col === 'title')  cmp = a.title.localeCompare(b.title) * dir
+    else if (tableSort.col === 'suite')  cmp = a.suite.localeCompare(b.suite) * dir
+    else if (tableSort.col === 'status') cmp = ((STATUS_ORDER[a.automationStatus] ?? 9) - (STATUS_ORDER[b.automationStatus] ?? 9)) * dir
+    if (cmp !== 0) return cmp
+    return a.title.localeCompare(b.title)
   })
   const total = filtered.length
   const start = (tablePage - 1) * tablePageSize
