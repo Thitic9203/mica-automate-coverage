@@ -873,6 +873,9 @@ function setupNav() {
 }
 
 function renderView() {
+  tableFilter = 'All'; tableSort = { col: 'status', dir: 'asc' }
+  tableSearch = ''; tablePage = 1; tablePageSize = 10
+  suiteSort = { col: 'automated', dir: 'desc' }; modulePage = 1
   const c = document.getElementById('content')
   if (activeView === 'overview') { c.className = 'view-scroll'; renderOverview() }
   else if (activeView === 'suites') { c.className = 'view-scroll'; renderSuites() }
