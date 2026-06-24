@@ -841,28 +841,30 @@ function renderOverview() {
   const { total, counts, automatedPct } = appStats
   const content = document.getElementById('content')
   content.innerHTML = `
-    <div class="cards-grid">
+    <div class="cards-grid" style="grid-template-columns:290px 1fr 420px">
       <div class="card">
         <div class="card-label">Total TCs</div>
         <div class="card-value">${total}</div>
         <div class="card-sub">in Mica Plan 5</div>
       </div>
-      <div class="card">
-        <div class="card-label">Automated</div>
-        <div class="card-value teal">${counts.Automated}</div>
-        <div class="card-sub">${automatedPct}% of total</div>
-      </div>
-      <div class="card">
-        <div class="card-label">To be Automated</div>
-        <div class="card-value amber">${counts['To be Automated']}</div>
-        <div class="card-sub">${total > 0 ? Math.round(counts['To be Automated']/total*100) : 0}% of total</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="card">
+          <div class="card-label">Automated</div>
+          <div class="card-value teal">${counts.Automated}</div>
+          <div class="card-sub">${automatedPct}% of total</div>
+        </div>
+        <div class="card">
+          <div class="card-label">To be Automated</div>
+          <div class="card-value amber">${counts['To be Automated']}</div>
+          <div class="card-sub">${total > 0 ? Math.round(counts['To be Automated']/total*100) : 0}% of total</div>
+        </div>
       </div>
       <div class="card">
         <div class="card-label">Environment</div>
         <table class="roles-table">
           <thead><tr><th>Environment</th><th>URL</th></tr></thead>
           <tbody>
-            <tr><td>NDLP</td><td><a href="https://www.ndlp68.ndlp.go.th" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;text-underline-offset:2px;">https://www.ndlp68.ndlp.go.th</a></td></tr>
+            <tr><td>Pre-production</td><td><a href="https://www.ndlp68.ndlp.go.th" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;text-underline-offset:2px;">https://www.ndlp68.ndlp.go.th</a></td></tr>
           </tbody>
         </table>
       </div>
