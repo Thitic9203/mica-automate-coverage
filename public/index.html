@@ -675,9 +675,17 @@ async function fetchFieldOptions() {
   } catch { return {} }
 }
 
-async function fetchCaseDetail(id) {
-  const data = await qaseFetch(`/case/${PROJECT}/${id}`)
-  return (data.status && data.result) ? data.result : null
+async function fetchAllCases() {
+  const all = []
+  let offset = 0
+  while (true) {
+    const data = await qaseFetch(`/case/${PROJECT}?limit=100&offset=${offset}`)
+    if (!data.status || !data.result) break
+    all.push(...data.result.entities)
+    if (data.result.entities.length < 100) break
+    offset += 100
+  }
+  return all
 }
 
 function extractAutomationStatus(tc, fieldOptions) {
@@ -701,14 +709,13 @@ function extractAutomationStatus(tc, fieldOptions) {
 }
 
 async function loadData() {
-  const [caseIds, suiteMap, fieldOptions] = await Promise.all([
+  const [caseIds, suiteMap, fieldOptions, allCases] = await Promise.all([
     fetchPlanCaseIds(),
     fetchSuiteMap(),
-    fetchFieldOptions()
+    fetchFieldOptions(),
+    fetchAllCases()
   ])
-  const ids = Array.from(caseIds)
-  const cases = await Promise.all(ids.map(id => fetchCaseDetail(id)))
-  return cases.filter(Boolean).map(tc => ({
+  return allCases.filter(tc => caseIds.has(tc.id)).map(tc => ({
     id: tc.id,
     title: tc.title,
     suite: suiteMap[tc.suite_id] || 'Uncategorized',
@@ -839,21 +846,21 @@ function renderOverview() {
           </div>
         </div>
         <div class="legend">
-          <div class="legend-item">
+          ${counts.Automated ? `<div class="legend-item">
             <span class="legend-dot" style="background:#62A88A"></span>
             <span class="legend-label">Automated</span>
             <span class="legend-val" style="color:var(--green)">${counts.Automated}</span>
-          </div>
-          <div class="legend-item">
+          </div>` : ''}
+          ${counts['To be Automated'] ? `<div class="legend-item">
             <span class="legend-dot" style="background:#C4913A"></span>
             <span class="legend-label">To be Automated</span>
             <span class="legend-val" style="color:var(--amber)">${counts['To be Automated']}</span>
-          </div>
-          <div class="legend-item">
+          </div>` : ''}
+          ${counts.Manual ? `<div class="legend-item">
             <span class="legend-dot" style="background:#6899B8"></span>
             <span class="legend-label">Manual</span>
             <span class="legend-val" style="color:var(--blue)">${counts.Manual}</span>
-          </div>
+          </div>` : ''}
         </div>
       </div>
       <div class="chart-card" id="suite-summary-card">
@@ -889,10 +896,22 @@ function renderDonut() {
   donutChart = new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels: ['Automated', 'To be Automated', 'Manual'],
+      labels: [
+        ...(counts.Automated ? ['Automated'] : []),
+        ...(counts['To be Automated'] ? ['To be Automated'] : []),
+        ...(counts.Manual ? ['Manual'] : [])
+      ],
       datasets: [{
-        data: [counts.Automated, counts['To be Automated'], counts.Manual],
-        backgroundColor: ['#62A88A', '#C4913A', '#6899B8'],
+        data: [
+          ...(counts.Automated ? [counts.Automated] : []),
+          ...(counts['To be Automated'] ? [counts['To be Automated']] : []),
+          ...(counts.Manual ? [counts.Manual] : [])
+        ],
+        backgroundColor: [
+          ...(counts.Automated ? ['#62A88A'] : []),
+          ...(counts['To be Automated'] ? ['#C4913A'] : []),
+          ...(counts.Manual ? ['#6899B8'] : [])
+        ],
         borderWidth: 0,
         hoverOffset: 5
       }]
