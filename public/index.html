@@ -358,7 +358,13 @@ th {
   cursor: pointer; user-select: none; white-space: nowrap;
   background: var(--card-border);
 }
-#table-header-wrap table, #table-pagination { flex: 0 0 auto; }
+#table-header-wrap, #table-pagination { flex: 0 0 auto; }
+#table-header-wrap {
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
+#table-header-wrap::-webkit-scrollbar { background: var(--card); }
+#table-header-wrap::-webkit-scrollbar-thumb { background: transparent; }
 #table-body-wrap, #suite-table-wrap {
   flex: 1 1 auto; min-height: 0;
   overflow-x: hidden;
