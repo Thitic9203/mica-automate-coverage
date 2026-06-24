@@ -217,7 +217,7 @@ body::-webkit-scrollbar { display: none; }
 /* ── Summary Cards ── */
 .cards-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 10px;
   margin-bottom: 20px;
 }
@@ -231,6 +231,11 @@ body::-webkit-scrollbar { display: none; }
 .card:nth-child(1){animation-delay:0s}
 .card:nth-child(2){animation-delay:0.06s}
 .card:nth-child(3){animation-delay:0.12s}
+.card:nth-child(4){animation-delay:0.18s}
+.env-table { width:100%; margin-top:12px; border-collapse:collapse; }
+.env-table td { padding:3px 0; font-size:12px; border-bottom:none; vertical-align:top; color:var(--text); }
+.env-k { color:var(--muted); white-space:nowrap; padding-right:10px; width:52px; font-size:11px; padding-top:4px; }
+.env-v { font-family:'JetBrains Mono',monospace; font-size:11px; word-break:break-all; line-height:1.5; }
 @keyframes cardIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
 .card-label {
   font-size: 11px; color: var(--muted);
@@ -325,6 +330,7 @@ body::-webkit-scrollbar { display: none; }
 
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
 th {
+  position: sticky; top: 0; z-index: 10;
   text-align: left; padding: 9px 16px;
   font-size: 11px; text-transform: uppercase;
   letter-spacing: .07em; color: var(--muted); font-weight: 600;
@@ -332,6 +338,12 @@ th {
   cursor: pointer; user-select: none; white-space: nowrap;
   background: var(--card-border);
 }
+#table-body-wrap {
+  max-height: calc(100vh - 230px);
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+#table-body-wrap::-webkit-scrollbar { display: none; }
 th:hover { color: var(--text); }
 th .sort-arrow { margin-left: 4px; opacity: 0.4; font-size: 10px; }
 th.sort-active .sort-arrow { opacity: 1; color: var(--teal); }
@@ -802,6 +814,15 @@ function renderOverview() {
         <div class="card-label">To be Automated</div>
         <div class="card-value amber">${counts['To be Automated']}</div>
         <div class="card-sub">${total > 0 ? Math.round(counts['To be Automated']/total*100) : 0}% of total</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Environment</div>
+        <table class="env-table">
+          <tr><td class="env-k">URL</td><td class="env-v">${window.location.origin}</td></tr>
+          <tr><td class="env-k">Project</td><td class="env-v">Mica / Plan 5</td></tr>
+          <tr><td class="env-k">User</td><td class="env-v">${auth.currentUser?.email ?? '—'}</td></tr>
+          <tr><td class="env-k">Role</td><td class="env-v">QA Team</td></tr>
+        </table>
       </div>
     </div>
     <div class="chart-section">
