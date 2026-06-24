@@ -380,6 +380,7 @@ tr:hover td { background: rgba(0,0,0,0.013); }
   background: rgba(0,0,0,0.04); color: var(--muted);
   border: 1px solid var(--border);
   border-radius: 4px; padding: 2px 7px; font-size: 11px;
+  white-space: normal; word-break: break-word;
 }
 
 /* ── Pagination ── */
@@ -1001,12 +1002,12 @@ function renderSuites() {
       <div class="table-head"><h3>Suite Breakdown</h3></div>
       <table class="page-table">
         <thead><tr>
-          <th>Suite</th>
-          <th>Total TCs</th>
-          <th style="color:var(--green)">Automated</th>
-          <th style="color:var(--amber)">To be Automated</th>
-          <th>Coverage</th>
-          <th>Progress</th>
+          <th style="min-width:260px">Suite</th>
+          <th style="width:80px">Total TCs</th>
+          <th style="color:var(--green);width:90px">Automated</th>
+          <th style="color:var(--amber);width:130px">To be Automated</th>
+          <th style="width:80px">Coverage</th>
+          <th style="width:140px">Progress</th>
         </tr></thead>
         <tbody>
           ${entries.map(([suite, s]) => {
@@ -1096,10 +1097,10 @@ function refreshTableBody() {
   wrap.innerHTML = `
     <table>
       <thead><tr>
-        <th class="${sortCls('id')}" data-col="id">ID${arrow('id')}</th>
+        <th class="${sortCls('id')}" data-col="id" style="width:90px">ID${arrow('id')}</th>
         <th class="${sortCls('title')}" data-col="title">Title${arrow('title')}</th>
-        <th class="${sortCls('suite')}" data-col="suite">Suite${arrow('suite')}</th>
-        <th class="${sortCls('status')}" data-col="status">Automation Status${arrow('status')}</th>
+        <th class="${sortCls('suite')}" data-col="suite" style="min-width:260px">Suite${arrow('suite')}</th>
+        <th class="${sortCls('status')}" data-col="status" style="width:150px">Automation Status${arrow('status')}</th>
       </tr></thead>
       <tbody>
         ${page.length === 0
