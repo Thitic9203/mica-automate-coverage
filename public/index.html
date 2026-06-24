@@ -363,6 +363,7 @@ th {
   flex: 1 1 auto; min-height: 0;
   overflow: auto;
   scrollbar-width: thin;
+  scrollbar-gutter: stable;
 }
 th:hover { color: var(--text); }
 th .sort-arrow { margin-left: 4px; opacity: 0.4; font-size: 10px; display: inline-block; width: 12px; text-align: center; }
@@ -767,24 +768,11 @@ let tablePageSize = 20
 let suiteSort = { col: 'automated', dir: 'desc' }
 let modulePage = 1
 const MODULE_PAGE_SIZE = 6
-let qaseLoggedIn = false
-
-async function checkQaseSession() {
-  try {
-    const resp = await fetch('https://app.qase.io/api/v1/user', {
-      credentials: 'include', mode: 'cors'
-    })
-    qaseLoggedIn = resp.ok
-  } catch {
-    qaseLoggedIn = false
-  }
-}
 
 function showApp() {
   document.getElementById('app').classList.remove('hidden')
   setupNav()
   document.getElementById('logout-btn').addEventListener('click', () => signOut(auth))
-  checkQaseSession()
   loadFromCacheThenRefresh()
   setInterval(fetchAndRender, 60 * 60 * 1000)
 }
@@ -1189,14 +1177,8 @@ function refreshTableBody() {
         ${page.length === 0
           ? `<tr><td colspan="4" style="text-align:center;padding:32px;color:var(--muted)">No test cases found</td></tr>`
           : page.map(tc => `<tr>
-              <td>${qaseLoggedIn
-                ? `<a class="tc-id" href="${tc.link}" target="_blank" style="color:var(--muted);text-decoration:none">Mica-${tc.id}</a>`
-                : `<span class="tc-id">Mica-${tc.id}</span>`
-              }</td>
-              <td>${qaseLoggedIn
-                ? `<a href="${tc.link}" target="_blank" style="color:var(--text);text-decoration:none">${tc.title}</a>`
-                : `<span>${tc.title}</span>`
-              }</td>
+              <td><a class="tc-id" href="${tc.link}" target="_blank" style="text-decoration:none;color:var(--teal)">Mica-${tc.id}</a></td>
+              <td><a href="${tc.link}" target="_blank" style="color:var(--text);text-decoration:none">${tc.title}</a></td>
               <td><span class="suite-tag">${tc.suite}</span></td>
               <td>${statusBadge(tc.automationStatus)}</td>
             </tr>`).join('')
