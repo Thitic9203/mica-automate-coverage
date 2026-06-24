@@ -751,6 +751,7 @@ let tableSort = { col: 'id', dir: 'asc' }
 let tableSearch = ''
 let tablePage = 1
 let tablePageSize = 20
+let suiteSort = { col: 'total', dir: 'desc' }
 let qaseLoggedIn = false
 
 async function checkQaseSession() {
@@ -990,46 +991,82 @@ function renderSuiteSummary() {
 
 function renderSuites() {
   const { suites, counts } = appStats
-  const entries = Object.entries(suites).sort((a, b) => b[1].total - a[1].total)
   const content = document.getElementById('content')
   content.innerHTML = `
     <div class="cards-grid" style="grid-template-columns:repeat(3,1fr)">
-      <div class="card"><div class="card-label">Total Suites</div><div class="card-value">${entries.length}</div></div>
+      <div class="card"><div class="card-label">Total Suites</div><div class="card-value">${Object.keys(suites).length}</div></div>
       <div class="card"><div class="card-label">Automated TCs</div><div class="card-value teal">${counts.Automated}</div><div class="card-sub">across all suites</div></div>
       <div class="card"><div class="card-label">Automation Rate</div><div class="card-value teal">${appStats.automatedPct}%</div></div>
     </div>
     <div class="table-card">
       <div class="table-head"><h3>Suite Breakdown</h3></div>
-      <table class="page-table">
-        <thead><tr>
-          <th style="min-width:260px">Suite</th>
-          <th style="width:80px">Total TCs</th>
-          <th style="color:var(--green);width:90px">Automated</th>
-          <th style="color:var(--amber);width:130px">To be Automated</th>
-          <th style="width:80px">Coverage</th>
-          <th style="width:140px">Progress</th>
-        </tr></thead>
-        <tbody>
-          ${entries.map(([suite, s]) => {
-            const pct = s.total > 0 ? Math.round(s.Automated / s.total * 100) : 0
-            return `<tr class="suite-row">
-              <td><span class="suite-tag">${suite}</span></td>
-              <td style="font-family:'JetBrains Mono',monospace">${s.total}</td>
-              <td style="color:var(--green);font-family:'JetBrains Mono',monospace">${s.Automated}</td>
-              <td style="color:var(--amber);font-family:'JetBrains Mono',monospace">${s['To be Automated']}</td>
-              <td style="font-family:'JetBrains Mono',monospace;color:var(--green)">${pct}%</td>
-              <td style="min-width:120px">
-                <div class="progress-bar">
-                  <div class="progress-fill" style="background:#62A88A;width:${pct}%"></div>
-                </div>
-                <div style="font-size:11px;color:var(--muted);margin-top:2px">${pct}% automated</div>
-              </td>
-            </tr>`
-          }).join('')}
-        </tbody>
-      </table>
+      <div id="suite-table-wrap"></div>
     </div>
   `
+  refreshSuiteTable()
+}
+
+function refreshSuiteTable() {
+  const { suites } = appStats
+  const wrap = document.getElementById('suite-table-wrap')
+  if (!wrap) return
+
+  let entries = Object.entries(suites).map(([name, s]) => {
+    const pct = s.total > 0 ? Math.round(s.Automated / s.total * 100) : 0
+    return { name, ...s, pct }
+  })
+
+  const dir = suiteSort.dir === 'asc' ? 1 : -1
+  entries.sort((a, b) => {
+    if (suiteSort.col === 'suite') return a.name.localeCompare(b.name) * dir
+    if (suiteSort.col === 'total') return (a.total - b.total) * dir
+    if (suiteSort.col === 'automated') return (a.Automated - b.Automated) * dir
+    if (suiteSort.col === 'tba') return (a['To be Automated'] - b['To be Automated']) * dir
+    if (suiteSort.col === 'coverage') return (a.pct - b.pct) * dir
+    return 0
+  })
+
+  const arrow = col => {
+    if (suiteSort.col !== col) return '<span class="sort-arrow">⇅</span>'
+    return `<span class="sort-arrow">${suiteSort.dir === 'asc' ? '↑' : '↓'}</span>`
+  }
+  const sortCls = col => suiteSort.col === col ? ' sort-active' : ''
+
+  wrap.innerHTML = `
+    <table>
+      <thead><tr>
+        <th class="${sortCls('suite')}" data-scol="suite" style="min-width:260px">Suite${arrow('suite')}</th>
+        <th class="${sortCls('total')}" data-scol="total" style="width:80px">Total TCs${arrow('total')}</th>
+        <th class="${sortCls('automated')}" data-scol="automated" style="color:var(--green);width:90px">Automated${arrow('automated')}</th>
+        <th class="${sortCls('tba')}" data-scol="tba" style="color:var(--amber);width:130px">To be Automated${arrow('tba')}</th>
+        <th class="${sortCls('coverage')}" data-scol="coverage" style="width:80px">Coverage${arrow('coverage')}</th>
+        <th style="width:140px;cursor:default">Progress</th>
+      </tr></thead>
+      <tbody>
+        ${entries.map(s => `<tr class="suite-row">
+          <td><span class="suite-tag">${s.name}</span></td>
+          <td style="font-family:'JetBrains Mono',monospace">${s.total}</td>
+          <td style="color:var(--green);font-family:'JetBrains Mono',monospace">${s.Automated}</td>
+          <td style="color:var(--amber);font-family:'JetBrains Mono',monospace">${s['To be Automated']}</td>
+          <td style="font-family:'JetBrains Mono',monospace;color:var(--green)">${s.pct}%</td>
+          <td style="min-width:120px">
+            <div class="progress-bar">
+              <div class="progress-fill" style="background:#62A88A;width:${s.pct}%"></div>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">${s.pct}% automated</div>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  `
+  wrap.querySelectorAll('th[data-scol]').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.scol
+      if (suiteSort.col === col) suiteSort.dir = suiteSort.dir === 'asc' ? 'desc' : 'asc'
+      else { suiteSort.col = col; suiteSort.dir = 'asc' }
+      refreshSuiteTable()
+    })
+  })
 }
 
 function statusBadge(status) {
