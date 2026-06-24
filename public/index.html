@@ -416,6 +416,46 @@ tr:hover td { background: rgba(0,0,0,0.013); }
   background: #FFFFFF; border: 1px solid var(--border);
   color: var(--text); border-radius: 5px; padding: 3px 8px;
   font-size: 12px; font-family: inherit;
+  display: none;
+}
+
+/* ── Custom dropdown ── */
+.custom-select {
+  position: relative; display: inline-block; min-width: 90px;
+}
+.custom-select-trigger {
+  display: flex; align-items: center; justify-content: space-between; gap: 6px;
+  background: #FFFFFF; border: 1px solid var(--border);
+  color: var(--text); border-radius: 5px; padding: 4px 10px;
+  font-size: 12px; font-family: inherit; cursor: pointer;
+  transition: border-color .12s, box-shadow .12s;
+  white-space: nowrap; user-select: none;
+}
+.custom-select-trigger:hover { border-color: rgba(62,122,94,0.32); }
+.custom-select.open .custom-select-trigger {
+  border-color: rgba(62,122,94,0.32);
+  box-shadow: 0 0 0 3px rgba(62,122,94,0.07);
+}
+.custom-select-arrow {
+  font-size: 9px; color: var(--muted); transition: transform .15s;
+}
+.custom-select.open .custom-select-arrow { transform: rotate(180deg); }
+.custom-select-options {
+  position: absolute; bottom: calc(100% + 4px); left: 0; right: 0;
+  background: #FFFFFF; border: 1px solid var(--card-border);
+  border-radius: 6px; padding: 4px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.10), 0 1px 3px rgba(0,0,0,0.06);
+  z-index: 50; display: none;
+}
+.custom-select.open .custom-select-options { display: block; }
+.custom-select-option {
+  padding: 5px 8px; border-radius: 4px; font-size: 12px;
+  cursor: pointer; color: var(--text); transition: background .08s;
+  white-space: nowrap;
+}
+.custom-select-option:hover { background: rgba(62,122,94,0.07); }
+.custom-select-option.selected {
+  background: rgba(62,122,94,0.11); color: var(--green); font-weight: 500;
 }
 
 /* ── Suite breakdown bars ── */
@@ -773,6 +813,9 @@ function showApp() {
   document.getElementById('app').classList.remove('hidden')
   setupNav()
   document.getElementById('logout-btn').addEventListener('click', () => signOut(auth))
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.custom-select.open').forEach(el => el.classList.remove('open'))
+  })
   loadFromCacheThenRefresh()
   setInterval(fetchAndRender, 60 * 60 * 1000)
 }
@@ -1199,9 +1242,12 @@ function refreshTableBody() {
       <div class="pagination">
         <span>${total} test case${total !== 1 ? 's' : ''} · Page ${tablePage} of ${totalPages}</span>
         <div class="pagination-btns">
-          <select class="page-size-select" id="page-size">
-            ${[10,20,50,100].map(n => `<option value="${n}"${tablePageSize===n?' selected':''}>${n}/page</option>`).join('')}
-          </select>
+          <div class="custom-select" id="page-size-dd">
+            <div class="custom-select-trigger"><span>${tablePageSize}/page</span><span class="custom-select-arrow">▼</span></div>
+            <div class="custom-select-options">
+              ${[10,20,50,100].map(n => `<div class="custom-select-option${tablePageSize===n?' selected':''}" data-value="${n}">${n}/page</div>`).join('')}
+            </div>
+          </div>
           <button class="pg-btn" id="pg-prev" ${tablePage <= 1 ? 'disabled' : ''}>‹</button>
           <button class="pg-btn" id="pg-next" ${tablePage >= totalPages ? 'disabled' : ''}>›</button>
         </div>
@@ -1209,9 +1255,20 @@ function refreshTableBody() {
     `
     pgWrap.querySelector('#pg-prev')?.addEventListener('click', () => { tablePage--; refreshTableBody() })
     pgWrap.querySelector('#pg-next')?.addEventListener('click', () => { tablePage++; refreshTableBody() })
-    pgWrap.querySelector('#page-size')?.addEventListener('change', e => {
-      tablePageSize = Number(e.target.value); tablePage = 1; refreshTableBody()
-    })
+    const dd = pgWrap.querySelector('#page-size-dd')
+    if (dd) {
+      dd.querySelector('.custom-select-trigger').addEventListener('click', e => {
+        e.stopPropagation()
+        dd.classList.toggle('open')
+      })
+      dd.querySelectorAll('.custom-select-option').forEach(opt => {
+        opt.addEventListener('click', () => {
+          tablePageSize = Number(opt.dataset.value); tablePage = 1
+          dd.classList.remove('open')
+          refreshTableBody()
+        })
+      })
+    }
   }
   wrap.querySelectorAll('th[data-col]').forEach(th => {
     th.addEventListener('click', () => {
