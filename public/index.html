@@ -915,7 +915,7 @@ function renderOverview() {
         <div class="card-value">${total}</div>
         <div class="card-sub">in ${PLAN_NAME}</div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
         <div class="card">
           <div class="card-label">Automated</div>
           <div class="card-value teal">${counts.Automated}</div>
@@ -925,6 +925,11 @@ function renderOverview() {
           <div class="card-label">To be Automated</div>
           <div class="card-value amber">${counts['To be Automated']}</div>
           <div class="card-sub">${total > 0 ? Math.round(counts['To be Automated']/total*100) : 0}% of total</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Manual</div>
+          <div class="card-value blue">${counts.Manual}</div>
+          <div class="card-sub">${total > 0 ? Math.round(counts.Manual/total*100) : 0}% of total</div>
         </div>
       </div>
       <div class="card">
@@ -1116,6 +1121,7 @@ function refreshSuiteTable() {
     else if (suiteSort.col === 'total') cmp = (a.total - b.total) * dir
     else if (suiteSort.col === 'automated') cmp = (a.Automated - b.Automated) * dir
     else if (suiteSort.col === 'tba') cmp = (a['To be Automated'] - b['To be Automated']) * dir
+    else if (suiteSort.col === 'manual') cmp = (a.Manual - b.Manual) * dir
     else if (suiteSort.col === 'coverage') cmp = (a.pct - b.pct) * dir
     if (cmp !== 0) return cmp
     return a.name.localeCompare(b.name)
@@ -1130,18 +1136,20 @@ function refreshSuiteTable() {
   wrap.innerHTML = `
     <table style="table-layout:fixed">
       <colgroup>
-        <col style="width:36%">
-        <col style="width:10%">
+        <col style="width:30%">
+        <col style="width:9%">
         <col style="width:12%">
         <col style="width:16%">
         <col style="width:10%">
-        <col style="width:16%">
+        <col style="width:9%">
+        <col style="width:14%">
       </colgroup>
       <thead><tr>
         <th class="${sortCls('suite')}" data-scol="suite">Suite${arrow('suite')}</th>
         <th class="${sortCls('total')}" data-scol="total">Total TCs${arrow('total')}</th>
         <th class="${sortCls('automated')}" data-scol="automated" style="color:var(--green)">Automated${arrow('automated')}</th>
         <th class="${sortCls('tba')}" data-scol="tba" style="color:var(--amber)">To be Automated${arrow('tba')}</th>
+        <th class="${sortCls('manual')}" data-scol="manual" style="color:var(--blue)">Manual${arrow('manual')}</th>
         <th class="${sortCls('coverage')}" data-scol="coverage">Coverage${arrow('coverage')}</th>
         <th style="cursor:default">Progress</th>
       </tr></thead>
@@ -1151,6 +1159,7 @@ function refreshSuiteTable() {
           <td style="font-family:'JetBrains Mono',monospace">${s.total}</td>
           <td style="color:var(--green);font-family:'JetBrains Mono',monospace">${s.Automated}</td>
           <td style="color:var(--amber);font-family:'JetBrains Mono',monospace">${s['To be Automated']}</td>
+          <td style="color:var(--blue);font-family:'JetBrains Mono',monospace">${s.Manual}</td>
           <td style="font-family:'JetBrains Mono',monospace;color:var(--green)">${s.pct}%</td>
           <td>
             <div class="progress-bar">
