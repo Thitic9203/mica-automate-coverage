@@ -687,7 +687,7 @@ document.getElementById('btnGoogle').addEventListener('click', async () => {
 const QASE_BASE = '/api/qase'
 const QASE_TOKEN = '50c6e3fb93f0d51bd387d50d91f2282b1cec3d9aab0c44f4b64c4cf02b02e71f'
 const PROJECT = 'Mica'
-const PLAN_ID = 5
+const PLAN_NAME = 'E2E Automation Testing'
 const STATUS_VALUES = ['Automated', 'To be Automated', 'Manual']
 
 async function qaseFetch(path) {
@@ -698,8 +698,23 @@ async function qaseFetch(path) {
   return res.json()
 }
 
+async function resolvePlanId() {
+  let offset = 0
+  while (true) {
+    const data = await qaseFetch(`/plan/${PROJECT}?limit=100&offset=${offset}`)
+    if (!data.status || !data.result) throw new Error('Failed to fetch plans')
+    const plans = data.result.entities
+    const match = plans.find(p => p.title === PLAN_NAME)
+    if (match) return match.id
+    if (plans.length < 100) break
+    offset += 100
+  }
+  throw new Error(`Test plan not found: "${PLAN_NAME}"`)
+}
+
 async function fetchPlanCaseIds() {
-  const data = await qaseFetch(`/plan/${PROJECT}/${PLAN_ID}`)
+  const planId = await resolvePlanId()
+  const data = await qaseFetch(`/plan/${PROJECT}/${planId}`)
   if (!data.status || !data.result) throw new Error('Failed to fetch plan')
   return new Set(data.result.cases.map(c => c.case_id))
 }
