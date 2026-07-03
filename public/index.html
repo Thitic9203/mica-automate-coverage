@@ -819,6 +819,12 @@ let suiteSort = { col: 'automated', dir: 'desc' }
 let modulePage = 1
 const MODULE_PAGE_SIZE = 6
 
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ))
+}
+
 function showApp() {
   document.getElementById('app').classList.remove('hidden')
   setupNav()
@@ -869,7 +875,7 @@ async function fetchAndRender() {
     const pill = document.getElementById('live-pill')
     pill.style.animation = 'none'
     requestAnimationFrame(() => { pill.style.animation = 'pillFlash 1.5s ease' })
-    renderView()
+    renderView(false)
   } catch (e) {
     document.getElementById('content').innerHTML =
       `<div class="error-msg">Failed to load data: ${e.message}</div>`
@@ -887,10 +893,12 @@ function setupNav() {
   })
 }
 
-function renderView() {
-  tableFilter = 'All'; tableSort = { col: 'status', dir: 'asc' }
-  tableSearch = ''; tablePage = 1; tablePageSize = 10
-  suiteSort = { col: 'automated', dir: 'desc' }; modulePage = 1
+function renderView(resetState = true) {
+  if (resetState) {
+    tableFilter = 'All'; tableSort = { col: 'status', dir: 'asc' }
+    tableSearch = ''; tablePage = 1; tablePageSize = 10
+    suiteSort = { col: 'automated', dir: 'desc' }; modulePage = 1
+  }
   const c = document.getElementById('content')
   if (activeView === 'overview') { c.className = 'view-scroll'; renderOverview() }
   else if (activeView === 'suites') { c.className = 'view-scroll'; renderSuites() }
@@ -905,7 +913,7 @@ function renderOverview() {
       <div class="card">
         <div class="card-label">Total TCs</div>
         <div class="card-value">${total}</div>
-        <div class="card-sub">in Mica Plan 5</div>
+        <div class="card-sub">in ${PLAN_NAME}</div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div class="card">
@@ -1050,7 +1058,7 @@ function renderSuiteSummary() {
             const pct = s.total > 0 ? Math.round(s.Automated / s.total * 100) : 0
             const pctColor = pct === 100 ? 'var(--green)' : pct === 0 ? 'var(--muted)' : 'var(--text)'
             return `<tr>
-              <td style="padding:9px 6px 9px 0;font-size:12px;line-height:1.4;border-bottom:1px solid var(--border)">${suite}</td>
+              <td style="padding:9px 6px 9px 0;font-size:12px;line-height:1.4;border-bottom:1px solid var(--border)">${escapeHtml(suite)}</td>
               <td style="padding:9px 8px;border-bottom:1px solid var(--border);width:80px">
                 <div class="suite-prog-bar" style="min-width:60px"><div class="suite-prog-fill" style="width:${pct}%"></div></div>
               </td>
@@ -1139,7 +1147,7 @@ function refreshSuiteTable() {
       </tr></thead>
       <tbody>
         ${entries.map(s => `<tr class="suite-row">
-          <td><span class="suite-tag">${s.name}</span></td>
+          <td><span class="suite-tag">${escapeHtml(s.name)}</span></td>
           <td style="font-family:'JetBrains Mono',monospace">${s.total}</td>
           <td style="color:var(--green);font-family:'JetBrains Mono',monospace">${s.Automated}</td>
           <td style="color:var(--amber);font-family:'JetBrains Mono',monospace">${s['To be Automated']}</td>
@@ -1176,9 +1184,9 @@ function renderTable() {
       <div class="table-head">
         <h3>All Test Cases</h3>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <input class="search-input" id="tc-search" placeholder="Search test cases" value="${tableSearch}">
+          <input class="search-input" id="tc-search" placeholder="Search test cases" value="${escapeHtml(tableSearch)}">
           <div class="filter-tabs">
-            ${['All', 'Automated', 'To be Automated'].map(f =>
+            ${['All', 'Automated', 'To be Automated', 'Manual'].map(f =>
               `<button class="filter-tab${tableFilter === f ? ' active' : ''}" data-filter="${f}">${f}</button>`
             ).join('')}
           </div>
@@ -1218,9 +1226,11 @@ function refreshTableBody() {
     return a.title.localeCompare(b.title)
   })
   const total = filtered.length
+  const totalPages = Math.max(1, Math.ceil(total / tablePageSize))
+  if (tablePage > totalPages) tablePage = totalPages
+  if (tablePage < 1) tablePage = 1
   const start = (tablePage - 1) * tablePageSize
   const page = filtered.slice(start, start + tablePageSize)
-  const totalPages = Math.max(1, Math.ceil(total / tablePageSize))
 
   const arrow = col => {
     if (tableSort.col !== col) return '<span class="sort-arrow">⇅</span>'
@@ -1250,8 +1260,8 @@ function refreshTableBody() {
           ? `<tr><td colspan="4" style="text-align:center;padding:32px;color:var(--muted)">No test cases found</td></tr>`
           : page.map(tc => `<tr>
               <td><a class="tc-id" href="${tc.link}" target="_blank" style="text-decoration:none;color:var(--teal)">Mica-${tc.id}</a></td>
-              <td><a href="${tc.link}" target="_blank" style="color:var(--text);text-decoration:none">${tc.title}</a></td>
-              <td><span class="suite-tag">${tc.suite}</span></td>
+              <td><a href="${tc.link}" target="_blank" style="color:var(--text);text-decoration:none">${escapeHtml(tc.title)}</a></td>
+              <td><span class="suite-tag">${escapeHtml(tc.suite)}</span></td>
               <td>${statusBadge(tc.automationStatus)}</td>
             </tr>`).join('')
         }
