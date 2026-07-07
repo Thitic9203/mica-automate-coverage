@@ -745,15 +745,20 @@ async function fetchFieldOptions() {
 }
 
 async function fetchAllCases() {
-  const all = []
-  let offset = 0
-  while (true) {
-    const data = await qaseFetch(`/case/${PROJECT}?limit=100&offset=${offset}`)
-    if (!data.status || !data.result) break
-    all.push(...data.result.entities)
-    if (data.result.entities.length < 100) break
-    offset += 100
+  // Fetch page 1 to learn the total, then fetch the remaining pages in parallel
+  // instead of one-at-a-time (1218 cases = 13 pages; sequential was ~8-10s).
+  const first = await qaseFetch(`/case/${PROJECT}?limit=100&offset=0`)
+  if (!first.status || !first.result) return []
+  const all = [...first.result.entities]
+  const total = first.result.total || all.length
+  const pages = []
+  for (let offset = 100; offset < total; offset += 100) {
+    pages.push(qaseFetch(`/case/${PROJECT}?limit=100&offset=${offset}`))
   }
+  const results = await Promise.all(pages)
+  results.forEach(data => {
+    if (data.status && data.result) all.push(...data.result.entities)
+  })
   return all
 }
 
@@ -838,7 +843,6 @@ function showApp() {
 }
 
 const CACHE_KEY = 'mica-ac-data'
-const CACHE_TTL = 5 * 60 * 1000
 
 function formatBkkTime(date) {
   const bkk = new Intl.DateTimeFormat('en-GB', {
@@ -860,10 +864,11 @@ function loadFromCacheThenRefresh() {
         appStats = computeStats(appData)
         renderView()
         document.getElementById('last-updated').textContent = formatBkkTime(new Date(ts))
-        if (Date.now() - ts < CACHE_TTL) return
       }
     }
   } catch {}
+  // Always refresh: show cached data instantly (fast), then fetch the latest in
+  // the background so the board converges to current data on every open.
   fetchAndRender()
 }
 

@@ -18,7 +18,10 @@ export async function onRequest(context) {
     headers: {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
-      'Cache-Control': 'public, max-age=300, s-maxage=300'
+      // No browser cache (so background refresh always gets fresh data); short
+      // shared edge cache (60s) to absorb concurrent opens without hitting Qase
+      // rate limits. Was max-age=300/s-maxage=300 → data could be ~5-10min stale.
+      'Cache-Control': 'public, max-age=0, s-maxage=60'
     }
   })
 }
