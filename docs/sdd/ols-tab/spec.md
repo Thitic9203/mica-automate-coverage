@@ -96,6 +96,26 @@ progress ลงไป … ทั้งหมดกี่เคส · automate �
     roles is selected (so per-role counts may add up to more than the case total — stated under the
     filter). Result values: Passed, Failed, Flaky, Skipped, Not run, — (Flaky counts as not passed).
 
+- **R17** — (owner order 2026-10-22, verbatim: "ในตาราง แยก PASSED, FAILED, NOT RUN, FLAGGY, TO BE Automate ไรงี้นะ
+  ปรับมาให้สอดคล้องกันทั้ง tab ด้วย") One status vocabulary for the whole OLS tab, uppercase:
+  **PASSED · FAILED · FLAKY · SKIPPED · NOT RUN · TO BE AUTOMATED**. Amends R2, R3, R11, R15, R16:
+  - **R17a** — The case table has one **Status** column (from the row `status`, export spec R7i) in place
+    of Automation and Result; columns: Qase ID · Case · Title · Status · Case Type · Role · Module. The
+    filters are Status, Case Type, Role, Module (R16a amended).
+  - **R17b** — Cards: "PASSED", "NOT PASSED" (breakdown FAILED / FLAKY / SKIPPED / NOT RUN), "TO BE
+    AUTOMATED"; bar legend PASSED / NOT PASSED / TO BE AUTOMATED; the case-type card headers PASSED /
+    NOT PASSED / TO BE AUTOMATED; the report totals line PASSED · FAILED · SKIPPED · FLAKY.
+  - **R17c** — Counts stay identical everywhere: with no filter, rows per status equal the card / breakdown
+    of the same name, and per type × status equal the type card (R16d extended). A fixture check in the
+    site test asserts this; the export sum gate (R7f) covers the `status` field.
+
 ## Out of scope
 
 Dark mode for the whole site (the site has no theme system today — a separate change).
+
+- **R18** — (owner order 2026-10-22 "ห้ามให้ข้อมูลที่ conflict กัน") The tab MUST show only figures from
+  `ols-progress.json` / `ols-cases.json` (export spec R8); the report totals line reads
+  `round.reportStats` labelled "per test × viewport" and the case figures are labelled "per unique case".
+  The page MUST hide the case table and state the reason when the two files' `measuredAt` differ, and
+  MUST NOT show the report totals when `round.reportStats.unit` is missing. Verified in Chrome: every
+  visible count equals the JSON and the linked report's totals.
