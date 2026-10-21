@@ -1187,7 +1187,7 @@ function olsTypesCard(ct, c, n) {
         <div class="ols-types-head" role="row"><span role="columnheader">Type</span><span role="columnheader">Cases</span><span role="columnheader">Passed</span><span role="columnheader">Not passed</span></div>
         ${OLS_TYPES.map(([k, label]) => `<div class="ols-types-row" role="row"><span role="rowheader">${label}</span><span role="cell">${n(ct[k].total)}</span><span role="cell" class="ols-t-pass">${n(ct[k].passed)}</span><span role="cell" class="ols-t-fail">${n(ct[k].notPassed)}</span></div>`).join('')}
       </div>
-      <div class="card-sub">Type = Qase “Test Case Type”, or the agreed keyword rule when Qase has none. The rest of each row's cases are waiting to automate.</div>
+      <div class="card-sub">Type = Qase “Test Case Type”, Exceptional = the case tests a ticket EC item; otherwise Qase, or the agreed keyword rule. The rest of each row's cases are waiting to automate.</div>
     </div>`
 }
 
