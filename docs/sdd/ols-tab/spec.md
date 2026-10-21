@@ -63,6 +63,10 @@ progress ลงไป … ทั้งหมดกี่เคส · automate �
 - **R13** — While the OLS tab is active the page title MUST read “OLS Automation Coverage” and the eyebrow
   “OLS · QA”; the other tabs keep “Mica Automation Coverage” / “MICA · QA”. Owner order 2026-10-21.
 
+- **R14** — Every case has a type (export R6f/R6g), so the type card shows no “No type” row. Both tabs
+  MUST link their Qase project (OLS tab → app.qase.io/project/OLS, MA tab → app.qase.io/project/MA) in the
+  notes row. Owner order 2026-10-21.
+
 ## Out of scope
 
 Dark mode for the whole site (the site has no theme system today — a separate change).
