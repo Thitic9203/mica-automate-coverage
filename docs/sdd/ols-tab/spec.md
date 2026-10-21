@@ -51,6 +51,9 @@ progress ลงไป … ทั้งหมดกี่เคส · automate �
   scope. URLs come from `tickets.filters` in the JSON; a missing or malformed URL shows no link. Owner order
   2026-10-21.
 
+- **R13** — While the OLS tab is active the page title MUST read “OLS Automation Coverage” and the eyebrow
+  “OLS · QA”; the other tabs keep “Mica Automation Coverage” / “MICA · QA”. Owner order 2026-10-21.
+
 ## Out of scope
 
 Dark mode for the whole site (the site has no theme system today — a separate change).
