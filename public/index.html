@@ -269,6 +269,7 @@ body::-webkit-scrollbar { display: none; }
 .card-value.blue  { color: var(--blue); }
 
 
+.ols-filter-link { display:block; margin-top:6px; font-size:14px; }
 .ols-report-link { color:var(--green); font-weight:600; text-decoration:underline; text-underline-offset:3px; }
 /* ── OLS tab (spec docs/sdd/ols-tab) ── */
 .ols-head { display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 14px; margin-bottom:14px; }
@@ -1097,6 +1098,8 @@ async function renderOls() {
         <h3>Done tickets with an automated case</h3>
         <div class="ols-big">${t.percent}%</div>
         <div class="card-sub">${t.withAutomatedCase} of ${t.done} tickets</div>
+        ${t.filters && /^https:\/\/[a-z0-9.-]+\/issues\/\?filter=\d+$/.test(t.filters.withAutomatedCase || '') ? `<a class="ols-report-link ols-filter-link" href="${escapeHtml(t.filters.withAutomatedCase)}" target="_blank" rel="noopener noreferrer">Jira filter: tickets with an automated case ↗</a>` : ''}
+        ${t.filters && /^https:\/\/[a-z0-9.-]+\/issues\/\?filter=\d+$/.test(t.filters.done || '') ? `<a class="ols-report-link ols-filter-link" href="${escapeHtml(t.filters.done)}" target="_blank" rel="noopener noreferrer">Jira filter: all Done tickets in scope ↗</a>` : ''}
       </div>
     </div>
     <div class="chart-card ols-note">
