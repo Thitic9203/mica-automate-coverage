@@ -67,6 +67,11 @@ progress ลงไป … ทั้งหมดกี่เคส · automate �
   MUST link their Qase project (OLS tab → app.qase.io/project/OLS, MA tab → app.qase.io/project/MA) in the
   notes row. Owner order 2026-10-21.
 
+- **R15** — The notes row MUST show the linked HTML report's own run totals (`round.reportStats`: passed ·
+  failed · skipped · flaky, counted per test × viewport) next to the report link, copied from that report's
+  embedded `report.json` stats, so the page and the report never disagree. The case cards stay per unique
+  caseId and are labelled as such. Owner order 2026-10-21 (every automate round).
+
 ## Out of scope
 
 Dark mode for the whole site (the site has no theme system today — a separate change).
