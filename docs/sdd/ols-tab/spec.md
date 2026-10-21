@@ -16,6 +16,9 @@ progress ลงไป … ทั้งหมดกี่เคส · automate �
 - **R2** — The view MUST show four cards: total cases, automated · passed, automated · not passed,
   waiting to automate — each with its count, and (except total) its percent of total, read from
   `cases` in the JSON. The not-passed card also shows failed / flaky / skipped / not run.
+  Layout (owner, 21 Oct 2026): the count MUST be large, and its percent MUST sit smaller on its own
+  line directly under the count — never side by side. The total card, which has no percent, MUST
+  reserve the same line so the counts and the lines below them line up across the four cards.
 - **R3** — The view MUST show one proportion bar of passed / not passed / waiting whose segment widths
   are the JSON percents, with a legend naming each segment.
 - **R4** — The view MUST show the Done-ticket figure (`tickets.withAutomatedCase` of `tickets.done`,
