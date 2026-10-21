@@ -46,6 +46,11 @@ progress ลงไป … ทั้งหมดกี่เคส · automate �
   Task / Bug)**, excluding Dev_Task and QA_Task”, replacing the earlier retired-cases note (owner order
   2026-10-21).
 
+- **R12** — Under the ticket figure the card MUST show two links, one per line, to saved Jira filters whose
+  JQL is the exact key list the figure counts: the tickets with an automated case, and all Done tickets in
+  scope. URLs come from `tickets.filters` in the JSON; a missing or malformed URL shows no link. Owner order
+  2026-10-21.
+
 ## Out of scope
 
 Dark mode for the whole site (the site has no theme system today — a separate change).
