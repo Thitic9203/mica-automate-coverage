@@ -1167,6 +1167,7 @@ async function renderOls() {
       <dl>
         <dt>Measured</dt><dd>${escapeHtml(formatBkkTime(new Date(d.measuredAt)))}</dd>
         <dt>Pass results from</dt><dd>${escapeHtml(d.round && d.round.label || '')} · started ${d.round && d.round.startedAt ? escapeHtml(formatBkkTime(new Date(d.round.startedAt))) : '—'}${d.round && /^https:\/\/claude\.ai\//.test(d.round.reportUrl || '') ? ` · <a class="ols-report-link" href="${escapeHtml(d.round.reportUrl)}" target="_blank" rel="noopener noreferrer">Open HTML report ↗</a>` : ''}</dd>
+        ${d.round && d.round.reportStats ? `<dt>Report run totals</dt><dd>${['passed','failed','skipped','flaky'].map(k => `${k} <b>${Number(d.round.reportStats[k]) || 0}</b>`).join(' · ')} <span class="ols-scope">(tests × viewports, from the report)</span></dd>` : ''}
         <dt>Case source</dt><dd><strong>Done tickets (Story / Task / Bug)</strong>, excluding Dev_Task and QA_Task</dd>
         <dt>Qase</dt><dd><a class="ols-report-link" href="https://app.qase.io/project/OLS" target="_blank" rel="noopener noreferrer">Open project OLS in Qase ↗</a></dd>
       </dl>
