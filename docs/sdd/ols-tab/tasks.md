@@ -10,3 +10,4 @@
 | T6 | Round HTML report link | R5b | link absent when `round.reportUrl` missing | link opens the private report in a new tab |
 | T7 | Remove repeated figures/definitions | R9 | count each number's occurrences in the visible text | every count, percent and definition appears once |
 | T8 | Scope line names the platforms | R10 | visible text equals the R10 wording | text matches, no overflow at 390 px |
+| T9 | “Cases by type” card from `caseTypes` | R7, R8, R9, R11 | fixture JSON with known type counts; card absent when `caseTypes` missing | values equal the JSON at 1440 / 900 / 390, overflow 0, no clipped text, each number once |

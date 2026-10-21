@@ -46,6 +46,13 @@ progress ลงไป … ทั้งหมดกี่เคส · automate �
   Task / Bug)**, excluding Dev_Task and QA_Task”, replacing the earlier retired-cases note (owner order
   2026-10-21).
 
+- **R11** — The view MUST show a “Cases by type” card: one row per Qase Test Case Type (Happy Path,
+  Failure Scenario, Edge Case, Exceptional Case) plus “No type”, each with its case count, passed and not
+  passed, read from `caseTypes` in the JSON (export spec R6). The rows use CSS grid and the existing
+  tokens; each number appears once (R9); counts count up under R7. When `caseTypes` is missing or
+  malformed the card is not shown (the rest of the view still renders). Owner order 2026-10-21
+  (“เพิ่มการบอกลักษณะของเคสด้วย เช่น happy path …”).
+
 - **R12** — Under the ticket figure the card MUST show two links, one per line, to saved Jira filters whose
   JQL is the exact key list the figure counts: the tickets with an automated case, and all Done tickets in
   scope. URLs come from `tickets.filters` in the JSON; a missing or malformed URL shows no link. Owner order
