@@ -9,3 +9,4 @@
 | T5 | Cards: count large, percent smaller on the line under it | R2, R7, R8 | at 1440 / 900 / 390 measure that the percent's top is below the count's bottom | values equal the JSON, no overflow, no clipped text, equal card heights per row, count-up still runs |
 | T6 | Round HTML report link | R5b | link absent when `round.reportUrl` missing | link opens the private report in a new tab |
 | T7 | Remove repeated figures/definitions | R9 | count each number's occurrences in the visible text | every count, percent and definition appears once |
+| T8 | Scope line names the platforms | R10 | visible text equals the R10 wording | text matches, no overflow at 390 px |
