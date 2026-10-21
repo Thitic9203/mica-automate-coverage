@@ -13,6 +13,8 @@ progress ลงไป … ทั้งหมดกี่เคส · automate �
 
 - **R1** — The tab bar MUST show a tab labelled **OLS** after the existing three; clicking it renders
   the OLS view; the other tabs keep working unchanged.
+  *Amended 2026-10-21 (spec `docs/sdd/ma-tabs` R1–R2): Overview, By Suite and All Test Cases are hidden;
+  the tab bar is “MICA 1 · EvMS · ELMS · CBMS” then OLS.*
 - **R2** — The view MUST show four cards: total cases, automated · passed, automated · not passed,
   waiting to automate — each with its count, and (except total) its percent of total, read from
   `cases` in the JSON. The not-passed card also shows failed / flaky / skipped / not run.
