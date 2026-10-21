@@ -292,8 +292,16 @@ body::-webkit-scrollbar { display: none; }
 .ols-note { font-size:12px; color:var(--muted); line-height:1.6; }
 .ols-note dt { font-weight:500; color:var(--text); }
 .ols-note dl { display:grid; grid-template-columns:max-content minmax(0,1fr); gap:4px 14px; }
+.ols-types { margin-bottom:14px; }
+.ols-types-grid { display:grid; grid-template-columns:minmax(0,1fr) repeat(3, minmax(72px, max-content)); column-gap:24px; margin:4px 0 10px; }
+.ols-types-head, .ols-types-row { display:contents; }
+.ols-types-head span { font-size:10px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; padding:6px 0; border-bottom:1px solid var(--border); }
+.ols-types-row span { font-size:13px; padding:8px 0; border-bottom:1px solid var(--border); overflow-wrap:anywhere; }
+.ols-types-head span:not(:first-child), .ols-types-row span:not(:first-child) { text-align:right; font-family:'JetBrains Mono',monospace; }
+.ols-types-head span:not(:first-child) { font-family:inherit; }
+.ols-types-row .ols-t-pass { color:var(--green); } .ols-types-row .ols-t-fail { color:var(--amber); }
 @media (max-width:1024px){ .ols-cards { grid-template-columns:repeat(2, minmax(0,1fr)); } .ols-row { grid-template-columns:minmax(0,1fr); } }
-@media (max-width:430px){ .ols-cards { grid-template-columns:minmax(0,1fr); } .ols-legend { grid-template-columns:minmax(0,1fr); } .ols-note dl { grid-template-columns:minmax(0,1fr); } }
+@media (max-width:430px){ .ols-cards { grid-template-columns:minmax(0,1fr); } .ols-legend { grid-template-columns:minmax(0,1fr); } .ols-note dl { grid-template-columns:minmax(0,1fr); } .ols-types-grid { grid-template-columns:minmax(0,1fr) repeat(3, max-content); column-gap:12px; } }
 
 /* ── Progress bar ── */
 .progress-bar { height: 4px; background: var(--border); border-radius: 99px; overflow: hidden; margin: 6px 0; }
@@ -1106,6 +1114,7 @@ async function renderOls() {
         ${t.filters && /^https:\/\/[a-z0-9.-]+\/issues\/\?filter=\d+$/.test(t.filters.done || '') ? `<a class="ols-report-link ols-filter-link" href="${escapeHtml(t.filters.done)}" target="_blank" rel="noopener noreferrer">Jira filter: all Done tickets in scope ↗</a>` : ''}
       </div>
     </div>
+    ${olsTypesCard(d.caseTypes, c, n)}
     <div class="chart-card ols-note">
       <dl>
         <dt>Measured</dt><dd>${escapeHtml(formatBkkTime(new Date(d.measuredAt)))}</dd>
@@ -1114,6 +1123,23 @@ async function renderOls() {
       </dl>
     </div>`
   animateOls(content)
+}
+
+// Spec R11: one row per Qase Test Case Type + "No type", from `caseTypes` only; hidden when malformed.
+const OLS_TYPES = [['happyPath', 'Happy Path'], ['failureScenario', 'Failure Scenario'], ['edgeCase', 'Edge Case'], ['exceptionalCase', 'Exceptional Case'], ['untyped', 'No type']]
+function olsTypesCard(ct, c, n) {
+  const ok = ct && OLS_TYPES.every(([k]) => ct[k] && ['total', 'passed', 'notPassed'].every(f => Number.isInteger(ct[k][f])))
+    && OLS_TYPES.reduce((s, [k]) => s + ct[k].total, 0) === c.total
+  if (!ok) return ''
+  return `
+    <div class="chart-card ols-types">
+      <h3>Cases by type</h3>
+      <div class="ols-types-grid" role="table" aria-label="Cases by test case type">
+        <div class="ols-types-head" role="row"><span role="columnheader">Type</span><span role="columnheader">Cases</span><span role="columnheader">Passed</span><span role="columnheader">Not passed</span></div>
+        ${OLS_TYPES.map(([k, label]) => `<div class="ols-types-row" role="row"><span role="rowheader">${label}</span><span role="cell">${n(ct[k].total)}</span><span role="cell" class="ols-t-pass">${n(ct[k].passed)}</span><span role="cell" class="ols-t-fail">${n(ct[k].notPassed)}</span></div>`).join('')}
+      </div>
+      <div class="card-sub">Type = Qase “Test Case Type”. No type = no Qase case or no type set. The rest of each row's cases are waiting to automate.</div>
+    </div>`
 }
 
 function animateOls(root) {
