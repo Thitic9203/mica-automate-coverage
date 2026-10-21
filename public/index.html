@@ -268,6 +268,30 @@ body::-webkit-scrollbar { display: none; }
 .card-value.amber { color: var(--amber); }
 .card-value.blue  { color: var(--blue); }
 
+
+/* ── OLS tab (spec docs/sdd/ols-tab) ── */
+.ols-head { display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 14px; margin-bottom:14px; }
+.ols-head h2 { font-size:15px; font-weight:600; letter-spacing:-.01em; }
+.ols-scope { font-size:12px; color:var(--muted); }
+.ols-cards { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:10px; margin-bottom:14px; }
+.ols-cards .card { min-width:0; }
+.ols-pct { font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:500; margin-left:6px; }
+.card-value.muted { color: var(--muted); }
+.ols-break { display:grid; grid-template-columns:repeat(4, auto); justify-content:start; gap:2px 12px; margin-top:8px; font-size:11px; color:var(--muted); }
+.ols-break b { font-family:'JetBrains Mono',monospace; font-weight:500; color:var(--text); }
+.ols-row { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr); gap:10px; margin-bottom:14px; }
+.ols-bar { display:flex; height:14px; border-radius:99px; overflow:hidden; background:var(--border); }
+.ols-bar span { display:block; height:100%; }
+.ols-seg-pass { background:var(--green-v); } .ols-seg-fail { background:var(--amber-v); } .ols-seg-wait { background:#B9B9B6; }
+.ols-legend { display:grid; grid-template-columns:repeat(3, auto); justify-content:start; gap:6px 18px; margin-top:12px; font-size:12px; color:var(--muted); }
+.ols-legend i { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:6px; vertical-align:middle; }
+.ols-big { font-family:'JetBrains Mono',monospace; font-size:1.7rem; font-weight:500; color:var(--green); line-height:1; }
+.ols-note { font-size:12px; color:var(--muted); line-height:1.6; }
+.ols-note dt { font-weight:500; color:var(--text); }
+.ols-note dl { display:grid; grid-template-columns:max-content minmax(0,1fr); gap:4px 14px; }
+@media (max-width:1024px){ .ols-cards { grid-template-columns:repeat(2, minmax(0,1fr)); } .ols-row { grid-template-columns:minmax(0,1fr); } }
+@media (max-width:430px){ .ols-cards { grid-template-columns:minmax(0,1fr); } .ols-legend { grid-template-columns:minmax(0,1fr); } .ols-note dl { grid-template-columns:minmax(0,1fr); } }
+
 /* ── Progress bar ── */
 .progress-bar { height: 4px; background: var(--border); border-radius: 99px; overflow: hidden; margin: 6px 0; }
 .progress-fill { height: 100%; border-radius: 99px; transition: width 0.8s ease; }
@@ -563,6 +587,15 @@ tr:hover td { background: rgba(0,0,0,0.013); }
         <span class="tab-label">All Test Cases</span>
         <span class="tab-x">×</span>
       </div>
+      <div class="tab" data-view="ols">
+        <!-- rising steps: OLS automation progress -->
+        <svg class="tab-icon" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" style="color:#2E6B4F">
+          <path d="M2 11.5h3V8.5h3V5.5h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="12" cy="5.5" r="1.3" fill="currentColor"/>
+        </svg>
+        <span class="tab-label">OLS</span>
+        <span class="tab-x">×</span>
+      </div>
 
       <div class="tab-spacer"></div>
 
@@ -595,6 +628,7 @@ tr:hover td { background: rgba(0,0,0,0.013); }
 
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script type="module">
 import Chart from 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/auto/+esm'
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js'
@@ -908,6 +942,7 @@ function renderView(resetState = true) {
   const c = document.getElementById('content')
   if (activeView === 'overview') { c.className = 'view-scroll'; renderOverview() }
   else if (activeView === 'suites') { c.className = 'view-scroll'; renderSuites() }
+  else if (activeView === 'ols') { c.className = 'view-scroll'; renderOls() }
   else { c.className = 'view-scroll'; renderTable() }
 }
 
@@ -997,6 +1032,89 @@ function renderOverview() {
   `
   renderDonut()
   renderSuiteSummary()
+}
+
+// ── OLS tab (spec docs/sdd/ols-tab) — every number comes from /ols-progress.json ──
+async function renderOls() {
+  const content = document.getElementById('content')
+  let d
+  try {
+    const res = await fetch('/ols-progress.json', { cache: 'no-store' })
+    if (!res.ok) throw new Error('HTTP ' + res.status)
+    d = await res.json()
+    const c = d && d.cases
+    if (!c || [c.total, c.passed, c.notPassed, c.waiting].some(n => typeof n !== 'number') || c.passed + c.notPassed + c.waiting !== c.total) throw new Error('unexpected shape')
+  } catch (e) {
+    if (activeView !== 'ols') return
+    content.innerHTML = `<div class="error-msg">OLS progress data is not available (${escapeHtml(e.message)}). Regenerate ols-progress.json and deploy again.</div>`
+    return
+  }
+  if (activeView !== 'ols') return
+  const c = d.cases, b = d.notPassedBreakdown || {}, t = d.tickets || {}
+  const n = v => `<span data-count="${v}">${v}</span>`
+  content.innerHTML = `
+    <div class="ols-head">
+      <h2>OLS · Automation progress</h2>
+      <span class="ols-scope">Unique caseId · all platforms · Done tickets (Story / Task / Bug) excluding Dev_Task and QA_Task</span>
+    </div>
+    <div class="ols-cards">
+      <div class="card">
+        <div class="card-label">Total cases</div>
+        <div class="card-value">${n(c.total)}</div>
+        <div class="card-sub">owed by Done tickets</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Automated · passed</div>
+        <div class="card-value teal">${n(c.passed)}<span class="ols-pct">${c.passedPercent}%</span></div>
+        <div class="card-sub">every run of the case passed</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Automated · not passed</div>
+        <div class="card-value amber">${n(c.notPassed)}<span class="ols-pct">${c.notPassedPercent}%</span></div>
+        <div class="ols-break"><span>failed <b>${b.failed ?? 0}</b></span><span>flaky <b>${b.flaky ?? 0}</b></span><span>skipped <b>${b.skipped ?? 0}</b></span><span>not run <b>${b.notRun ?? 0}</b></span></div>
+      </div>
+      <div class="card">
+        <div class="card-label">Waiting to automate</div>
+        <div class="card-value muted">${n(c.waiting)}<span class="ols-pct">${c.waitingPercent}%</span></div>
+        <div class="card-sub">case on a Done ticket with no test yet</div>
+      </div>
+    </div>
+    <div class="ols-row">
+      <div class="chart-card">
+        <h3>Case progress</h3>
+        <div class="ols-bar" role="img" aria-label="Passed ${c.passedPercent}%, not passed ${c.notPassedPercent}%, waiting ${c.waitingPercent}%">
+          <span class="ols-seg-pass" style="width:${c.passedPercent}%"></span><span class="ols-seg-fail" style="width:${c.notPassedPercent}%"></span><span class="ols-seg-wait" style="width:${c.waitingPercent}%"></span>
+        </div>
+        <div class="ols-legend">
+          <span><i class="ols-seg-pass"></i>Passed ${c.passed} · ${c.passedPercent}%</span>
+          <span><i class="ols-seg-fail"></i>Not passed ${c.notPassed} · ${c.notPassedPercent}%</span>
+          <span><i class="ols-seg-wait"></i>Waiting ${c.waiting} · ${c.waitingPercent}%</span>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3>Done tickets with an automated case</h3>
+        <div class="ols-big">${t.percent}%</div>
+        <div class="card-sub">${t.withAutomatedCase} of ${t.done} tickets</div>
+      </div>
+    </div>
+    <div class="chart-card ols-note">
+      <dl>
+        <dt>Measured</dt><dd>${escapeHtml(formatBkkTime(new Date(d.measuredAt)))}</dd>
+        <dt>Pass results from</dt><dd>${escapeHtml(d.round && d.round.label || '')} · started ${d.round && d.round.startedAt ? escapeHtml(formatBkkTime(new Date(d.round.startedAt))) : '—'}</dd>
+        <dt>Rules</dt><dd>Passed = every run of the case passed. Flaky, failed, skipped or not run = not passed. Cases retired by the PO are not counted.</dd>
+      </dl>
+    </div>`
+  animateOls(content)
+}
+
+function animateOls(root) {
+  const g = window.gsap
+  if (!g || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  g.from(root.querySelectorAll('.ols-bar span'), { scaleX: 0, transformOrigin: 'left center', duration: 0.8, ease: 'power3.out', stagger: 0.08, clearProps: 'transform,transformOrigin' })
+  root.querySelectorAll('[data-count]').forEach(el => {
+    const end = Number(el.dataset.count), o = { v: end }
+    g.from(o, { v: 0, duration: 0.8, ease: 'power2.out', onUpdate: () => { el.textContent = String(Math.round(o.v)) }, onComplete: () => { el.textContent = String(end) } })
+  })
 }
 
 let donutChart = null

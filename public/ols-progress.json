@@ -1,0 +1,28 @@
+{
+  "measuredAt": "2026-10-21T04:21:20.393Z",
+  "round": {
+    "startedAt": "2026-10-20T06:25:37.186Z",
+    "label": "Desktop dev round 20 Oct 2026",
+    "files": 10
+  },
+  "cases": {
+    "total": 406,
+    "passed": 222,
+    "notPassed": 117,
+    "waiting": 67,
+    "passedPercent": 54.7,
+    "notPassedPercent": 28.8,
+    "waitingPercent": 16.5
+  },
+  "notPassedBreakdown": {
+    "failed": 57,
+    "flaky": 7,
+    "skipped": 53,
+    "notRun": 0
+  },
+  "tickets": {
+    "done": 644,
+    "withAutomatedCase": 125,
+    "percent": 19.4
+  }
+}
