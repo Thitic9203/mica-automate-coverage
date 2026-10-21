@@ -36,6 +36,10 @@ progress ลงไป … ทั้งหมดกี่เคส · automate �
 - **R8** — Layout works at ≥1280, 768–1024 and ≤430 px wide without horizontal page scroll; the four
   cards use CSS grid; text never clips.
 
+- **R9** — Each figure and each definition MUST appear on the page once (owner order 2026-10-21,
+  “อย่าแสดงข้อมูลซ้ำซ้อนกัน”): the bar legend names the segments only (counts and percents live on the
+  cards), and the notes row carries only what no card says (cases retired by the PO are not counted).
+
 ## Out of scope
 
 Dark mode for the whole site (the site has no theme system today — a separate change).
