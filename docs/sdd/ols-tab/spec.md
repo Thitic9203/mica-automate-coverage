@@ -40,10 +40,11 @@ progress ลงไป … ทั้งหมดกี่เคส · automate �
   “อย่าแสดงข้อมูลซ้ำซ้อนกัน”): the bar legend names the segments only (counts and percents live on the
   cards), and the notes row carries only what no card says (cases retired by the PO are not counted).
 
-- **R10** — The case source MUST stand out on its own line: “Cases from **Done tickets (Story / Task / Bug)**,
-  excluding Dev_Task and QA_Task”. The scope line below it MUST read “Unique caseId from all platforms (…)” and name each platform with its
-  viewport from `ols-qa-e2e/tests/e2e/config/viewports.ts`: Desktop 1440×900 · Tablet 768×1024 · Tablet
-  landscape 1024×768 · Mobile 375×812 · Mobile landscape 844×390 (owner order 2026-10-21).
+- **R10** — The header scope line MUST read “Unique caseId from all platforms (Desktop 1440×900 · Tablet
+  768×1024 · Tablet landscape 1024×768 · Mobile 375×812 · Mobile landscape 844×390)”, viewports from
+  `ols-qa-e2e/tests/e2e/config/viewports.ts`. The notes row “Case source” MUST read “**Done tickets (Story /
+  Task / Bug)**, excluding Dev_Task and QA_Task”, replacing the earlier retired-cases note (owner order
+  2026-10-21).
 
 ## Out of scope
 
