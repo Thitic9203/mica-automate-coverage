@@ -942,6 +942,10 @@ function renderView(resetState = true) {
     tableSearch = ''; tablePage = 1; tablePageSize = 10
     suiteSort = { col: 'automated', dir: 'desc' }; modulePage = 1
   }
+  const ols = activeView === 'ols'
+  const pt = document.querySelector('.page-title'), pe = document.querySelector('.page-eyebrow')
+  if (pt) pt.textContent = ols ? 'OLS Automation Coverage' : 'Mica Automation Coverage'
+  if (pe) pe.textContent = ols ? 'OLS · QA' : 'MICA · QA'
   const c = document.getElementById('content')
   if (activeView === 'overview') { c.className = 'view-scroll'; renderOverview() }
   else if (activeView === 'suites') { c.className = 'view-scroll'; renderSuites() }
