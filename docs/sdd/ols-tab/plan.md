@@ -14,7 +14,6 @@
   page, size}` in memory (per-viewer only); filter/sort/paginate in plain JS over ≤ ~450 rows.
 - Filter control: one custom listbox component reused for the five filters; on <768 px it renders as a
   bottom sheet (focus trap, Esc closes, `aria-modal`).
-- Data: rows ship in `public/ols-progress.json` (≈150 KB raw / ≈25 KB gzip at 428 rows) or a separate
-  `public/ols-cases.json` if the owner prefers a lighter first paint — open question in the export plan.
-- Public repo: titles and Qase numbers become public — owner confirmation pending (export plan Q2).
+- Data: `public/ols-cases.json` (owner 2026-10-22), fetched after the cards render.
+- Public repo: titles and Qase numbers public — approved by the owner 2026-10-22 with the export's denylist scan.
 - No new dependency (cost: none).

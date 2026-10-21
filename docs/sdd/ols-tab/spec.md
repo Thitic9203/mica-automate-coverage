@@ -72,8 +72,8 @@ progress ลงไป … ทั้งหมดกี่เคส · automate �
   embedded `report.json` stats, so the page and the report never disagree. The case cards stay per unique
   caseId and are labelled as such. Owner order 2026-10-21 (every automate round).
 
-- **R16** — (owner order 2026-10-22, plan step — awaiting owner approval) Below the rest of the OLS view
-  the page MUST show a case table from `caseRows` (export spec R7), headers in English:
+- **R16** — (owner order 2026-10-22, approved 2026-10-22) Below the rest of the OLS view
+  the page MUST show a case table from `public/ols-cases.json` `rows` (export spec R7/R7h), headers in English:
   **Qase ID** (link to the case in app.qase.io project OLS; plain text when `qaseId` is null) · **Case** ·
   **Title** · **Automation** · **Result** · **Case Type** · **Role** · **Module**.
   - **R16a** — Above the table: filters Automation, Result, Case Type, Role, Module (options built from the
@@ -90,7 +90,11 @@ progress ลงไป … ทั้งหมดกี่เคส · automate �
     becomes a CSS-grid card; no horizontal page scroll at 1440 / 900 / 390; tap targets ≥44 px; tokens
     only. Motion per R7 (rows fade with `gsap.from` + `clearProps` on first render only; no-op under
     reduced motion). Re-render 2–3 times leaves no extra nodes.
-  - **R16f** — When `caseRows` is missing or malformed the table section is not shown; the rest renders.
+  - **R16f** — When `ols-cases.json` is missing or malformed, or its `measuredAt` differs from
+    `ols-progress.json`, the table section is not shown (the mismatch is stated); the rest renders.
+  - **R16g** — Role cells list every role of the case; the Role filter matches a row when any of its
+    roles is selected (so per-role counts may add up to more than the case total — stated under the
+    filter). Result values: Passed, Failed, Flaky, Skipped, Not run, — (Flaky counts as not passed).
 
 ## Out of scope
 
