@@ -1,0 +1,16 @@
+{
+  "measuredAt": "2026-10-21T09:40:10.983Z",
+  "project": "MA",
+  "systems": {
+    "MICA1": {
+      "suite": "MICA1",
+      "totalAutomated": 435,
+      "run": null
+    },
+    "EVMS": {
+      "suite": "EVMS",
+      "totalAutomated": 157,
+      "run": null
+    }
+  }
+}

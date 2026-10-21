@@ -271,6 +271,14 @@ body::-webkit-scrollbar { display: none; }
 
 .ols-filter-link { display:block; margin-top:6px; font-size:14px; }
 .ols-report-link { color:var(--green); font-weight:600; text-decoration:underline; text-underline-offset:3px; }
+/* ── MA tab (spec docs/sdd/ma-tabs) ── */
+.ma-sys { margin-bottom:18px; }
+.ma-sys h3 { font-size:13px; font-weight:600; letter-spacing:-.01em; margin-bottom:8px; }
+.ols-cards.ma-cards { grid-template-columns:repeat(3, minmax(0,1fr)); margin-bottom:0; }
+.ma-cards .ma-none { grid-column:1 / -1; }
+.ma-empty { font-family:inherit; font-size:15px; font-weight:500; color:var(--muted); line-height:1.2; }
+@media (max-width:1024px){ .ols-cards.ma-cards { grid-template-columns:repeat(3, minmax(0,1fr)); } }
+@media (max-width:640px){ .ols-cards.ma-cards { grid-template-columns:minmax(0,1fr); } }
 /* ── OLS tab (spec docs/sdd/ols-tab) ── */
 .ols-head { display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 14px; margin-bottom:14px; }
 .ols-head h2 { font-size:15px; font-weight:600; letter-spacing:-.01em; }
@@ -568,34 +576,16 @@ tr:hover td { background: rgba(0,0,0,0.013); }
       </div>
 
       <!-- Tabs -->
-      <div class="tab active" data-view="overview">
-        <!-- bar chart: ascending bars = coverage analytics -->
+      <!-- Overview, By Suite, All Test Cases: hidden (spec docs/sdd/ma-tabs R1); their render code stays below -->
+      <div class="tab active" data-view="ma">
+        <!-- four squares: four systems in Qase project MA -->
         <svg class="tab-icon" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" style="color:#2E6B4F">
-          <rect x="1.5" y="10" width="2.5" height="2" rx="0.5" fill="currentColor" opacity="0.45"/>
-          <rect x="5.5" y="7" width="2.5" height="5" rx="0.5" fill="currentColor" opacity="0.72"/>
-          <rect x="9.5" y="4" width="2.5" height="8" rx="0.5" fill="currentColor"/>
+          <rect x="1.5" y="1.5" width="4.5" height="4.5" rx="1" fill="currentColor"/>
+          <rect x="8" y="1.5" width="4.5" height="4.5" rx="1" fill="currentColor" opacity="0.72"/>
+          <rect x="1.5" y="8" width="4.5" height="4.5" rx="1" fill="currentColor" opacity="0.5"/>
+          <rect x="8" y="8" width="4.5" height="4.5" rx="1" fill="currentColor" opacity="0.3"/>
         </svg>
-        <span class="tab-label">Overview</span>
-        <span class="tab-x">×</span>
-      </div>
-      <div class="tab" data-view="suites">
-        <!-- stacked layers: fading depth = organised suites -->
-        <svg class="tab-icon" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" style="color:#3A6080">
-          <rect x="2" y="9.5" width="10" height="2" rx="0.8" stroke="currentColor" stroke-width="1.2" opacity="0.3"/>
-          <rect x="2" y="6"   width="10" height="2" rx="0.8" stroke="currentColor" stroke-width="1.2" opacity="0.62"/>
-          <rect x="2" y="2.5" width="10" height="2" rx="0.8" stroke="currentColor" stroke-width="1.2"/>
-        </svg>
-        <span class="tab-label">By Suite</span>
-        <span class="tab-x">×</span>
-      </div>
-      <div class="tab" data-view="table">
-        <!-- beaker: test tube = QA test cases -->
-        <svg class="tab-icon" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" style="color:#8A6020">
-          <path d="M4.5 2h5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-          <path d="M5.5 2v5L3.5 10.5a1 1 0 0 0 .9 1.5h6.2a1 1 0 0 0 .9-1.5L9 7V2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M4.8 9h4.4" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity="0.38"/>
-        </svg>
-        <span class="tab-label">All Test Cases</span>
+        <span class="tab-label">MICA 1 · EvMS · ELMS · CBMS</span>
         <span class="tab-x">×</span>
       </div>
       <div class="tab" data-view="ols">
@@ -860,7 +850,7 @@ function computeStats(cases) {
 
 let appData = []
 let appStats = {}
-let activeView = 'overview'
+let activeView = 'ma' // spec docs/sdd/ma-tabs R2: the page opens on the MA tab
 let tableFilter = 'All'
 let tableSort = { col: 'status', dir: 'asc' }
 let tableSearch = ''
@@ -879,6 +869,7 @@ function escapeHtml(s) {
 function showApp() {
   document.getElementById('app').classList.remove('hidden')
   setupNav()
+  if (activeView === 'ma') renderView() // MA tab reads its own JSON; it does not wait for the old Qase loader
   document.getElementById('logout-btn').addEventListener('click', () => signOut(auth))
   document.addEventListener('click', () => {
     document.querySelectorAll('.custom-select.open').forEach(el => el.classList.remove('open'))
@@ -907,7 +898,7 @@ function loadFromCacheThenRefresh() {
       if (data && data.length) {
         appData = data
         appStats = computeStats(appData)
-        renderView()
+        if (activeView !== 'ma') renderView()
         document.getElementById('last-updated').textContent = formatBkkTime(new Date(ts))
       }
     }
@@ -926,8 +917,9 @@ async function fetchAndRender() {
     const pill = document.getElementById('live-pill')
     pill.style.animation = 'none'
     requestAnimationFrame(() => { pill.style.animation = 'pillFlash 1.5s ease' })
-    renderView(false)
+    if (activeView !== 'ma') renderView(false)
   } catch (e) {
+    if (activeView === 'ma') return
     document.getElementById('content').innerHTML =
       `<div class="error-msg">Failed to load data: ${e.message}</div>`
   }
@@ -958,6 +950,7 @@ function renderView(resetState = true) {
   if (activeView === 'overview') { c.className = 'view-scroll'; renderOverview() }
   else if (activeView === 'suites') { c.className = 'view-scroll'; renderSuites() }
   else if (activeView === 'ols') { c.className = 'view-scroll'; renderOls() }
+  else if (activeView === 'ma') { c.className = 'view-scroll'; renderMa() }
   else { c.className = 'view-scroll'; renderTable() }
 }
 
@@ -1047,6 +1040,61 @@ function renderOverview() {
   `
   renderDonut()
   renderSuiteSummary()
+}
+
+// ── MA tab (spec docs/sdd/ma-tabs) — every number comes from /ma-progress.json, written by
+// scripts/build-ma-progress.mjs. The browser never calls Qase for this tab.
+const MA_SYSTEMS = [['MICA1', 'MICA 1'], ['EVMS', 'EvMS'], ['ELMS', 'ELMS'], ['CBMS', 'CBMS']]
+function maValid(d) {
+  if (!d || typeof d.measuredAt !== 'string' || !d.systems || typeof d.systems !== 'object') return false
+  return Object.values(d.systems).every(s => s && typeof s.totalAutomated === 'number' && (s.run === null ||
+    (s.run && ['cases', 'passed', 'notPassed', 'passedPercent', 'notPassedPercent'].every(k => typeof s.run[k] === 'number') && s.run.passed + s.run.notPassed === s.run.cases)))
+}
+async function renderMa() {
+  const content = document.getElementById('content')
+  let d
+  try {
+    const res = await fetch('/ma-progress.json', { cache: 'no-store' })
+    if (!res.ok) throw new Error('HTTP ' + res.status)
+    d = await res.json()
+    if (!maValid(d)) throw new Error('unexpected shape')
+  } catch (e) {
+    if (activeView !== 'ma') return
+    content.innerHTML = `<div class="error-msg">MA progress data is not available (${escapeHtml(e.message)}). Regenerate ma-progress.json and deploy again.</div>`
+    return
+  }
+  if (activeView !== 'ma') return
+  const n = v => `<span data-count="${v}">${v}</span>`
+  const pad = '<span class="ols-pct" aria-hidden="true">&nbsp;</span>'
+  const noRun = label => `<div class="card"><div class="card-label">${label}</div><div class="card-value"><span class="ma-empty">No test run yet</span>${pad}</div></div>`
+  const section = ([key, name]) => {
+    const s = d.systems[key]
+    if (!s) return `<section class="ma-sys" data-system="${key}"><h3>${name}</h3><div class="ols-cards ma-cards">
+      <div class="card ma-none"><div class="card-value"><span class="ma-empty">No data in Qase yet</span></div></div></div></section>`
+    const r = s.run
+    return `<section class="ma-sys" data-system="${key}"><h3>${name}</h3><div class="ols-cards ma-cards">
+      <div class="card"><div class="card-label">Total automated</div><div class="card-value">${n(s.totalAutomated)}${pad}</div></div>
+      ${r ? `<div class="card"><div class="card-label">Automated · passed</div><div class="card-value teal">${n(r.passed)}<span class="ols-pct">${r.passedPercent}%</span></div></div>
+      <div class="card"><div class="card-label">Automated · not passed</div><div class="card-value amber">${n(r.notPassed)}<span class="ols-pct">${r.notPassedPercent}%</span></div></div>`
+        : noRun('Automated · passed') + noRun('Automated · not passed')}
+    </div></section>`
+  }
+  const runs = MA_SYSTEMS.filter(([k]) => d.systems[k] && d.systems[k].run).map(([k, name]) => {
+    const r = d.systems[k].run
+    const when = r.completedAt ? formatBkkTime(new Date(String(r.completedAt).replace(' ', 'T') + (/[zZ]|[+-]\d\d:?\d\d$/.test(r.completedAt) ? '' : 'Z'))) : '—'
+    return `<dt>Latest run · ${name}</dt><dd>${escapeHtml(r.title || '')} · completed ${escapeHtml(when)} · ${r.cases} cases</dd>`
+  }).join('')
+  content.innerHTML = `
+    <div class="ols-head"><h2>MICA · Automation progress</h2></div>
+    ${MA_SYSTEMS.map(section).join('')}
+    <div class="chart-card ols-note">
+      <dl>
+        <dt>Measured</dt><dd>${escapeHtml(formatBkkTime(new Date(d.measuredAt)))}</dd>
+        <dt>Source</dt><dd>Qase project MA · one top-level suite per system</dd>
+        ${runs}
+      </dl>
+    </div>`
+  animateOls(content)
 }
 
 // ── OLS tab (spec docs/sdd/ols-tab) — every number comes from /ols-progress.json ──
