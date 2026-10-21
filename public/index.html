@@ -269,13 +269,15 @@ body::-webkit-scrollbar { display: none; }
 .card-value.blue  { color: var(--blue); }
 
 
+.ols-report-link { color:var(--green); font-weight:600; text-decoration:underline; text-underline-offset:3px; }
 /* ── OLS tab (spec docs/sdd/ols-tab) ── */
 .ols-head { display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 14px; margin-bottom:14px; }
 .ols-head h2 { font-size:15px; font-weight:600; letter-spacing:-.01em; }
 .ols-scope { font-size:12px; color:var(--muted); }
 .ols-cards { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:10px; margin-bottom:14px; }
-.ols-cards .card { min-width:0; }
-.ols-pct { font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:500; margin-left:6px; }
+.ols-cards .card { min-width:0; justify-content:flex-start; }
+.ols-cards .card-value > span { display:block; }
+.ols-pct { font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:500; line-height:1.2; margin-top:6px; }
 .card-value.muted { color: var(--muted); }
 .ols-break { display:grid; grid-template-columns:repeat(4, auto); justify-content:start; gap:2px 12px; margin-top:8px; font-size:11px; color:var(--muted); }
 .ols-break b { font-family:'JetBrains Mono',monospace; font-weight:500; color:var(--text); }
@@ -1060,8 +1062,8 @@ async function renderOls() {
     <div class="ols-cards">
       <div class="card">
         <div class="card-label">Total cases</div>
-        <div class="card-value">${n(c.total)}</div>
-        <div class="card-sub">owed by Done tickets</div>
+        <div class="card-value">${n(c.total)}<span class="ols-pct" aria-hidden="true">&nbsp;</span></div>
+        <div class="card-sub" aria-hidden="true">&nbsp;</div>
       </div>
       <div class="card">
         <div class="card-label">Automated · passed</div>
@@ -1086,9 +1088,9 @@ async function renderOls() {
           <span class="ols-seg-pass" style="width:${c.passedPercent}%"></span><span class="ols-seg-fail" style="width:${c.notPassedPercent}%"></span><span class="ols-seg-wait" style="width:${c.waitingPercent}%"></span>
         </div>
         <div class="ols-legend">
-          <span><i class="ols-seg-pass"></i>Passed ${c.passed} · ${c.passedPercent}%</span>
-          <span><i class="ols-seg-fail"></i>Not passed ${c.notPassed} · ${c.notPassedPercent}%</span>
-          <span><i class="ols-seg-wait"></i>Waiting ${c.waiting} · ${c.waitingPercent}%</span>
+          <span><i class="ols-seg-pass"></i>Passed</span>
+          <span><i class="ols-seg-fail"></i>Not passed</span>
+          <span><i class="ols-seg-wait"></i>Waiting</span>
         </div>
       </div>
       <div class="chart-card">
@@ -1100,8 +1102,8 @@ async function renderOls() {
     <div class="chart-card ols-note">
       <dl>
         <dt>Measured</dt><dd>${escapeHtml(formatBkkTime(new Date(d.measuredAt)))}</dd>
-        <dt>Pass results from</dt><dd>${escapeHtml(d.round && d.round.label || '')} · started ${d.round && d.round.startedAt ? escapeHtml(formatBkkTime(new Date(d.round.startedAt))) : '—'}</dd>
-        <dt>Rules</dt><dd>Passed = every run of the case passed. Flaky, failed, skipped or not run = not passed. Cases retired by the PO are not counted.</dd>
+        <dt>Pass results from</dt><dd>${escapeHtml(d.round && d.round.label || '')} · started ${d.round && d.round.startedAt ? escapeHtml(formatBkkTime(new Date(d.round.startedAt))) : '—'}${d.round && /^https:\/\/claude\.ai\//.test(d.round.reportUrl || '') ? ` · <a class="ols-report-link" href="${escapeHtml(d.round.reportUrl)}" target="_blank" rel="noopener noreferrer">Open HTML report ↗</a>` : ''}</dd>
+        <dt>Rules</dt><dd>Cases retired by the PO are not counted.</dd>
       </dl>
     </div>`
   animateOls(content)
