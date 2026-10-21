@@ -297,11 +297,12 @@ body::-webkit-scrollbar { display: none; }
 .ols-legend { display:grid; grid-template-columns:repeat(3, auto); justify-content:start; gap:6px 18px; margin-top:12px; font-size:12px; color:var(--muted); }
 .ols-legend i { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:6px; vertical-align:middle; }
 .ols-big { font-family:'JetBrains Mono',monospace; font-size:1.7rem; font-weight:500; color:var(--green); line-height:1; }
+.ols-unit { font-weight:400; text-transform:none; letter-spacing:0; }
 .ols-note { font-size:12px; color:var(--muted); line-height:1.6; }
 .ols-note dt { font-weight:500; color:var(--text); }
 .ols-note dl { display:grid; grid-template-columns:max-content minmax(0,1fr); gap:4px 14px; }
 .ols-types { margin-bottom:14px; }
-.ols-types-grid { display:grid; grid-template-columns:minmax(0,1fr) repeat(3, minmax(72px, max-content)); column-gap:24px; margin:4px 0 10px; }
+.ols-types-grid { display:grid; grid-template-columns:minmax(0,1fr) repeat(4, minmax(72px, max-content)); column-gap:24px; margin:4px 0 10px; }
 .ols-types-head, .ols-types-row { display:contents; }
 .ols-types-head span { font-size:10px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; padding:6px 0; border-bottom:1px solid var(--border); }
 .ols-types-row span { font-size:13px; padding:8px 0; border-bottom:1px solid var(--border); overflow-wrap:anywhere; }
@@ -309,7 +310,76 @@ body::-webkit-scrollbar { display: none; }
 .ols-types-head span:not(:first-child) { font-family:inherit; }
 .ols-types-row .ols-t-pass { color:var(--green); } .ols-types-row .ols-t-fail { color:var(--amber); }
 @media (max-width:1024px){ .ols-cards { grid-template-columns:repeat(2, minmax(0,1fr)); } .ols-row { grid-template-columns:minmax(0,1fr); } }
-@media (max-width:430px){ .ols-cards { grid-template-columns:minmax(0,1fr); } .ols-legend { grid-template-columns:minmax(0,1fr); } .ols-note dl { grid-template-columns:minmax(0,1fr); } .ols-types-grid { grid-template-columns:minmax(0,1fr) repeat(3, max-content); column-gap:12px; } }
+@media (max-width:430px){ .ols-cards { grid-template-columns:minmax(0,1fr); } .ols-legend { grid-template-columns:minmax(0,1fr); } .ols-note dl { grid-template-columns:minmax(0,1fr); } .ols-types-grid { grid-template-columns:minmax(0,1fr) repeat(4, max-content); column-gap:8px; } .ols-types-head span { font-size:9px; letter-spacing:.02em; } }
+
+/* ── OLS case table (spec docs/sdd/ols-tab R16–R18) ── */
+.oc { margin-top:14px; }
+.oc-head { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:end; gap:8px 16px; margin-bottom:10px; }
+.oc-head h3 { font-size:13px; font-weight:600; }
+.oc-tools { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)) minmax(180px, 1.4fr); gap:8px; margin-bottom:10px; }
+.oc-fbtn, .oc-search, .oc-size button, .oc-pager button, .oc-sheet-close {
+  min-height:44px; border:1px solid var(--border); background:var(--card); color:var(--text);
+  border-radius:6px; font:inherit; font-size:12px; padding:0 12px;
+}
+.oc-fbtn { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:6px; text-align:left; cursor:pointer; width:100%; }
+.oc-fbtn span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.oc-fbtn b { font-weight:600; }
+.oc-fbtn[aria-expanded="true"], .oc-fbtn.on { border-color:var(--teal); }
+.oc-search { width:100%; }
+.oc-fwrap { position:relative; min-width:0; }
+.oc-panel { position:absolute; top:calc(100% + 4px); left:0; z-index:30; min-width:100%; max-width:min(320px, calc(100vw - 32px)); max-height:320px; overflow:auto;
+  background:var(--card); border:1px solid var(--card-border); border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,.12); padding:4px; }
+.oc-panel.right { left:auto; right:0; }
+.oc-opt { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px; align-items:center; min-height:40px; padding:0 10px; border-radius:5px; font-size:12px; cursor:pointer; }
+.oc-opt[aria-selected="true"] { background:rgba(46,107,79,.10); color:var(--teal); font-weight:600; }
+.oc-opt:focus, .oc-opt:hover { background:rgba(0,0,0,.05); outline:none; }
+.oc-opt i { font-style:normal; font-family:'JetBrains Mono',monospace; color:var(--muted); }
+.oc-sheet-head { display:none; }
+.oc-backdrop { display:none; }
+.oc-note { font-size:11px; color:var(--muted); margin:-4px 0 8px; }
+.oc-wrap { overflow-x:auto; border:1px solid var(--border); border-radius:8px; background:var(--card); }
+.oc-table { width:100%; border-collapse:collapse; table-layout:fixed; font-size:12px; }
+.oc-table th { position:static; padding:0; background:var(--chrome); cursor:default; }
+.oc-table th button { all:unset; box-sizing:border-box; display:flex; align-items:center; gap:4px; width:100%; min-height:44px; padding:0 10px; cursor:pointer;
+  font-size:10px; font-weight:600; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); }
+.oc-table th button:focus-visible { outline:2px solid var(--teal); outline-offset:-2px; }
+.oc-table th[aria-sort="ascending"] button, .oc-table th[aria-sort="descending"] button { color:var(--text); }
+.oc-table td { padding:8px 10px; vertical-align:top; overflow-wrap:anywhere; word-break:normal; }
+.oc-table col.c-id { width:84px; } .oc-table col.c-case { width:104px; } .oc-table col.c-st { width:150px; }
+.oc-table col.c-type { width:120px; } .oc-table col.c-role { width:130px; } .oc-table col.c-mod { width:150px; }
+.oc-id { font-family:'JetBrains Mono',monospace; }
+.oc-st { display:inline-block; padding:2px 7px; border-radius:4px; font-size:10px; font-weight:600; letter-spacing:.04em; white-space:nowrap; }
+.oc-st.s-PASSED { background:rgba(62,122,94,.12); color:var(--green); }
+.oc-st.s-FAILED, .oc-st.s-FLAKY { background:rgba(138,96,32,.12); color:var(--amber); }
+.oc-st.s-SKIPPED, .oc-st.s-NOT-RUN { background:rgba(94,94,94,.12); color:var(--muted); }
+.oc-st.s-TO-BE-AUTOMATED { background:rgba(58,96,128,.10); color:var(--blue); }
+.oc-empty { padding:24px; text-align:center; color:var(--muted); }
+.oc-foot { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:8px 16px; margin-top:10px; font-size:12px; color:var(--muted); }
+.oc-size, .oc-pager { display:grid; grid-auto-flow:column; gap:6px; align-items:center; }
+.oc-size button[aria-pressed="true"] { border-color:var(--teal); color:var(--teal); font-weight:600; }
+.oc-pager button { min-width:44px; cursor:pointer; } .oc-pager button:disabled { opacity:.4; cursor:default; }
+.oc-range { text-align:center; }
+@media (max-width:1024px){ .oc-tools { grid-template-columns:repeat(2, minmax(0,1fr)); } .oc-search-wrap { grid-column:1 / -1; } }
+@media (max-width:767px){
+  .oc-panel { position:fixed; inset:auto 0 0 0; max-width:none; max-height:70vh; border-radius:14px 14px 0 0; z-index:60;
+    padding:8px 12px calc(12px + env(safe-area-inset-bottom)); }
+  .oc-panel.right { right:0; }
+  .oc-sheet-head { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; padding:4px 0 8px; font-size:13px; font-weight:600; }
+  .oc-sheet-close { cursor:pointer; }
+  .oc-opt { min-height:44px; }
+  .oc-backdrop.open { display:block; position:fixed; inset:0; background:rgba(0,0,0,.28); z-index:55; }
+  .oc-foot { grid-template-columns:minmax(0,1fr); justify-items:start; }
+}
+@media (max-width:430px){
+  .oc-tools { grid-template-columns:minmax(0,1fr); }
+  .oc-wrap { border:none; background:none; overflow:visible; }
+  .oc-table, .oc-table tbody { display:grid; gap:8px; }
+  .oc-table colgroup, .oc-table thead { display:none; }
+  .oc-table tr { display:grid; grid-template-columns:96px minmax(0,1fr); gap:2px 10px; padding:10px 12px; border:1px solid var(--border); border-radius:8px; background:var(--card); }
+  .oc-table td { display:contents; }
+  .oc-table td::before { content:attr(data-label); font-size:10px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); padding:3px 0; }
+  .oc-table td > * , .oc-table td > .oc-v { padding:2px 0; min-width:0; }
+}
 
 /* ── Progress bar ── */
 .progress-bar { height: 4px; background: var(--border); border-radius: 99px; overflow: hidden; margin: 6px 0; }
@@ -1122,22 +1192,22 @@ async function renderOls() {
     </div>
     <div class="ols-cards">
       <div class="card">
-        <div class="card-label">Total cases</div>
+        <div class="card-label">Total cases <span class="ols-unit">per unique case</span></div>
         <div class="card-value">${n(c.total)}<span class="ols-pct" aria-hidden="true">&nbsp;</span></div>
         <div class="card-sub" aria-hidden="true">&nbsp;</div>
       </div>
       <div class="card">
-        <div class="card-label">Automated · passed</div>
+        <div class="card-label">PASSED</div>
         <div class="card-value teal">${n(c.passed)}<span class="ols-pct">${c.passedPercent}%</span></div>
         <div class="card-sub">every run of the case passed</div>
       </div>
       <div class="card">
-        <div class="card-label">Automated · not passed</div>
+        <div class="card-label">NOT PASSED</div>
         <div class="card-value amber">${n(c.notPassed)}<span class="ols-pct">${c.notPassedPercent}%</span></div>
-        <div class="ols-break"><span>failed <b>${b.failed ?? 0}</b></span><span>flaky <b>${b.flaky ?? 0}</b></span><span>skipped <b>${b.skipped ?? 0}</b></span><span>not run <b>${b.notRun ?? 0}</b></span></div>
+        <div class="ols-break"><span>FAILED <b>${b.failed ?? 0}</b></span><span>FLAKY <b>${b.flaky ?? 0}</b></span><span>SKIPPED <b>${b.skipped ?? 0}</b></span><span>NOT RUN <b>${b.notRun ?? 0}</b></span></div>
       </div>
       <div class="card">
-        <div class="card-label">Waiting to automate</div>
+        <div class="card-label">TO BE AUTOMATED</div>
         <div class="card-value muted">${n(c.waiting)}<span class="ols-pct">${c.waitingPercent}%</span></div>
         <div class="card-sub">case on a Done ticket with no test yet</div>
       </div>
@@ -1145,13 +1215,13 @@ async function renderOls() {
     <div class="ols-row">
       <div class="chart-card">
         <h3>Case progress</h3>
-        <div class="ols-bar" role="img" aria-label="Passed ${c.passedPercent}%, not passed ${c.notPassedPercent}%, waiting ${c.waitingPercent}%">
+        <div class="ols-bar" role="img" aria-label="PASSED ${c.passedPercent}%, NOT PASSED ${c.notPassedPercent}%, TO BE AUTOMATED ${c.waitingPercent}%">
           <span class="ols-seg-pass" style="width:${c.passedPercent}%"></span><span class="ols-seg-fail" style="width:${c.notPassedPercent}%"></span><span class="ols-seg-wait" style="width:${c.waitingPercent}%"></span>
         </div>
         <div class="ols-legend">
-          <span><i class="ols-seg-pass"></i>Passed</span>
-          <span><i class="ols-seg-fail"></i>Not passed</span>
-          <span><i class="ols-seg-wait"></i>Waiting</span>
+          <span><i class="ols-seg-pass"></i>PASSED</span>
+          <span><i class="ols-seg-fail"></i>NOT PASSED</span>
+          <span><i class="ols-seg-wait"></i>TO BE AUTOMATED</span>
         </div>
       </div>
       <div class="chart-card">
@@ -1167,28 +1237,30 @@ async function renderOls() {
       <dl>
         <dt>Measured</dt><dd>${escapeHtml(formatBkkTime(new Date(d.measuredAt)))}</dd>
         <dt>Pass results from</dt><dd>${escapeHtml(d.round && d.round.label || '')} · started ${d.round && d.round.startedAt ? escapeHtml(formatBkkTime(new Date(d.round.startedAt))) : '—'}${d.round && /^https:\/\/claude\.ai\//.test(d.round.reportUrl || '') ? ` · <a class="ols-report-link" href="${escapeHtml(d.round.reportUrl)}" target="_blank" rel="noopener noreferrer">Open HTML report ↗</a>` : ''}</dd>
-        ${d.round && d.round.reportStats ? `<dt>Report run totals</dt><dd>${['passed','failed','skipped','flaky'].map(k => `${k} <b>${Number(d.round.reportStats[k]) || 0}</b>`).join(' · ')} <span class="ols-scope">(tests × viewports, from the report)</span></dd>` : ''}
+        ${d.round && d.round.reportStats && d.round.reportStats.unit === 'test × viewport' ? `<dt>Report run totals</dt><dd>${[['passed','PASSED'],['failed','FAILED'],['skipped','SKIPPED'],['flaky','FLAKY']].map(([k, l]) => `${l} <b>${Number(d.round.reportStats[k]) || 0}</b>`).join(' · ')} <span class="ols-scope">per test × viewport — counted from the same round results and checked equal to the HTML report; the cards count per unique case</span></dd>` : ''}
         <dt>Case source</dt><dd><strong>Done tickets (Story / Task / Bug)</strong>, excluding Dev_Task and QA_Task</dd>
         <dt>Qase</dt><dd><a class="ols-report-link" href="https://app.qase.io/project/OLS" target="_blank" rel="noopener noreferrer">Open project OLS in Qase ↗</a></dd>
       </dl>
-    </div>`
+    </div>
+    <section class="oc" id="ols-cases" aria-label="OLS cases"></section>`
   animateOls(content)
+  renderOlsCases(d)
 }
 
 // Spec R11: one row per Qase Test Case Type + "No type", from `caseTypes` only; hidden when malformed.
 const OLS_TYPES = [['happyPath', 'Happy Path'], ['failureScenario', 'Failure Scenario'], ['edgeCase', 'Edge Case'], ['exceptionalCase', 'Exceptional Case']]
 function olsTypesCard(ct, c, n) {
-  const ok = ct && OLS_TYPES.every(([k]) => ct[k] && ['total', 'passed', 'notPassed'].every(f => Number.isInteger(ct[k][f])))
+  const ok = ct && OLS_TYPES.every(([k]) => ct[k] && ['total', 'passed', 'notPassed', 'waiting'].every(f => Number.isInteger(ct[k][f])))
     && OLS_TYPES.reduce((s, [k]) => s + ct[k].total, 0) === c.total
   if (!ok) return ''
   return `
     <div class="chart-card ols-types">
       <h3>Cases by type</h3>
       <div class="ols-types-grid" role="table" aria-label="Cases by test case type">
-        <div class="ols-types-head" role="row"><span role="columnheader">Type</span><span role="columnheader">Cases</span><span role="columnheader">Passed</span><span role="columnheader">Not passed</span></div>
-        ${OLS_TYPES.map(([k, label]) => `<div class="ols-types-row" role="row"><span role="rowheader">${label}</span><span role="cell">${n(ct[k].total)}</span><span role="cell" class="ols-t-pass">${n(ct[k].passed)}</span><span role="cell" class="ols-t-fail">${n(ct[k].notPassed)}</span></div>`).join('')}
+        <div class="ols-types-head" role="row"><span role="columnheader">Type</span><span role="columnheader">Cases</span><span role="columnheader">PASSED</span><span role="columnheader">NOT PASSED</span><span role="columnheader">TO BE AUTOMATED</span></div>
+        ${OLS_TYPES.map(([k, label]) => `<div class="ols-types-row" role="row"><span role="rowheader">${label}</span><span role="cell">${n(ct[k].total)}</span><span role="cell" class="ols-t-pass">${n(ct[k].passed)}</span><span role="cell" class="ols-t-fail">${n(ct[k].notPassed)}</span><span role="cell">${n(ct[k].waiting)}</span></div>`).join('')}
       </div>
-      <div class="card-sub">Type = Qase “Test Case Type”, Exceptional = the case tests a ticket EC item; otherwise Qase, or the agreed keyword rule. The rest of each row's cases are waiting to automate.</div>
+      <div class="card-sub">Type = Qase “Test Case Type”, Exceptional = the case tests a ticket EC item; otherwise Qase, or the agreed keyword rule. </div>
     </div>`
 }
 
@@ -1200,6 +1272,182 @@ function animateOls(root) {
     const end = Number(el.dataset.count), o = { v: end }
     g.from(o, { v: 0, duration: 0.8, ease: 'power2.out', onUpdate: () => { el.textContent = String(Math.round(o.v)) }, onComplete: () => { el.textContent = String(end) } })
   })
+}
+
+// ── OLS case table (spec docs/sdd/ols-tab R16–R18) ──────────────────────────────────────────────
+const OC_STATUSES = ['PASSED', 'FAILED', 'FLAKY', 'SKIPPED', 'NOT RUN', 'TO BE AUTOMATED']
+const OC_COLS = [
+  ['qaseId', 'Qase ID', 'c-id'], ['caseKey', 'Case', 'c-case'], ['title', 'Title', 'c-title'], ['status', 'Status', 'c-st'],
+  ['type', 'Case Type', 'c-type'], ['role', 'Role', 'c-role'], ['module', 'Module', 'c-mod'],
+]
+const OC_FILTERS = [['status', 'Status'], ['type', 'Case Type'], ['role', 'Role'], ['module', 'Module']]
+const OC_SIZES = [25, 50, 100]
+const oc = { rows: [], f: { status: '', type: '', role: '', module: '' }, q: '', sort: null, dir: 1, page: 1, size: 25, open: null }
+
+// R17c/R18: rows must agree with every card figure of the same file, or the table is not shown.
+function ocConflicts(d, rows) {
+  const c = d.cases, b = d.notPassedBreakdown || {}, out = []
+  const n = f => rows.filter(f).length, st = s => n(r => r.status === s)
+  const eq = (name, got, want) => { if (got !== want) out.push(`${name}: table ${got} ≠ card ${want}`) }
+  eq('cases', rows.length, c.total); eq('PASSED', st('PASSED'), c.passed); eq('TO BE AUTOMATED', st('TO BE AUTOMATED'), c.waiting)
+  eq('FAILED', st('FAILED'), b.failed); eq('FLAKY', st('FLAKY'), b.flaky); eq('SKIPPED', st('SKIPPED'), b.skipped); eq('NOT RUN', st('NOT RUN'), b.notRun)
+  for (const [k, label] of OLS_TYPES) {
+    const t = d.caseTypes && d.caseTypes[k]; if (!t) continue
+    const of = f => n(r => r.type === label && f(r))
+    eq(`${label} cases`, of(() => true), t.total); eq(`${label} PASSED`, of(r => r.status === 'PASSED'), t.passed)
+    eq(`${label} TO BE AUTOMATED`, of(r => r.status === 'TO BE AUTOMATED'), t.waiting)
+    eq(`${label} NOT PASSED`, of(r => r.status !== 'PASSED' && r.status !== 'TO BE AUTOMATED'), t.notPassed)
+  }
+  return out
+}
+
+async function renderOlsCases(d) {
+  const host = document.getElementById('ols-cases')
+  if (!host) return
+  let j
+  try {
+    const res = await fetch('/ols-cases.json', { cache: 'no-store' })
+    if (!res.ok) throw new Error('HTTP ' + res.status)
+    j = await res.json()
+    if (!j || !Array.isArray(j.rows) || !j.rows.every(r => r && typeof r.caseKey === 'string' && OC_STATUSES.includes(r.status) && Array.isArray(r.role))) throw new Error('unexpected shape')
+  } catch (e) {
+    if (document.getElementById('ols-cases') === host) host.innerHTML = ''
+    return // R16f: no table; the rest of the view stays
+  }
+  if (document.getElementById('ols-cases') !== host) return
+  if (j.measuredAt !== d.measuredAt) {
+    host.innerHTML = `<div class="ols-note chart-card">The case table is hidden: its data (${escapeHtml(j.measuredAt || '?')}) is not from the same export as the figures above.</div>`
+    return
+  }
+  const conflicts = ocConflicts(d, j.rows)
+  if (conflicts.length) {
+    host.innerHTML = `<div class="ols-note chart-card">The case table is hidden because it disagrees with the figures above: ${escapeHtml(conflicts.slice(0, 3).join(' · '))}.</div>`
+    return
+  }
+  oc.rows = j.rows
+  oc.f = { status: '', type: '', role: '', module: '' }; oc.q = ''; oc.sort = null; oc.dir = 1; oc.page = 1; oc.open = null
+  host.innerHTML = `
+    <div class="oc-head"><h3>Cases <span class="ols-unit ols-scope">per unique case</span></h3></div>
+    <div class="oc-tools">
+      ${OC_FILTERS.map(([k, label], i) => `<div class="oc-fwrap"><button type="button" class="oc-fbtn" data-f="${k}" aria-haspopup="listbox" aria-expanded="false"><span>${label}: <b data-flabel="${k}">All</b></span><span aria-hidden="true">▾</span></button></div>`).join('')}
+      <div class="oc-search-wrap"><input class="oc-search" type="search" placeholder="Search Qase ID, case, title, module" aria-label="Search cases"></div>
+    </div>
+    <div class="oc-note">A case with several roles is counted under each of its roles.</div>
+    <div class="oc-wrap"><table class="oc-table">
+      <colgroup>${OC_COLS.map(([, , c]) => `<col class="${c}">`).join('')}</colgroup>
+      <thead><tr>${OC_COLS.map(([k, label]) => `<th scope="col" aria-sort="none" data-k="${k}"><button type="button">${label}<span aria-hidden="true" class="oc-arrow"></span></button></th>`).join('')}</tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <div class="oc-foot">
+      <div class="oc-size" role="group" aria-label="Rows per page">${OC_SIZES.map(z => `<button type="button" data-size="${z}" aria-pressed="${z === oc.size}">${z}</button>`).join('')}</div>
+      <div class="oc-range" aria-live="polite"></div>
+      <div class="oc-pager"><button type="button" data-pg="-1" aria-label="Previous page">‹</button><span class="oc-pageno"></span><button type="button" data-pg="1" aria-label="Next page">›</button></div>
+    </div>
+    <div class="oc-backdrop"></div>`
+  host.querySelector('.oc-search').addEventListener('input', e => { oc.q = e.target.value.trim().toLowerCase(); oc.page = 1; ocDraw(host) })
+  host.querySelectorAll('.oc-table th').forEach(th => th.querySelector('button').addEventListener('click', () => {
+    const k = th.dataset.k
+    if (oc.sort === k) oc.dir = -oc.dir; else { oc.sort = k; oc.dir = 1 }
+    oc.page = 1; ocDraw(host)
+  }))
+  host.querySelectorAll('[data-size]').forEach(bt => bt.addEventListener('click', () => { oc.size = Number(bt.dataset.size); oc.page = 1; ocDraw(host) }))
+  host.querySelectorAll('[data-pg]').forEach(bt => bt.addEventListener('click', () => { oc.page += Number(bt.dataset.pg); ocDraw(host) }))
+  host.querySelectorAll('.oc-fbtn').forEach(bt => bt.addEventListener('click', () => (oc.open === bt.dataset.f ? ocClose(host) : ocOpen(host, bt.dataset.f))))
+  host.querySelector('.oc-backdrop').addEventListener('click', () => ocClose(host))
+  ocDraw(host)
+  const g = window.gsap
+  if (g && !window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+    g.from(host.querySelectorAll('tbody tr'), { opacity: 0, y: 6, duration: 0.35, stagger: 0.012, ease: 'power2.out', clearProps: 'opacity,transform' })
+}
+
+const ocMatch = (r, skip) => OC_FILTERS.every(([k]) => k === skip || !oc.f[k] || (k === 'role' ? r.role.includes(oc.f[k]) : r[k] === oc.f[k]))
+  && (!oc.q || [r.qaseId == null ? '' : String(r.qaseId), r.caseKey, r.title, r.module].some(v => v.toLowerCase().includes(oc.q)))
+
+function ocOptions(k) {
+  const counts = new Map()
+  for (const r of oc.rows) if (ocMatch(r, k)) for (const v of (k === 'role' ? r.role : [r[k]])) counts.set(v, (counts.get(v) || 0) + 1)
+  // R17: the status filter always lists the six statuses (0 included); types follow the type card.
+  if (k === 'status') return OC_STATUSES.map(v => [v, counts.get(v) || 0])
+  const order = k === 'type' ? OLS_TYPES.map(([, l]) => l) : [...counts.keys()].sort((a, b) => a.localeCompare(b, 'th'))
+  return order.filter(v => counts.has(v)).map(v => [v, counts.get(v)])
+}
+
+function ocOpen(host, k) {
+  ocClose(host)
+  const bt = host.querySelector(`.oc-fbtn[data-f="${k}"]`), label = OC_FILTERS.find(f => f[0] === k)[1]
+  const total = oc.rows.filter(r => ocMatch(r, k)).length
+  const opts = [['', `All`, total], ...ocOptions(k).map(([v, n]) => [v, v, n])]
+  const panel = document.createElement('div')
+  panel.className = 'oc-panel'; panel.setAttribute('role', 'listbox'); panel.setAttribute('aria-label', label)
+  panel.innerHTML = `<div class="oc-sheet-head"><span>${label}</span><button type="button" class="oc-sheet-close" aria-label="Close">Close</button></div>`
+    + opts.map(([v, text, n]) => `<div class="oc-opt" role="option" tabindex="-1" data-v="${escapeHtml(v)}" aria-selected="${oc.f[k] === v}"><span>${escapeHtml(text)}</span><i>${n}</i></div>`).join('')
+  bt.parentElement.appendChild(panel)
+  if (panel.getBoundingClientRect().right > document.documentElement.clientWidth - 8) panel.classList.add('right')
+  bt.setAttribute('aria-expanded', 'true'); oc.open = k
+  host.querySelector('.oc-backdrop').classList.add('open')
+  const items = [...panel.querySelectorAll('.oc-opt')]
+  const pick = el => { oc.f[k] = el.dataset.v; oc.page = 1; ocClose(host); ocDraw(host); bt.focus() }
+  items.forEach(el => el.addEventListener('click', () => pick(el)))
+  panel.querySelector('.oc-sheet-close').addEventListener('click', () => { ocClose(host); bt.focus() })
+  panel.addEventListener('keydown', e => {
+    const i = items.indexOf(document.activeElement)
+    if (e.key === 'Escape') { e.preventDefault(); ocClose(host); bt.focus() }
+    else if (e.key === 'ArrowDown') { e.preventDefault(); items[Math.min(items.length - 1, i + 1)].focus() }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); items[Math.max(0, i - 1)].focus() }
+    else if ((e.key === 'Enter' || e.key === ' ') && i >= 0) { e.preventDefault(); pick(items[i]) }
+  })
+  ;(items.find(el => el.getAttribute('aria-selected') === 'true') || items[0]).focus()
+  setTimeout(() => document.addEventListener('click', ocOutside), 0)
+}
+function ocOutside(e) {
+  const host = document.getElementById('ols-cases')
+  if (!host || !e.target.closest('.oc-fwrap')) host ? ocClose(host) : document.removeEventListener('click', ocOutside)
+}
+function ocClose(host) {
+  host.querySelectorAll('.oc-panel').forEach(p => p.remove())
+  host.querySelectorAll('.oc-fbtn').forEach(b => b.setAttribute('aria-expanded', 'false'))
+  const bd = host.querySelector('.oc-backdrop'); if (bd) bd.classList.remove('open')
+  oc.open = null
+  document.removeEventListener('click', ocOutside)
+}
+
+function ocDraw(host) {
+  let rows = oc.rows.filter(r => ocMatch(r))
+  if (oc.sort) {
+    const k = oc.sort
+    const key = r => k === 'role' ? r.role.join(', ') : k === 'status' ? OC_STATUSES.indexOf(r.status) : r[k]
+    rows = [...rows].sort((a, b) => {
+      const x = key(a), y = key(b)
+      if (x == null && y == null) return 0
+      if (x == null) return 1
+      if (y == null) return -1
+      return (typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y), 'th', { numeric: true })) * oc.dir
+    })
+  }
+  const pages = Math.max(1, Math.ceil(rows.length / oc.size))
+  oc.page = Math.min(Math.max(1, oc.page), pages)
+  const from = (oc.page - 1) * oc.size, shown = rows.slice(from, from + oc.size)
+  const cell = (label, html) => `<td data-label="${label}"><span class="oc-v">${html}</span></td>`
+  host.querySelector('tbody').innerHTML = shown.length ? shown.map(r => `<tr>
+    ${cell('Qase ID', r.qaseId == null ? '—' : `<a class="oc-id ols-report-link" href="https://app.qase.io/case/OLS-${Number(r.qaseId)}" target="_blank" rel="noopener noreferrer">${Number(r.qaseId)}</a>`)}
+    ${cell('Case', `<span class="oc-id">${escapeHtml(r.caseKey)}</span>`)}
+    ${cell('Title', escapeHtml(r.title))}
+    ${cell('Status', `<span class="oc-st s-${r.status.replace(/ /g, '-')}">${r.status}</span>`)}
+    ${cell('Case Type', escapeHtml(r.type))}
+    ${cell('Role', escapeHtml(r.role.join(', ')))}
+    ${cell('Module', escapeHtml(r.module))}</tr>`).join('')
+    : `<tr><td colspan="7" class="oc-empty" data-label="">No case matches.</td></tr>`
+  host.querySelectorAll('.oc-table th').forEach(th => th.setAttribute('aria-sort', th.dataset.k !== oc.sort ? 'none' : oc.dir > 0 ? 'ascending' : 'descending'))
+  host.querySelectorAll('.oc-arrow').forEach(a => { const k = a.closest('th').dataset.k; a.textContent = k === oc.sort ? (oc.dir > 0 ? '▲' : '▼') : '' })
+  host.querySelector('.oc-range').textContent = rows.length ? `${from + 1}–${from + shown.length} of ${rows.length}` : `0 of 0`
+  host.querySelector('.oc-pageno').textContent = `Page ${oc.page} of ${pages}`
+  host.querySelector('[data-pg="-1"]').disabled = oc.page <= 1
+  host.querySelector('[data-pg="1"]').disabled = oc.page >= pages
+  host.querySelectorAll('[data-size]').forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.size) === oc.size)))
+  for (const [k] of OC_FILTERS) {
+    host.querySelector(`[data-flabel="${k}"]`).textContent = oc.f[k] || 'All'
+    host.querySelector(`.oc-fbtn[data-f="${k}"]`).classList.toggle('on', !!oc.f[k])
+  }
 }
 
 let donutChart = null
