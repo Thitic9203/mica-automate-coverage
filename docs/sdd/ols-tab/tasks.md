@@ -11,3 +11,8 @@
 | T7 | Remove repeated figures/definitions | R9 | count each number's occurrences in the visible text | every count, percent and definition appears once |
 | T8 | Scope line names the platforms | R10 | visible text equals the R10 wording | text matches, no overflow at 390 px |
 | T9 | “Cases by type” card from `caseTypes` | R7, R8, R9, R11 | fixture JSON with known type counts; card absent when `caseTypes` missing | values equal the JSON at 1440 / 900 / 390, overflow 0, no clipped text, each number once |
+| T10 | Case table from `caseRows`, English headers, Qase link | R16, R16f | fixture JSON with known rows; table absent when `caseRows` missing | cells equal the JSON |
+| T11 | Filters + search (listbox desktop, bottom sheet mobile) | R16a, R16d | fixture: each filter's count equals the matching card | counts equal, no native select at 390 |
+| T12 | Sortable headers with `aria-sort` | R16b | sort each column asc/desc on a known fixture order | order + aria-sort correct |
+| T13 | Pagination 25/50/100 | R16c | fixture 120 rows: page counts 5/3/2, reset to page 1 on filter | correct ranges |
+| T14 | Responsive + motion + axe | R16e | 1440/900/390 scrollWidth ≤ clientWidth; re-render ×3 node count stable | overflow 0, axe clean |

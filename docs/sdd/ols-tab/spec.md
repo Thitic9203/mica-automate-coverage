@@ -72,6 +72,26 @@ progress ลงไป … ทั้งหมดกี่เคส · automate �
   embedded `report.json` stats, so the page and the report never disagree. The case cards stay per unique
   caseId and are labelled as such. Owner order 2026-10-21 (every automate round).
 
+- **R16** — (owner order 2026-10-22, plan step — awaiting owner approval) Below the rest of the OLS view
+  the page MUST show a case table from `caseRows` (export spec R7), headers in English:
+  **Qase ID** (link to the case in app.qase.io project OLS; plain text when `qaseId` is null) · **Case** ·
+  **Title** · **Automation** · **Result** · **Case Type** · **Role** · **Module**.
+  - **R16a** — Above the table: filters Automation, Result, Case Type, Role, Module (options built from the
+    row values, each with its count) and one search box (matches Qase ID, Case, Title, Module). At ≥768 px
+    the filters are custom listbox controls; below 768 px they open a bottom sheet with
+    `env(safe-area-inset-bottom)` padding — no native `<select>` on mobile (global rule 16).
+  - **R16b** — Every header is a button that sorts asc/desc and sets `aria-sort` on its `th`; one sort
+    active at a time; Thai titles sort with `localeCompare('th')`.
+  - **R16c** — Below the table: pagination with page size 25 / 50 / 100 (default 25), page x of y, and
+    "a–b of n" for the filtered set. Filters, search and sort reset to page 1.
+  - **R16d** — With no filter, the counts per Automation / Result / Case Type MUST equal the cards and the
+    type card above (same JSON); the page computes nothing that the JSON does not carry as rows.
+  - **R16e** — Layout: a real `<table>` inside a scroll container on desktop/tablet; at ≤430 px each row
+    becomes a CSS-grid card; no horizontal page scroll at 1440 / 900 / 390; tap targets ≥44 px; tokens
+    only. Motion per R7 (rows fade with `gsap.from` + `clearProps` on first render only; no-op under
+    reduced motion). Re-render 2–3 times leaves no extra nodes.
+  - **R16f** — When `caseRows` is missing or malformed the table section is not shown; the rest renders.
+
 ## Out of scope
 
 Dark mode for the whole site (the site has no theme system today — a separate change).
