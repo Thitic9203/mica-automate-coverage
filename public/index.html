@@ -1090,7 +1090,7 @@ async function renderMa() {
     <div class="chart-card ols-note">
       <dl>
         <dt>Measured</dt><dd>${escapeHtml(formatBkkTime(new Date(d.measuredAt)))}</dd>
-        <dt>Source</dt><dd>Qase project MA · one top-level suite per system</dd>
+        <dt>Source</dt><dd>Qase project MA · one top-level suite per system · <a class="ols-report-link" href="https://app.qase.io/project/MA" target="_blank" rel="noopener noreferrer">Open in Qase ↗</a></dd>
         ${runs}
       </dl>
     </div>`
@@ -1168,13 +1168,14 @@ async function renderOls() {
         <dt>Measured</dt><dd>${escapeHtml(formatBkkTime(new Date(d.measuredAt)))}</dd>
         <dt>Pass results from</dt><dd>${escapeHtml(d.round && d.round.label || '')} · started ${d.round && d.round.startedAt ? escapeHtml(formatBkkTime(new Date(d.round.startedAt))) : '—'}${d.round && /^https:\/\/claude\.ai\//.test(d.round.reportUrl || '') ? ` · <a class="ols-report-link" href="${escapeHtml(d.round.reportUrl)}" target="_blank" rel="noopener noreferrer">Open HTML report ↗</a>` : ''}</dd>
         <dt>Case source</dt><dd><strong>Done tickets (Story / Task / Bug)</strong>, excluding Dev_Task and QA_Task</dd>
+        <dt>Qase</dt><dd><a class="ols-report-link" href="https://app.qase.io/project/OLS" target="_blank" rel="noopener noreferrer">Open project OLS in Qase ↗</a></dd>
       </dl>
     </div>`
   animateOls(content)
 }
 
 // Spec R11: one row per Qase Test Case Type + "No type", from `caseTypes` only; hidden when malformed.
-const OLS_TYPES = [['happyPath', 'Happy Path'], ['failureScenario', 'Failure Scenario'], ['edgeCase', 'Edge Case'], ['exceptionalCase', 'Exceptional Case'], ['untyped', 'No type']]
+const OLS_TYPES = [['happyPath', 'Happy Path'], ['failureScenario', 'Failure Scenario'], ['edgeCase', 'Edge Case'], ['exceptionalCase', 'Exceptional Case']]
 function olsTypesCard(ct, c, n) {
   const ok = ct && OLS_TYPES.every(([k]) => ct[k] && ['total', 'passed', 'notPassed'].every(f => Number.isInteger(ct[k][f])))
     && OLS_TYPES.reduce((s, [k]) => s + ct[k].total, 0) === c.total
@@ -1186,7 +1187,7 @@ function olsTypesCard(ct, c, n) {
         <div class="ols-types-head" role="row"><span role="columnheader">Type</span><span role="columnheader">Cases</span><span role="columnheader">Passed</span><span role="columnheader">Not passed</span></div>
         ${OLS_TYPES.map(([k, label]) => `<div class="ols-types-row" role="row"><span role="rowheader">${label}</span><span role="cell">${n(ct[k].total)}</span><span role="cell" class="ols-t-pass">${n(ct[k].passed)}</span><span role="cell" class="ols-t-fail">${n(ct[k].notPassed)}</span></div>`).join('')}
       </div>
-      <div class="card-sub">Type = Qase “Test Case Type”. No type = no Qase case or no type set. The rest of each row's cases are waiting to automate.</div>
+      <div class="card-sub">Type = Qase “Test Case Type”, or the agreed keyword rule when Qase has none. The rest of each row's cases are waiting to automate.</div>
     </div>`
 }
 
