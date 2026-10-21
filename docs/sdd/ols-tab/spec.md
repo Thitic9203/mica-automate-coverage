@@ -26,6 +26,9 @@ progress ลงไป … ทั้งหมดกี่เคส · automate �
 - **R5** — The view MUST show when the numbers were measured (`measuredAt`, Bangkok time) and which
   round the pass results come from (`round.label`, `round.startedAt`), and the definitions: unique
   caseId · all platforms · Done tickets excluding Dev_Task / QA_Task · flaky counts as not passed.
+- **R5b** — When `round.reportUrl` is present the view MUST show a link labelled “Open HTML report”
+  next to the round, opening in a new tab; the report itself is hosted privately (claude.ai artifact),
+  never on this public site. When it is absent the view shows no link. Owner order 2026-10-21.
 - **R6** — When the JSON is missing or malformed the view MUST say so and show no numbers.
 - **R7** — Motion follows the owner's UI rule: bar segments grow from the left with `gsap.from()` +
   `clearProps`; numbers count up; nothing animates when `prefers-reduced-motion` is set or GSAP did
