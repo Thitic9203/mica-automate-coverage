@@ -1,5 +1,5 @@
 {
-  "measuredAt": "2026-10-21T09:57:00.290Z",
+  "measuredAt": "2026-10-21T14:11:59.595Z",
   "round": {
     "startedAt": "2026-10-20T06:25:37.186Z",
     "label": "Desktop dev round 20 Oct 2026",
@@ -7,24 +7,24 @@
     "reportUrl": "https://claude.ai/artifact/UDdt8xsRtyb4YF2F8MepbV"
   },
   "cases": {
-    "total": 418,
+    "total": 422,
     "passed": 222,
-    "notPassed": 130,
+    "notPassed": 134,
     "waiting": 66,
-    "passedPercent": 53.1,
-    "notPassedPercent": 31.1,
-    "waitingPercent": 15.8
+    "passedPercent": 52.6,
+    "notPassedPercent": 31.8,
+    "waitingPercent": 15.6
   },
   "notPassedBreakdown": {
     "failed": 57,
     "flaky": 7,
     "skipped": 53,
-    "notRun": 13
+    "notRun": 17
   },
   "tickets": {
-    "done": 650,
-    "withAutomatedCase": 165,
-    "percent": 25.4,
+    "done": 654,
+    "withAutomatedCase": 182,
+    "percent": 27.8,
     "filters": {
       "withAutomatedCase": "https://skilllane.atlassian.net/issues/?filter=23932",
       "done": "https://skilllane.atlassian.net/issues/?filter=23931"
@@ -32,27 +32,27 @@
   },
   "caseTypes": {
     "happyPath": {
-      "total": 349,
-      "passed": 178,
-      "notPassed": 117,
+      "total": 325,
+      "passed": 165,
+      "notPassed": 106,
       "waiting": 54
     },
     "failureScenario": {
-      "total": 56,
-      "passed": 36,
+      "total": 50,
+      "passed": 30,
       "notPassed": 9,
       "waiting": 11
     },
     "edgeCase": {
-      "total": 13,
-      "passed": 8,
+      "total": 12,
+      "passed": 7,
       "notPassed": 4,
       "waiting": 1
     },
     "exceptionalCase": {
-      "total": 0,
-      "passed": 0,
-      "notPassed": 0,
+      "total": 35,
+      "passed": 20,
+      "notPassed": 15,
       "waiting": 0
     },
     "untyped": {
