@@ -1,5 +1,5 @@
 {
-  "measuredAt": "2026-10-21T09:21:46.222Z",
+  "measuredAt": "2026-10-21T09:27:48.722Z",
   "round": {
     "startedAt": "2026-10-20T06:25:37.186Z",
     "label": "Desktop dev round 20 Oct 2026",
@@ -28,6 +28,38 @@
     "filters": {
       "withAutomatedCase": "https://skilllane.atlassian.net/issues/?filter=23932",
       "done": "https://skilllane.atlassian.net/issues/?filter=23931"
+    }
+  },
+  "caseTypes": {
+    "happyPath": {
+      "total": 240,
+      "passed": 160,
+      "notPassed": 80,
+      "waiting": 0
+    },
+    "failureScenario": {
+      "total": 36,
+      "passed": 31,
+      "notPassed": 5,
+      "waiting": 0
+    },
+    "edgeCase": {
+      "total": 10,
+      "passed": 8,
+      "notPassed": 2,
+      "waiting": 0
+    },
+    "exceptionalCase": {
+      "total": 0,
+      "passed": 0,
+      "notPassed": 0,
+      "waiting": 0
+    },
+    "untyped": {
+      "total": 132,
+      "passed": 23,
+      "notPassed": 43,
+      "waiting": 66
     }
   }
 }
