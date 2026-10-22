@@ -1,5 +1,5 @@
 {
-  "measuredAt": "2026-10-21T22:50:53.999Z",
+  "measuredAt": "2026-10-22T05:17:06.324Z",
   "round": {
     "startedAt": "2026-10-21T14:23:22.165Z",
     "label": "Final dev round 21 Oct 2026",
@@ -14,24 +14,24 @@
     }
   },
   "cases": {
-    "total": 428,
+    "total": 452,
     "passed": 235,
-    "notPassed": 131,
-    "waiting": 62,
-    "passedPercent": 54.9,
-    "notPassedPercent": 30.6,
-    "waitingPercent": 14.5
+    "notPassed": 162,
+    "waiting": 55,
+    "passedPercent": 52,
+    "notPassedPercent": 35.8,
+    "waitingPercent": 12.2
   },
   "notPassedBreakdown": {
     "failed": 62,
     "flaky": 0,
     "skipped": 58,
-    "notRun": 11
+    "notRun": 42
   },
   "tickets": {
-    "done": 655,
-    "withAutomatedCase": 200,
-    "percent": 30.5,
+    "done": 660,
+    "withAutomatedCase": 244,
+    "percent": 37,
     "filters": {
       "withAutomatedCase": "https://skilllane.atlassian.net/issues/?filter=23932",
       "done": "https://skilllane.atlassian.net/issues/?filter=23931"
@@ -39,27 +39,27 @@
   },
   "caseTypes": {
     "happyPath": {
-      "total": 327,
-      "passed": 175,
-      "notPassed": 103,
-      "waiting": 49
+      "total": 346,
+      "passed": 176,
+      "notPassed": 126,
+      "waiting": 44
     },
     "failureScenario": {
-      "total": 52,
-      "passed": 30,
-      "notPassed": 10,
-      "waiting": 12
+      "total": 55,
+      "passed": 29,
+      "notPassed": 16,
+      "waiting": 10
     },
     "edgeCase": {
-      "total": 12,
+      "total": 13,
       "passed": 6,
-      "notPassed": 5,
+      "notPassed": 6,
       "waiting": 1
     },
     "exceptionalCase": {
-      "total": 37,
+      "total": 38,
       "passed": 24,
-      "notPassed": 13,
+      "notPassed": 14,
       "waiting": 0
     },
     "untyped": {
