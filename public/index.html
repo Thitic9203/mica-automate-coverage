@@ -274,10 +274,10 @@ body::-webkit-scrollbar { display: none; }
 /* ── MA tab (spec docs/sdd/ma-tabs) ── */
 .ma-sys { margin-bottom:18px; }
 .ma-sys h3 { font-size:13px; font-weight:600; letter-spacing:-.01em; margin-bottom:8px; }
-.ols-cards.ma-cards { grid-template-columns:repeat(3, minmax(0,1fr)); margin-bottom:0; }
+.ols-cards.ma-cards { grid-template-columns:repeat(4, minmax(0,1fr)); margin-bottom:0; }
 .ma-cards .ma-none { grid-column:1 / -1; }
 .ma-empty { font-family:inherit; font-size:15px; font-weight:500; color:var(--muted); line-height:1.2; }
-@media (max-width:1024px){ .ols-cards.ma-cards { grid-template-columns:repeat(3, minmax(0,1fr)); } }
+@media (max-width:1024px){ .ols-cards.ma-cards { grid-template-columns:repeat(2, minmax(0,1fr)); } }
 @media (max-width:640px){ .ols-cards.ma-cards { grid-template-columns:minmax(0,1fr); } }
 /* ── OLS tab (spec docs/sdd/ols-tab) ── */
 .ols-head { display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 14px; margin-bottom:14px; }
@@ -1048,7 +1048,7 @@ function renderOverview() {
 const MA_SYSTEMS = [['MICA1', 'MICA 1'], ['EVMS', 'EvMS'], ['ELMS', 'ELMS'], ['CBMS', 'CBMS']]
 function maValid(d) {
   if (!d || typeof d.measuredAt !== 'string' || !d.systems || typeof d.systems !== 'object') return false
-  return Object.values(d.systems).every(s => s && typeof s.totalAutomated === 'number' && (s.run === null ||
+  return Object.values(d.systems).every(s => s && typeof s.totalCases === 'number' && typeof s.totalAutomated === 'number' && s.totalAutomated <= s.totalCases && (s.run === null ||
     (s.run && ['cases', 'passed', 'notPassed', 'passedPercent', 'notPassedPercent'].every(k => typeof s.run[k] === 'number') && s.run.passed + s.run.notPassed === s.run.cases)))
 }
 async function renderMa() {
@@ -1074,6 +1074,7 @@ async function renderMa() {
       <div class="card ma-none"><div class="card-value"><span class="ma-empty">No data in Qase yet</span></div></div></div></section>`
     const r = s.run
     return `<section class="ma-sys" data-system="${key}"><h3>${name}</h3><div class="ols-cards ma-cards">
+      <div class="card"><div class="card-label">Total cases</div><div class="card-value">${n(s.totalCases)}${pad}</div></div>
       <div class="card"><div class="card-label">Total automated</div><div class="card-value">${n(s.totalAutomated)}${pad}</div></div>
       ${r ? `<div class="card"><div class="card-label">Automated · passed</div><div class="card-value teal">${n(r.passed)}<span class="ols-pct">${r.passedPercent}%</span></div></div>
       <div class="card"><div class="card-label">Automated · not passed</div><div class="card-value amber">${n(r.notPassed)}<span class="ols-pct">${r.notPassedPercent}%</span></div></div>`

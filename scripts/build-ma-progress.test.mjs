@@ -40,8 +40,8 @@ test('R5/R6/R8: no run → run null; missing suite → system absent', async () 
   assert.equal(out.measuredAt, NOW.toISOString())
   assert.equal(out.project, 'MA')
   assert.deepEqual(Object.keys(out.systems), ['MICA1', 'EVMS'])
-  assert.deepEqual(out.systems.MICA1, { suite: 'MICA1', totalAutomated: 3, run: null })
-  assert.deepEqual(out.systems.EVMS, { suite: 'EVMS', totalAutomated: 1, run: null })
+  assert.deepEqual(out.systems.MICA1, { suite: 'MICA1', totalCases: 4, totalAutomated: 3, run: null })
+  assert.deepEqual(out.systems.EVMS, { suite: 'EVMS', totalCases: 1, totalAutomated: 1, run: null })
   assert.equal('ELMS' in out.systems, false)
   assert.equal('CBMS' in out.systems, false)
 })
@@ -49,8 +49,15 @@ test('R5/R6/R8: no run → run null; missing suite → system absent', async () 
 test('R5: suite title match is case-insensitive and ignores spaces', async () => {
   const suites = [{ id: 1, title: 'Elms', parent_id: null }, { id: 2, title: 'c b m s', parent_id: 0 }]
   const out = await buildMaProgress({ fetchJson: mockQase({ suites, cases: [auto(1, 1), auto(2, 2)] }), now: NOW })
-  assert.deepEqual(out.systems.ELMS, { suite: 'Elms', totalAutomated: 1, run: null })
-  assert.deepEqual(out.systems.CBMS, { suite: 'c b m s', totalAutomated: 1, run: null })
+  assert.deepEqual(out.systems.ELMS, { suite: 'Elms', totalCases: 1, totalAutomated: 1, run: null })
+  assert.deepEqual(out.systems.CBMS, { suite: 'c b m s', totalCases: 1, totalAutomated: 1, run: null })
+})
+
+test('R19: totalCases counts every case in the suite tree, whatever its automation value', async () => {
+  const suites = [{ id: 1, title: 'CBMS', parent_id: null }, { id: 2, title: 'Child', parent_id: 1 }]
+  const cases = [auto(1, 1, 0), auto(2, 1, 1), auto(3, 2, 0), auto(4, 2, 2), auto(5, 99, 2)]
+  const out = await buildMaProgress({ fetchJson: mockQase({ suites, cases }), now: NOW })
+  assert.deepEqual(out.systems.CBMS, { suite: 'CBMS', totalCases: 4, totalAutomated: 1, run: null })
 })
 
 test('R7: latest completed run containing the system; mixed statuses; latest result per case', async () => {
