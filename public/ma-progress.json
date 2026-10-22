@@ -1,24 +1,28 @@
 {
-  "measuredAt": "2026-10-22T11:16:21.166Z",
+  "measuredAt": "2026-10-22T11:35:31.907Z",
   "project": "MA",
   "systems": {
     "MICA1": {
       "suite": "MICA1",
+      "totalCases": 1349,
       "totalAutomated": 432,
       "run": null
     },
     "EVMS": {
       "suite": "EVMS",
+      "totalCases": 228,
       "totalAutomated": 155,
       "run": null
     },
     "ELMS": {
       "suite": "ELMS",
+      "totalCases": 66,
       "totalAutomated": 0,
       "run": null
     },
     "CBMS": {
       "suite": "CBMS",
+      "totalCases": 317,
       "totalAutomated": 0,
       "run": null
     }

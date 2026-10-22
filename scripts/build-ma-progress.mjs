@@ -59,7 +59,9 @@ export async function buildMaProgress({ fetchJson, now = new Date() }) {
     const ids = tree(suite.id)
     const own = cases.filter(c => ids.has(c.suite_id))
     const ownIds = new Set(own.map(c => c.id))
+    const totalCases = own.length // R19: every case in the suite tree, whatever its automation value
     const totalAutomated = own.filter(c => c.automation === AUTOMATED).length
+    if (totalAutomated > totalCases) throw new Error(`${key}: automated ${totalAutomated} > cases ${totalCases}`) // R19 guard → R9
 
     let run = null
     const latest = runs.find(r => (r.cases || []).some(id => ownIds.has(id)))
@@ -79,7 +81,7 @@ export async function buildMaProgress({ fetchJson, now = new Date() }) {
         passedPercent: pct(passed, n), notPassedPercent: pct(notPassed, n),
       }
     }
-    systems[key] = { suite: suite.title, totalAutomated, run }
+    systems[key] = { suite: suite.title, totalCases, totalAutomated, run }
   }
   return { measuredAt: now.toISOString(), project: PROJECT, systems }
 }
