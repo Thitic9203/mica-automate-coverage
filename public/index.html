@@ -1182,13 +1182,19 @@ function olsTypesCard(ct, c, n) {
   const ok = ct && OLS_TYPES.every(([k]) => ct[k] && ['total', 'passed', 'notPassed'].every(f => Number.isInteger(ct[k][f])))
     && ['total', 'passed', 'notPassed'].every(f => OLS_TYPES.reduce((s, [k]) => s + ct[k][f], 0) === c[f])
   if (!ok) return ''
+  // R19: shares in tenths of a percent, largest remainder, so the type rows add to exactly 100.0%
+  const raw = OLS_TYPES.map(([k]) => c.total ? ct[k].total * 1000 / c.total : 0)
+  const tenths = raw.map(Math.floor)
+  let left = c.total ? 1000 - tenths.reduce((s, v) => s + v, 0) : 0
+  raw.map((v, i) => [v - tenths[i], i]).sort((a, b) => b[0] - a[0] || a[1] - b[1]).forEach(([, i]) => { if (left > 0) { tenths[i]++; left-- } })
+  const share = Object.fromEntries(OLS_TYPES.map(([k], i) => [k, (tenths[i] / 10).toFixed(1) + '%']))
   const pct = v => c.total ? (v / c.total * 100).toFixed(1) + '%' : '0.0%'
   return `
     <div class="chart-card ols-types">
       <h3>Cases by type</h3>
       <div class="ols-types-grid" role="table" aria-label="Cases by test case type">
         <div class="ols-types-head" role="row"><span role="columnheader">Type</span><span role="columnheader">Cases</span><span role="columnheader">%</span><span role="columnheader">Passed</span><span role="columnheader">Not passed</span></div>
-        ${OLS_TYPES.map(([k, label]) => `<div class="ols-types-row" role="row"><span role="rowheader">${label}</span><span role="cell">${n(ct[k].total)}</span><span role="cell">${pct(ct[k].total)}</span><span role="cell" class="ols-t-pass">${n(ct[k].passed)}</span><span role="cell" class="ols-t-fail">${n(ct[k].notPassed)}</span></div>`).join('')}
+        ${OLS_TYPES.map(([k, label]) => `<div class="ols-types-row" role="row"><span role="rowheader">${label}</span><span role="cell">${n(ct[k].total)}</span><span role="cell">${share[k]}</span><span role="cell" class="ols-t-pass">${n(ct[k].passed)}</span><span role="cell" class="ols-t-fail">${n(ct[k].notPassed)}</span></div>`).join('')}
         <div class="ols-types-row ols-types-total" role="row"><span role="rowheader">Total</span><span role="cell">${n(c.total)}</span><span role="cell">${pct(c.total)}</span><span role="cell" class="ols-t-pass">${n(c.passed)}</span><span role="cell" class="ols-t-fail">${n(c.notPassed)}</span></div>
       </div>
       <div class="card-sub">Type = Qase “Test Case Type”, Exceptional = the case tests a ticket EC item; otherwise Qase, or the agreed keyword rule. The rest of each row's cases are waiting to automate.</div>
