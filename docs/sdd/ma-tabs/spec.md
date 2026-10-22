@@ -56,6 +56,24 @@ four systems (not four tabs).
 - **R17** — CSS grid layout; no horizontal page scroll and no clipped text at 1440, 900 and 390 px.
 - **R18** — When the JSON is missing or malformed the tab says so and shows no numbers.
 
+## Rules — total cases per system (owner order 2026-10-22: "เพิ่มการ์ดจำนวนเคสทั้งหมดต่อระบบ")
+
+Source: owner chat 22/Oct after CBMS (317 cases) and ELMS (66 cases) showed only "Total automated 0" —
+the owner expects the cases that exist in Qase to be visible.
+
+- **R19** — The builder MUST write `totalCases` for each present system: the count of all cases in the
+  system's suite and its descendant suites (R5), whatever their `automation` value. R8's system shape
+  becomes `{ suite, totalCases, totalAutomated, run }`; `totalAutomated ≤ totalCases` MUST hold, otherwise
+  the builder exits non-zero and writes nothing (R9).
+- **R20** — A present system's section MUST show four cards, in this order: **Total cases**
+  (`totalCases`), **Total automated**, **Automated · passed**, **Automated · not passed**. Total cases
+  uses the same card format as Total automated (count, reserved percent line, no percent). R11 is amended
+  from three cards to these four.
+- **R21** — The card grid for the MA tab: 4 columns above 1024 px, 2 columns at ≤ 1024 px, 1 column at
+  ≤ 640 px (R17 still applies: no overflow, no clipped text at 1440 / 900 / 390).
+- **R22** — The page MUST treat JSON without a numeric `totalCases`, or with `totalAutomated > totalCases`,
+  as malformed (R18).
+
 ## Done when
 
 - The tab bar reads "MICA 1 · EvMS · ELMS · CBMS", "OLS" and nothing else; the page opens on the MA tab.

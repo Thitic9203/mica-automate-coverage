@@ -8,3 +8,6 @@
 | T4 | `renderMa()` sections, cards, empty states, notes | R10–R15, R18 | page text vs JSON | every value equals the JSON, each once |
 | T5 | Motion + reduced-motion | R16 | reduced-motion shows final state | both modes |
 | T6 | Responsive 1440 / 900 / 390 | R17 | `scrollWidth ≤ clientWidth` | overflow 0 at all three, OLS tab unchanged |
+| T7 | Builder `totalCases` + guard | R19 | test: mixed automation → totalCases counts all; automated > cases throws | `node --test scripts/` green |
+| T8 | Page: Total cases card first, validation, 4/2/1 grid | R20–R22 | page text vs JSON; malformed JSON message | every value equals the JSON once; overflow 0 at 1440 / 900 / 390 |
+| T9 | Regenerate JSON; deploy staging → verify → production | R19, R8 | live JSON on staging has `totalCases` | production JSON and page show CBMS 317 / ELMS 66 total cases |
