@@ -124,7 +124,9 @@ Dark mode for the whole site (the site has no theme system today — a separate 
   cases as `total / c.total × 100` with one decimal, the same format as the cards above. It MUST end with a
   “Total” row whose Cases, Passed and Not passed are the sums of the type rows. Those sums equal
   `c.total`, `c.passed` and `c.notPassed`; if any sum differs, the card is not shown (R18, no
-  conflicting figures). The Total row's % is 100.0%. The rounded type shares may not add to exactly
-  100.0; the page shows them as computed and does not adjust them.
+  conflicting figures). The Total row's % is 100.0%. (Amended by owner order 2026-10-22, verbatim:
+  "จัดการคำนวณมาให้พอดี") The type shares MUST add to exactly 100.0: compute each share in tenths of a
+  percent with the largest-remainder method (floor each, then give the leftover tenths one each to
+  the rows with the largest remainders, ties to the earlier row).
   Done when: at 1440, 900 and 390 the column and the row show values equal to the JSON, overflow is 0
   and no text is clipped.
