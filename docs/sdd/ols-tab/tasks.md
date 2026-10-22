@@ -17,3 +17,4 @@
 | T13 | Pagination 25/50/100 | R16c | fixture 120 rows: page counts 5/3/2, reset to page 1 on filter | correct ranges |
 | T14 | Responsive + motion + axe | R16e | 1440/900/390 scrollWidth ≤ clientWidth; re-render ×3 node count stable | overflow 0, axe clean |
 | T15 | One status vocabulary across the tab (R17) | R17a–c | fixture: visible labels = the six uppercase values; rows per status = cards | labels + counts equal at 1440/900/390 |
+| T19 | “%” column + “Total” row on Cases by type | R19, R18, R11 | fixture where type sums ≠ case totals → card absent; known fixture → % and sums exact | values equal the JSON at 1440 / 900 / 390, overflow 0 |

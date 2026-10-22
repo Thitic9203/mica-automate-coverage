@@ -119,3 +119,12 @@ Dark mode for the whole site (the site has no theme system today — a separate 
   The page MUST hide the case table and state the reason when the two files' `measuredAt` differ, and
   MUST NOT show the report totals when `round.reportStats.unit` is missing. Verified in Chrome: every
   visible count equals the JSON and the linked report's totals.
+- **R19** — (owner order 2026-10-22, verbatim: "เพิ่ม % ของแต่ละประเภท และมีบรรทัด total ด้วย") The
+  “Cases by type” card (R11) MUST show a “%” column right after “Cases”, giving each type's share of all
+  cases as `total / c.total × 100` with one decimal, the same format as the cards above. It MUST end with a
+  “Total” row whose Cases, Passed and Not passed are the sums of the type rows. Those sums equal
+  `c.total`, `c.passed` and `c.notPassed`; if any sum differs, the card is not shown (R18, no
+  conflicting figures). The Total row's % is 100.0%. The rounded type shares may not add to exactly
+  100.0; the page shows them as computed and does not adjust them.
+  Done when: at 1440, 900 and 390 the column and the row show values equal to the JSON, overflow is 0
+  and no text is clipped.
