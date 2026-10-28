@@ -10,10 +10,10 @@
 | T6 | Responsive 1440 / 900 / 390 | R17 | `scrollWidth ≤ clientWidth` | overflow 0 at all three, OLS tab unchanged |
 | T7 | Builder `totalCases` + guard | R19 | test: mixed automation → totalCases counts all; automated > cases throws | `node --test scripts/` green |
 | T8 | Page: Total cases card first, validation, 4/2/1 grid | R20–R22 | page text vs JSON; malformed JSON message | every value equals the JSON once; overflow 0 at 1440 / 900 / 390 |
-| T9 | Regenerate JSON; deploy staging → verify → production | R19, R8 | live JSON on staging has `totalCases` | production JSON and page show CBMS 317 / ELMS 66 total cases |
+| T9 | Regenerate JSON; deploy production → verify | R19, R8 | live JSON on production lacks `totalCases` | production JSON and page show CBMS 317 / ELMS 66 total cases |
 | T10 | Core module + concurrent paging; builder re-exports | R24, R25 | existing builder tests import still resolves; test: pages come back in offset order | `node --test scripts/` green |
 | T11 | `renderMa()` computes live, loading + error states | R23, R26, R27 | page text vs fresh builder run | every value equals a builder run at the same time |
-| T12 | Deploy staging → verify → production | R23 | staging MA tab shows MICA 1 2153 / CBMS 627 | production shows the live totals with no JSON change |
+| T12 | Deploy production → verify | R23 | — | production shows the live totals with no JSON change |
 | T13 | Retry transient page failures | R28 | test: 521 twice then ok → ok; 521 always → rejects after 3; 401 → 1 call | `node --test scripts/` green |
 | T14 | Abort a page request after 10 s, retry under R28 | R29 | production page stuck > 40 s on 8 pages | MA tab renders in production; no page waits > 10 s per attempt |
 | T15 | Completed-run rule fix | R30 | test: run status 3 with end_time is picked | tests green |
