@@ -114,3 +114,28 @@ test('live R10: a failed update says so in the pill and keeps the last date', as
   assert.equal(els['last-updated'].textContent, 'Updated Date: 2026-10-28T10:00:00.000Z')
   assert.equal(els['live-sub'].textContent, 'Update failed — showing the last numbers')
 })
+
+test('live R11: a tiny non-zero status still shows its colour and reads <0.1%', async () => {
+  const d = { measuredAt: '2026-10-28T13:00:00.000Z', project: 'MA', runsUsed: 1,
+    cases: { total: 2011, passed: 586, notPassed: 1, waiting: 1424, passedPercent: 29.1, notPassedPercent: 0, waitingPercent: 70.8 },
+    breakdown: { failed: 1, skipped: 0, notRun: 0, other: {} }, types: null, typesError: 'x', run: null }
+  const { api, content } = load({ stored: null, live: async () => d })
+  await api.renderMa()
+  const fail = content.innerHTML.match(/<span class="ols-seg-fail"[^>]*>/)
+  assert.ok(fail, 'not-passed segment rendered')
+  assert.match(fail[0], /flex:1 1 0/)
+  assert.match(fail[0], /min-width:6px/)
+  assert.match(content.innerHTML, /<span class="ols-pct">&lt;0\.1%<\/span>|<span class="ols-pct"><0\.1%<\/span>/)
+  assert.doesNotMatch(content.innerHTML, /amber">[^]*?<span class="ols-pct">0%</)
+})
+
+test('live R11: a zero status has no bar segment', async () => {
+  const d = { measuredAt: '2026-10-28T13:00:00.000Z', project: 'MA', runsUsed: 1,
+    cases: { total: 10, passed: 10, notPassed: 0, waiting: 0, passedPercent: 100, notPassedPercent: 0, waitingPercent: 0 },
+    breakdown: { failed: 0, skipped: 0, notRun: 0, other: {} }, types: null, typesError: 'x', run: null }
+  const { api, content } = load({ stored: null, live: async () => d })
+  await api.renderMa()
+  assert.doesNotMatch(content.innerHTML, /<span class="ols-seg-fail"/)
+  assert.doesNotMatch(content.innerHTML, /<span class="ols-seg-wait"/)
+  assert.match(content.innerHTML, /<span class="ols-seg-pass" style="flex:10 1 0;min-width:6px">/)
+})
