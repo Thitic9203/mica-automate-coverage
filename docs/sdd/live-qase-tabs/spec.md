@@ -61,6 +61,12 @@ number", R2–R5, R10, R11, R14 for the case figures (they came from `ols-progre
   each non-zero segment at least 6 px wide); a status with count 0 shows no segment. A card whose count
   is > 0 but rounds to 0.0 % MUST read "<0.1%", never "0%".
 
+- **R12** — (measured 2026-10-28 21:27: six tabs opened together got `Qase HTTP 429`) An HTTP 429 from Qase
+  MUST be retried, waiting the `Retry-After` seconds when given (else 2 s, 4 s, 6 s), up to 3 more tries;
+  supersedes ma-tabs R28 "4xx fails at once" for 429 only. The proxy forwards `Retry-After`.
+- **R13** — The proxy MUST cache each Qase GET at the Cloudflare edge for 60 s (`cf.cacheTtl`), so viewers
+  opening the board together share one Qase call per page; a run completed in Qase shows within 60 s.
+
 ## Done when
 
 - Tests: a case in an older run keeps its result when the newest run omits it; a 1-case retest run does

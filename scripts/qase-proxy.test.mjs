@@ -54,3 +54,12 @@ test('R6: the page holds no Qase token and sends no Token header', () => {
   assert.equal(/[0-9a-f]{64}/i.test(html), false)
   assert.equal(/['"]Token['"]\s*:/.test(html), false)
 })
+
+test('live R12/R13: GET is edge-cached 60 s and Retry-After is passed through', async t => {
+  const calls = []
+  t.mock.method(globalThis, 'fetch', async (url, init) => { calls.push(init); return new Response('{"status":false}', { status: 429, headers: { 'Retry-After': '7' } }) })
+  const res = await onRequest({ request: new Request('https://x.dev/api/qase/case/MA'), env: { QASE_API_TOKEN: 'tok' } })
+  assert.deepEqual(calls[0].cf, { cacheTtl: 60, cacheEverything: true })
+  assert.equal(res.status, 429)
+  assert.equal(res.headers.get('Retry-After'), '7')
+})
