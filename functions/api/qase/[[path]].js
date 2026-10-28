@@ -18,6 +18,7 @@ export async function onRequest(context) {
 
   const response = await fetch(qaseUrl, {
     method,
+    cf: { cacheTtl: 60, cacheEverything: true }, // live-qase-tabs R13: viewers opening together share one Qase call
     headers: {
       'Token': token,
       'Accept': 'application/json',
@@ -31,6 +32,7 @@ export async function onRequest(context) {
     headers: {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
+      ...(response.headers.get('Retry-After') ? { 'Retry-After': response.headers.get('Retry-After') } : {}),
       // No browser cache (so background refresh always gets fresh data); short
       // shared edge cache (60s) to absorb concurrent opens without hitting Qase
       // rate limits. Was max-age=300/s-maxage=300 → data could be ~5-10min stale.

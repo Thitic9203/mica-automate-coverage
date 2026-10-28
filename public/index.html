@@ -1124,7 +1124,7 @@ async function renderLive(tab) {
     const fetchJson = core.retryable(core.hedged(async path => { // R28 retry · R40 hedge after 4 s
       // no-store: the hedge must not wait behind the browser's cache lock on the same URL
       const res = await fetch('/api/qase' + path, { cache: 'no-store', signal: AbortSignal.timeout(MA_PAGE_TIMEOUT_MS) }) // R29
-      if (!res.ok) throw Object.assign(new Error('Qase HTTP ' + res.status), { status: res.status })
+      if (!res.ok) throw Object.assign(new Error('Qase HTTP ' + res.status), { status: res.status, retryAfter: res.headers.get('Retry-After') }) // R12
       return res.json()
     }))
     d = await core[tab.build]({ fetchJson }) // R26: measuredAt = now

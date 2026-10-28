@@ -228,3 +228,18 @@ test('live R1/R5: OLS overview counts every case in the project, typed by field 
   assert.deepEqual([o.cases.total, o.cases.passed, o.cases.notPassed, o.cases.waiting], [3, 1, 1, 1])
   assert.deepEqual(o.types.map(t => [t.key, t.total]), [['happyPath', 1], ['failureScenario', 1], ['edgeCase', 0], ['exceptionalCase', 0], ['empty', 1]])
 })
+
+test('live R12: HTTP 429 is retried up to 3 more times, honouring Retry-After', async () => {
+  const waits = []
+  const realST = globalThis.setTimeout
+  globalThis.setTimeout = (fn, ms) => { waits.push(ms); return realST(fn, 0) }
+  try {
+    let n = 0
+    const limited = core.retryable(async () => { n++; if (n < 4) { const e = new Error('Qase HTTP 429'); e.status = 429; e.retryAfter = n === 1 ? 3 : undefined; throw e } return 'ok' }, 0)
+    assert.equal(await limited('/x'), 'ok'); assert.equal(n, 4)
+    assert.deepEqual(waits, [3000, 4000, 6000])
+    let m = 0
+    const always = core.retryable(async () => { m++; const e = new Error('Qase HTTP 429'); e.status = 429; throw e }, 0)
+    await assert.rejects(always('/x'), /429/); assert.equal(m, 4)
+  } finally { globalThis.setTimeout = realST }
+})

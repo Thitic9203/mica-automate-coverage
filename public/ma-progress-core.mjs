@@ -97,10 +97,17 @@ export async function buildMaProgress({ fetchJson, now = new Date() }) {
 }
 
 // R28: a page that fails with 5xx or a network error is tried again, at most twice; 4xx fails at once.
+// live-qase-tabs R12: 429 (Qase rate limit) waits Retry-After, else 2/4/6 s, at most 3 more tries.
 export function retryable(fetchJson, delayMs = 800) {
   return async path => {
     for (let attempt = 0; ; attempt++) {
       try { return await fetchJson(path) } catch (e) {
+        if (e.status === 429) {
+          if (attempt >= 3) throw e
+          const wait = Number(e.retryAfter) > 0 ? Number(e.retryAfter) * 1000 : 2000 * (attempt + 1)
+          await new Promise(r => setTimeout(r, wait))
+          continue
+        }
         const transient = e.status === undefined || e.status >= 500
         if (!transient || attempt >= 2) throw e
         await new Promise(r => setTimeout(r, delayMs * (attempt + 1)))
