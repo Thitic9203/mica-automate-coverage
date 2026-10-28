@@ -118,11 +118,12 @@ These rules replace R10–R12, R15 and R19–R22 for the page; R23–R29 still a
   run yet" while Qase held 586 passed / 1 failed. A run counts as completed when the API's `status=complete`
   filter returns it **and** it has an `end_time`; no other status check.
 - **R31** — The four systems (R5) are counted **together** as one case set: the union of their suite trees.
-- **R32** — Per case: `automation ≠ 2` → **waiting** (TO BE AUTOMATED), whatever results exist. Otherwise the
-  case's latest result in the **pass-results run** (the latest completed run, R30, containing any counted case):
-  `passed` → PASSED; `failed` → FAILED; `skipped` → SKIPPED; no result → NOT RUN; any other Qase status →
-  counted under not passed under its own Qase name (never folded into another word). FLAKY has no Qase source
-  and shows "—", never a number (global rule 20).
+- **R32** — (amended 2026-10-28, owner: "ผลการรันล่าสุดของแท็บแรกดูใน Test run on Qase.io ของโปรเจ็ค MA" — measured:
+  the only run, #1 "MICA1 & MICA2", holds 586 passed + 1 failed over 587 cases, 129 of them not marked automated)
+  Per case, the latest result in the **pass-results run** (the latest completed run, R30, containing any counted
+  case) decides: `passed` → PASSED; `failed` → FAILED; `skipped` → SKIPPED; any other Qase status → counted under
+  not passed under its own Qase name. A case with **no result** in that run is NOT RUN when automated
+  (`automation = 2`) and TO BE AUTOMATED otherwise. FLAKY has no Qase source and shows "—".
 - **R33** — Cards as the OLS tab: Total cases · Automated · passed · Automated · not passed (failed / flaky /
   skipped / not run, plus any other status by name) · Waiting to automate; percents of total to one decimal;
   `passed + notPassed + waiting = total` or the tab shows its error (R27).
@@ -132,8 +133,7 @@ These rules replace R10–R12, R15 and R19–R22 for the page; R23–R29 still a
   2 Failure Scenario, 3 Edge Case, 4 Exceptional Case) plus an **Empty** row for cases with no value (counted
   normally — owner rule for dashboards); shares by largest remainder to exactly 100.0%; Total row; a value that is
   not one of 1–4 (or several values) hides the card and says why.
-- **R36** — Notes: Measured · Pass results from (run title, started, completed) · when results exist for cases
-  not marked automated, the count of those results, stated · Case source (Qase project MA, MICA 1 · EvMS · ELMS ·
+- **R36** — Notes: Measured · Pass results from (run title, started, completed) · Case source (Qase project MA, MICA 1 · EvMS · ELMS ·
   CBMS counted together) · Qase link. No report link, no report totals, no ticket filters.
 - **R37** — Every render (tab switch, reload, URL open) recomputes from Qase (R23); no redeploy is ever needed
   for numbers.
