@@ -1056,12 +1056,12 @@ async function renderMa() {
   let d
   content.innerHTML = '<div class="loading"><div class="spinner"></div> Loading Qase MA…</div>' // R27
   try {
-    const { buildMaProgress } = await import('/ma-progress-core.mjs')
-    const fetchJson = async path => {
+    const { buildMaProgress, retryable } = await import('/ma-progress-core.mjs')
+    const fetchJson = retryable(async path => { // R28
       const res = await fetch('/api/qase' + path)
-      if (!res.ok) throw new Error('Qase HTTP ' + res.status)
+      if (!res.ok) throw Object.assign(new Error('Qase HTTP ' + res.status), { status: res.status })
       return res.json()
-    }
+    })
     d = await buildMaProgress({ fetchJson }) // R26: measuredAt = now
     if (!maValid(d)) throw new Error('unexpected shape')
   } catch (e) {

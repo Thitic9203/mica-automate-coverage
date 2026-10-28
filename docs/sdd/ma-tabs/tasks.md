@@ -14,3 +14,4 @@
 | T10 | Core module + concurrent paging; builder re-exports | R24, R25 | existing builder tests import still resolves; test: pages come back in offset order | `node --test scripts/` green |
 | T11 | `renderMa()` computes live, loading + error states | R23, R26, R27 | page text vs fresh builder run | every value equals a builder run at the same time |
 | T12 | Deploy staging → verify → production | R23 | staging MA tab shows MICA 1 2153 / CBMS 627 | production shows the live totals with no JSON change |
+| T13 | Retry transient page failures | R28 | test: 521 twice then ok → ok; 521 always → rejects after 3; 401 → 1 call | `node --test scripts/` green |

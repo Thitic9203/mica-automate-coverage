@@ -87,3 +87,16 @@ export async function buildMaProgress({ fetchJson, now = new Date() }) {
   }
   return { measuredAt: now.toISOString(), project: PROJECT, systems }
 }
+
+// R28: a page that fails with 5xx or a network error is tried again, at most twice; 4xx fails at once.
+export function retryable(fetchJson, delayMs = 800) {
+  return async path => {
+    for (let attempt = 0; ; attempt++) {
+      try { return await fetchJson(path) } catch (e) {
+        const transient = e.status === undefined || e.status >= 500
+        if (!transient || attempt >= 2) throw e
+        await new Promise(r => setTimeout(r, delayMs * (attempt + 1)))
+      }
+    }
+  }
+}
