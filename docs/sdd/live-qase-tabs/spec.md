@@ -75,7 +75,9 @@ number", R2–R5, R10, R11, R14 for the case figures (they came from `ols-progre
 - **R15** — (owner order 2026-10-28 "ทำเสร็จทั้งหมด", global rule 16.2; supersedes ma-tabs "dark mode out of
   scope") Light and dark themes: every CSS colour is a `:root` token with a `[data-theme="dark"]` set; the theme
   is applied by a head script before first paint; a saved choice (`localStorage` `mica-theme`) wins over the
-  system setting; the header "Dark" button toggles it and carries `aria-pressed`.
+  system setting; a square icon button left of the date pill toggles it
+  (owner screenshot 2026-10-28: sun icon in light theme, moon icon in dark theme, 1 px border, ≥44 px,
+  `aria-label` "Dark mode", `aria-pressed`); Sign out shows a log-out icon before its label.
 
 ## Done when
 
