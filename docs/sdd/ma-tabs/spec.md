@@ -97,7 +97,11 @@ every number" note and the "Calling Qase from the browser" out-of-scope line for
   fails with HTTP 5xx or a network error MUST be tried again at most twice with a short back-off; a 4xx MUST
   fail at once. If it still fails, R27 applies (error, no numbers).
 
-Done when (R23–R28): page values equal a fresh builder run against Qase MA at the same time; the tab shows
+- **R29** — (measured 28/Oct in production: proxy `wallTime` 29.3 s and 38.8 s with 1–3 ms CPU on single case
+  pages, i.e. waiting on Qase, while the same pages answer in ~2–3 s most of the time) each page request MUST
+  be aborted after 10 s; an abort counts as a network failure and is retried under R28.
+
+Done when (R23–R29): page values equal a fresh builder run against Qase MA at the same time; the tab shows
 MICA 1 2153 / CBMS 627 total cases as of 28/Oct without any JSON change; `node --test scripts/` green.
 
 ## Done when

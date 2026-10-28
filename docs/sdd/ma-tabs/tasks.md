@@ -15,3 +15,4 @@
 | T11 | `renderMa()` computes live, loading + error states | R23, R26, R27 | page text vs fresh builder run | every value equals a builder run at the same time |
 | T12 | Deploy staging → verify → production | R23 | staging MA tab shows MICA 1 2153 / CBMS 627 | production shows the live totals with no JSON change |
 | T13 | Retry transient page failures | R28 | test: 521 twice then ok → ok; 521 always → rejects after 3; 401 → 1 call | `node --test scripts/` green |
+| T14 | Abort a page request after 10 s, retry under R28 | R29 | production page stuck > 40 s on 8 pages | MA tab renders in production; no page waits > 10 s per attempt |
