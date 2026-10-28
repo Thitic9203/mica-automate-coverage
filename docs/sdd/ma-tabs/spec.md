@@ -146,8 +146,14 @@ These rules replace R10–R12, R15 and R19–R22 for the page; R23–R29 still a
   Qase loader (`loadFromCacheThenRefresh`, `fetchAndRender`) MUST NOT run while the MA or OLS tab is active; it
   starts the first time a view that uses its data is shown. The MA tab neither waits for it nor shares Qase's
   rate limit with it.
+- **R40** — (root cause measured 28/Oct, same instant, same token, 6 pages in parallel: direct Mac → Qase
+  2.1–2.4 s every page; Mac → Cloudflare proxy → Qase 2.3–15.1 s; proxy tail earlier showed wallTime 29–39 s at
+  1–3 ms CPU; browser TTFB 21.1 s vs 4 ms download — the Cloudflare → Qase hop is slow at random per request.
+  R29 / R38 / R39 did not address it. Owner chose "ยิงสำรองหน้าที่ช้า".) A page request still unanswered after
+  **4 s** MUST be sent once more in parallel; the first successful answer is used. If both fail, the request fails
+  (then R28 retries apply). The 4 s threshold is a judgment from the measured median (~2.2 s), not a standard.
 
-Done when (R30–R39): live page equals a Node run of the same core against Qase at the same time; 28/Oct expected
+Done when (R30–R40): live page equals a Node run of the same core against Qase at the same time; 28/Oct expected
 from Qase: total 3074, automated 587, run #1 results 586 passed / 1 failed; no overflow at 1440 / 900 / 390;
 `node --test scripts/*.test.mjs` green.
 

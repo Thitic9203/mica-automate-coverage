@@ -149,3 +149,28 @@ test('R38: at most 8 requests in flight, pages still in offset order', async () 
   assert.ok(maxInFlight <= 8, `max in flight was ${maxInFlight}`)
   assert.ok(maxInFlight >= 6, `expected near the cap, was ${maxInFlight}`)
 })
+
+test('R40: a request unanswered after the threshold is sent again; first success wins', async () => {
+  const { hedged } = await import('../public/ma-progress-core.mjs')
+  let calls = 0
+  const slowThenFast = hedged(async () => { const n = ++calls; await new Promise(r => setTimeout(r, n === 1 ? 300 : 10)); return 'call' + n }, 50)
+  const t0 = Date.now()
+  assert.equal(await slowThenFast('/x'), 'call2')
+  assert.ok(Date.now() - t0 < 200, 'hedge answer should win before the slow one')
+  assert.equal(calls, 2)
+})
+
+test('R40: a fast answer sends no second request', async () => {
+  const { hedged } = await import('../public/ma-progress-core.mjs')
+  let calls = 0
+  const fast = hedged(async () => { calls++; return 'ok' }, 50)
+  assert.equal(await fast('/x'), 'ok')
+  await new Promise(r => setTimeout(r, 80))
+  assert.equal(calls, 1)
+})
+
+test('R40: both attempts failing rejects', async () => {
+  const { hedged } = await import('../public/ma-progress-core.mjs')
+  const bad = hedged(async () => { await new Promise(r => setTimeout(r, 70)); throw Object.assign(new Error('HTTP 521'), { status: 521 }) }, 20)
+  await assert.rejects(bad('/x'), /521/)
+})
