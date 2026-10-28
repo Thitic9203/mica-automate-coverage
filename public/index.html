@@ -1216,7 +1216,7 @@ function paintLive(tab, d, refresh, animate) {
     <div class="chart-card ols-note">
       <dl>
         <dt>Measured</dt><dd>${escapeHtml(formatBkkTime(new Date(d.measuredAt)))}${refresh === 'updating' ? ' <span class="ols-scope ma-refresh">· updating from Qase…</span>' : refresh ? ` <span class="ols-scope ma-refresh">· update ${escapeHtml(refresh)} — showing the last numbers</span>` : ''}</dd>
-        <dt>Pass results from</dt><dd>${r ? `latest: ${escapeHtml(r.title || '')} · started ${fmt(r.startedAt)} · completed ${fmt(r.completedAt)}${d.runsUsed > 1 ? ` · each case uses its newest of ${d.runsUsed} completed runs` : ''}` : 'no completed run in Qase yet — every automated case reads NOT RUN'}</dd>
+        <dt>Pass results from</dt><dd>${r ? `latest: ${escapeHtml(r.title || '')} · started ${fmt(r.startedAt)} · completed ${fmt(r.completedAt)} · ${d.runsUsed} completed run${d.runsUsed === 1 ? '' : 's'} used, each case from its newest` : 'no completed run in Qase yet — every automated case reads NOT RUN'}</dd>
         <dt>Case source</dt><dd>${tab.source}</dd>
         <dt>Qase</dt><dd><a class="ols-report-link" href="https://app.qase.io/project/${tab.project}" target="_blank" rel="noopener noreferrer">Open project ${tab.project} in Qase ↗</a></dd>
       </dl>
