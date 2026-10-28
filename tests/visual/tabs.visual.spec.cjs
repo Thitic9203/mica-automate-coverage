@@ -33,8 +33,12 @@ const page = (all, u) => {
 }
 
 async function open(pageObj, view) {
+  // fixed wall clock: the ticket card's 2 h staleness check and the pill time must not depend on when tests run
+  await pageObj.clock.setFixedTime(new Date('2026-10-28T16:00:00.000Z'))
   await pageObj.route('https://www.gstatic.com/firebasejs/**/firebase-app.js', r => r.fulfill({ contentType: 'text/javascript', body: APP }))
   await pageObj.route('https://www.gstatic.com/firebasejs/**/firebase-auth.js', r => r.fulfill({ contentType: 'text/javascript', body: AUTH }))
+  await pageObj.route('https://raw.githubusercontent.com/**/ols-tickets.json', r => r.fulfill({ contentType: 'application/json',
+    body: JSON.stringify({ measuredAt: '2026-10-28T15:31:20.353Z', done: 684, withAutomatedCase: 292, percent: 42.7 }) }))
   await pageObj.route('**/api/qase/**', r => {
     const u = new URL(r.request().url())
     const [, , , kind, project] = u.pathname.split('/')
