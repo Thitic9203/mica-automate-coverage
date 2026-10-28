@@ -8,7 +8,8 @@ const PAGE = 100
 
 const norm = s => String(s || '').replace(/\s+/g, '').toUpperCase()
 const pct = (n, d) => (d ? Math.round((n / d) * 1000) / 10 : 0)
-const isComplete = r => r.status === 1 || String(r.status_text || '').toLowerCase() === 'complete'
+// R30: /run?status=complete already filters; Qase reports a finished run with failures as status 3 ("failed").
+const isComplete = r => Boolean(r.end_time)
 
 // R25: first page tells the total; the remaining pages go out together and land in offset order.
 async function fetchAll(fetchJson, path) {
@@ -98,5 +99,103 @@ export function retryable(fetchJson, delayMs = 800) {
         await new Promise(r => setTimeout(r, delayMs * (attempt + 1)))
       }
     }
+  }
+}
+
+const TYPE_OPTIONS = { 1: 'happyPath', 2: 'failureScenario', 3: 'edgeCase', 4: 'exceptionalCase' }
+const TYPE_ORDER = ['happyPath', 'failureScenario', 'edgeCase', 'exceptionalCase', 'empty']
+const TYPE_FIELD_ID = 4
+
+// Largest-remainder shares in tenths of a percent so the rows add to exactly 100.0 (OLS R19).
+function shares(totals, sum) {
+  const raw = totals.map(t => (sum ? (t * 1000) / sum : 0))
+  const tenths = raw.map(Math.floor)
+  let left = sum ? 1000 - tenths.reduce((a, b) => a + b, 0) : 0
+  raw.map((v, i) => [v - tenths[i], i]).sort((a, b) => b[0] - a[0] || a[1] - b[1]).forEach(([, i]) => { if (left > 0) { tenths[i]++; left-- } })
+  return tenths.map(t => t / 10)
+}
+
+/** R31–R36: the four systems counted together, in the OLS card vocabulary. */
+export async function buildMaOverview({ fetchJson, now = new Date() }) {
+  const suites = await fetchAll(fetchJson, `/suite/${PROJECT}`)
+  const cases = await fetchAll(fetchJson, `/case/${PROJECT}`)
+  const runs = (await fetchAll(fetchJson, `/run/${PROJECT}?status=complete&include=cases`)).filter(isComplete)
+
+  const children = new Map()
+  for (const s of suites) {
+    const p = s.parent_id || 0
+    if (!children.has(p)) children.set(p, [])
+    children.get(p).push(s.id)
+  }
+  const inSystems = new Set()
+  for (const key of SYSTEMS) {
+    const root = suites.find(s => !s.parent_id && norm(s.title) === key)
+    if (!root) continue
+    const stack = [root.id]
+    while (stack.length) { const id = stack.pop(); inSystems.add(id); stack.push(...(children.get(id) || [])) }
+  }
+  const own = cases.filter(c => inSystems.has(c.suite_id))
+  const ownIds = new Set(own.map(c => c.id))
+
+  runs.sort((a, b) => String(b.end_time || '').localeCompare(String(a.end_time || '')) || b.id - a.id)
+  const latest = runs.find(r => (r.cases || []).some(id => ownIds.has(id)))
+  const last = new Map()
+  if (latest) {
+    for (const res of await fetchAll(fetchJson, `/result/${PROJECT}?run=${latest.id}`)) {
+      if (!ownIds.has(res.case_id)) continue
+      const prev = last.get(res.case_id)
+      if (!prev || String(res.end_time || '') >= String(prev.end_time || '')) last.set(res.case_id, res)
+    }
+  }
+
+  let passed = 0, waiting = 0, failed = 0, skipped = 0, notRun = 0, resultsOnNotAutomated = 0
+  const other = {}
+  const statusOf = new Map()
+  for (const c of own) {
+    if (c.automation !== AUTOMATED) {
+      waiting++; statusOf.set(c.id, 'waiting')
+      if (last.has(c.id)) resultsOnNotAutomated++
+      continue
+    }
+    const st = String(last.get(c.id)?.status || '').toLowerCase()
+    if (!st) { notRun++; statusOf.set(c.id, 'notPassed') }
+    else if (st === 'passed') { passed++; statusOf.set(c.id, 'passed') }
+    else {
+      statusOf.set(c.id, 'notPassed')
+      if (st === 'failed') failed++
+      else if (st === 'skipped') skipped++
+      else other[st] = (other[st] || 0) + 1
+    }
+  }
+  const total = own.length
+  const notPassed = failed + skipped + notRun + Object.values(other).reduce((a, b) => a + b, 0)
+  if (passed + notPassed + waiting !== total) throw new Error('status counts do not add up to the total')
+
+  // R35: Qase custom field 4; one value per case; unknown value → no card, with the reason.
+  const byType = Object.fromEntries(TYPE_ORDER.map(k => [k, { key: k, total: 0, passed: 0, notPassed: 0, waiting: 0 }]))
+  let typesError = null
+  for (const c of own) {
+    const f = (c.custom_fields || []).find(x => Number(x.id) === TYPE_FIELD_ID)
+    const raw = f && f.value !== '' && f.value != null ? String(f.value) : null
+    let key = 'empty'
+    if (raw !== null) {
+      const parts = raw.split(',').map(x => x.trim())
+      if (parts.length !== 1 || !TYPE_OPTIONS[parts[0]]) { typesError = `Test Case Type value "${raw}" is not one of 1–4`; break }
+      key = TYPE_OPTIONS[parts[0]]
+    }
+    byType[key].total++; byType[key][statusOf.get(c.id)]++
+  }
+  let types = null
+  if (!typesError) {
+    const share = shares(TYPE_ORDER.map(k => byType[k].total), total)
+    types = TYPE_ORDER.map((k, i) => ({ ...byType[k], sharePercent: share[i] }))
+  }
+
+  return {
+    measuredAt: now.toISOString(), project: PROJECT,
+    cases: { total, passed, notPassed, waiting, passedPercent: pct(passed, total), notPassedPercent: pct(notPassed, total), waitingPercent: pct(waiting, total) },
+    breakdown: { failed, skipped, notRun, other },
+    types, typesError,
+    run: latest ? { title: latest.title, startedAt: latest.start_time || null, completedAt: latest.end_time, resultsOnNotAutomated } : null,
   }
 }

@@ -64,3 +64,70 @@ test('R29: an aborted (timed-out) request has no status and is retried', async (
   const slowOnce = retryable(async () => { n++; if (n === 1) throw new DOMException('signal timed out', 'TimeoutError'); return 'ok' }, 0)
   assert.equal(await slowOnce('/x'), 'ok'); assert.equal(n, 2)
 })
+
+// ── R30–R35: overview (all systems together) ──
+import { buildMaOverview } from '../public/ma-progress-core.mjs'
+const OV_SUITES = [
+  { id: 1, title: 'MICA1', parent_id: null }, { id: 2, title: 'Child', parent_id: 1 },
+  { id: 3, title: 'CBMS', parent_id: null }, { id: 9, title: 'Other', parent_id: null },
+]
+const cf = v => (v === null ? [] : [{ id: 4, value: v }])
+const kase = (id, suite_id, automation, type = null) => ({ id, suite_id, automation, custom_fields: cf(type) })
+function ovMock({ cases, runs = [], results = {} }) {
+  const page = (all, url) => {
+    const limit = Number(url.searchParams.get('limit')), offset = Number(url.searchParams.get('offset'))
+    return { status: true, result: { total: all.length, entities: all.slice(offset, offset + limit) } }
+  }
+  return async path => {
+    const url = new URL('http://x' + path)
+    if (url.pathname.startsWith('/suite/')) return page(OV_SUITES, url)
+    if (url.pathname.startsWith('/case/')) return page(cases, url)
+    if (url.pathname.startsWith('/run/')) return page(runs, url)
+    if (url.pathname.startsWith('/result/')) return page(results[url.searchParams.get('run')] || [], url)
+    throw new Error('unexpected ' + path)
+  }
+}
+const NOW2 = new Date('2026-10-28T10:00:00.000Z')
+
+test('R30: a completed run with status 3 (failed) and an end_time is used', async () => {
+  const cases = [kase(1, 1, 2, '1')]
+  const runs = [{ id: 1, title: 'R', status: 3, status_text: 'failed', start_time: '2026-10-27T19:13:31+07:00', end_time: '2026-10-27T19:13:42+07:00', cases: [1] }]
+  const o = await buildMaOverview({ fetchJson: ovMock({ cases, runs, results: { 1: [{ case_id: 1, status: 'failed' }] } }), now: NOW2 })
+  assert.equal(o.run.title, 'R')
+  assert.equal(o.cases.notPassed, 1)
+})
+
+test('R31/R32/R33: systems counted together; not automated → waiting; statuses by name', async () => {
+  const cases = [kase(1, 1, 2), kase(2, 2, 2), kase(3, 3, 2), kase(4, 3, 2), kase(5, 3, 2), kase(6, 1, 0), kase(7, 3, 1), kase(8, 9, 2)]
+  const runs = [{ id: 1, title: 'R', status: 1, end_time: '2026-10-27 10:00:00', start_time: '2026-10-27 09:00:00', cases: [1, 2, 3, 4, 6] }]
+  const results = { 1: [
+    { case_id: 1, status: 'passed' }, { case_id: 2, status: 'failed' }, { case_id: 3, status: 'skipped' },
+    { case_id: 4, status: 'blocked' }, { case_id: 6, status: 'passed' }, // 6 is not automated → still waiting
+  ] }
+  const o = await buildMaOverview({ fetchJson: ovMock({ cases, runs, results }), now: NOW2 })
+  assert.equal(o.cases.total, 7) // case 8 is in "Other", not a system
+  assert.equal(o.cases.waiting, 2) // 6 and 7
+  assert.equal(o.cases.passed, 1)
+  assert.equal(o.cases.notPassed, 4) // failed 1 + skipped 1 + blocked 1 + not run 1 (case 5)
+  assert.deepEqual(o.breakdown, { failed: 1, skipped: 1, notRun: 1, other: { blocked: 1 } })
+  assert.equal(o.cases.passed + o.cases.notPassed + o.cases.waiting, o.cases.total)
+  assert.equal(o.run.resultsOnNotAutomated, 1)
+  assert.equal(o.cases.passedPercent, 14.3)
+})
+
+test('R35: types from custom field 4 with Empty row; shares add to exactly 100.0; bad value hides card', async () => {
+  const cases = [kase(1, 1, 0, '1'), kase(2, 1, 0, '1'), kase(3, 1, 0, '2'), kase(4, 1, 0, '3'), kase(5, 1, 0, '4'), kase(6, 1, 0, null), kase(7, 1, 0, null)]
+  const o = await buildMaOverview({ fetchJson: ovMock({ cases }), now: NOW2 })
+  assert.equal(o.typesError, null)
+  assert.deepEqual(o.types.map(t => [t.key, t.total]), [['happyPath', 2], ['failureScenario', 1], ['edgeCase', 1], ['exceptionalCase', 1], ['empty', 2]])
+  assert.equal(o.types.reduce((s, t) => s + t.sharePercent, 0).toFixed(1), '100.0')
+  const bad = await buildMaOverview({ fetchJson: ovMock({ cases: [kase(1, 1, 0, '9')] }), now: NOW2 })
+  assert.equal(bad.types, null)
+  assert.match(bad.typesError, /9/)
+})
+
+test('R32: no run at all → run null, every automated case NOT RUN', async () => {
+  const o = await buildMaOverview({ fetchJson: ovMock({ cases: [kase(1, 1, 2), kase(2, 1, 0)] }), now: NOW2 })
+  assert.equal(o.run, null)
+  assert.deepEqual(o.breakdown, { failed: 0, skipped: 0, notRun: 1, other: {} })
+})
