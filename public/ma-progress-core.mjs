@@ -203,3 +203,23 @@ export async function buildMaOverview({ fetchJson, now = new Date() }) {
     run: latest ? { title: latest.title, startedAt: latest.start_time || null, completedAt: latest.end_time } : null,
   }
 }
+
+// R40: the Cloudflare → Qase hop is slow at random per request; a page still unanswered after `afterMs` is sent
+// once more and the first success wins. Both failing rejects with the last error.
+export function hedged(fetchJson, afterMs = 4000) {
+  return path => new Promise((resolve, reject) => {
+    let done = false, pending = 0, lastError = null, timer = null
+    const attempt = () => {
+      pending++
+      fetchJson(path).then(v => {
+        if (!done) { done = true; clearTimeout(timer); resolve(v) }
+      }, e => {
+        lastError = e
+        if (--pending === 0 && !done && timer === 'fired') { done = true; reject(lastError) }
+        else if (pending === 0 && !done && timer !== 'fired') { clearTimeout(timer); timer = 'fired'; attempt() }
+      })
+    }
+    attempt()
+    timer = setTimeout(() => { if (!done) { timer = 'fired'; attempt() } }, afterMs)
+  })
+}

@@ -21,3 +21,4 @@
 | T17 | OLS-style `renderMa()` | R33–R37 | page text vs Node run | equal; overflow 0 at 1440/900/390 |
 | T18 | Cap in-flight Qase requests at 8 | R38 | test: 31 pages → max in flight ≤ 8, order kept | tests green; production load: 0 timeouts |
 | T19 | Old loader runs only for views that use it | R39 | test: page source gates both call sites | production open: 0 requests to /Mica |
+| T20 | Hedge a page request after 4 s | R40 | tests: slow first → second wins; fast first → one call; both fail → rejects | production open: tab renders |
