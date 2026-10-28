@@ -1,4 +1,11 @@
+// Qase proxy — spec docs/sdd/qase-proxy-token. The token lives only in the Pages secret QASE_API_TOKEN.
 export async function onRequest(context) {
+  const token = context.env && context.env.QASE_API_TOKEN
+  if (!token) {
+    return new Response(JSON.stringify({ status: false, errorMessage: 'Proxy misconfigured: QASE_API_TOKEN secret is not set' }), {
+      status: 500, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
+    })
+  }
   const url = new URL(context.request.url)
   const path = url.pathname.replace('/api/qase', '') || '/'
   const qaseUrl = `https://api.qase.io/v1${path}${url.search}`
@@ -6,7 +13,7 @@ export async function onRequest(context) {
   const response = await fetch(qaseUrl, {
     method: context.request.method,
     headers: {
-      'Token': '50c6e3fb93f0d51bd387d50d91f2282b1cec3d9aab0c44f4b64c4cf02b02e71f',
+      'Token': token,
       'Accept': 'application/json',
       'Content-Type': 'application/json'
     }
