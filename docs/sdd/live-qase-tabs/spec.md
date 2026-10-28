@@ -56,6 +56,11 @@ number", R2–R5, R10, R11, R14 for the case figures (they came from `ols-progre
   so the header never overflows; tab names are never cut (they wrap); tabs and Sign out are ≥44 px tall
   on ≤1024 px and on touch screens.
 
+- **R11** — (owner order 2026-10-28 "not passed ไม่มีสีเลย ต้องมีครบนะ") Every status with a count > 0 MUST
+  show its colour in the Case progress bar, however small its share (segment widths follow the counts,
+  each non-zero segment at least 6 px wide); a status with count 0 shows no segment. A card whose count
+  is > 0 but rounds to 0.0 % MUST read "<0.1%", never "0%".
+
 ## Done when
 
 - Tests: a case in an older run keeps its result when the newest run omits it; a 1-case retest run does

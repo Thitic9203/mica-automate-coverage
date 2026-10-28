@@ -1168,6 +1168,9 @@ function paintLive(tab, d, refresh, animate) {
   const fmt = iso => iso ? escapeHtml(formatBkkTime(new Date(String(iso).replace(' ', 'T') + (/[zZ]|[+-]\d\d:?\d\d$/.test(iso) ? '' : 'Z')))) : '—'
   const r = d.run
   const extra = tab.view === 'ols' ? (olsTicketsHtml || '') : ''
+  // live-qase-tabs R11: widths follow counts; any non-zero status stays visible; tiny shares read <0.1%
+  const seg = (cls, v) => v > 0 ? `<span class="${cls}" style="flex:${v} 1 0;min-width:6px"></span>` : ''
+  const pl = (v, p) => v > 0 && p === 0 ? '&lt;0.1%' : `${p}%`
   content.innerHTML = `
     <div class="ols-head">
       <h2>${tab.title}</h2>
@@ -1181,17 +1184,17 @@ function paintLive(tab, d, refresh, animate) {
       </div>
       <div class="card">
         <div class="card-label">PASSED</div>
-        <div class="card-value teal">${n(c.passed)}<span class="ols-pct">${c.passedPercent}%</span></div>
+        <div class="card-value teal">${n(c.passed)}<span class="ols-pct">${pl(c.passed, c.passedPercent)}</span></div>
         <div class="card-sub">latest run result passed</div>
       </div>
       <div class="card">
         <div class="card-label">NOT PASSED</div>
-        <div class="card-value amber">${n(c.notPassed)}<span class="ols-pct">${c.notPassedPercent}%</span></div>
+        <div class="card-value amber">${n(c.notPassed)}<span class="ols-pct">${pl(c.notPassed, c.notPassedPercent)}</span></div>
         <div class="ols-break"><span>failed <b>${b.failed}</b></span><span>flaky <b>—</b></span><span>skipped <b>${b.skipped}</b></span><span>not run <b>${b.notRun}</b></span>${other}</div>
       </div>
       <div class="card">
         <div class="card-label">TO BE AUTOMATED</div>
-        <div class="card-value muted">${n(c.waiting)}<span class="ols-pct">${c.waitingPercent}%</span></div>
+        <div class="card-value muted">${n(c.waiting)}<span class="ols-pct">${pl(c.waiting, c.waitingPercent)}</span></div>
         <div class="card-sub">not automated and no run result</div>
       </div>
     </div>
@@ -1199,7 +1202,7 @@ function paintLive(tab, d, refresh, animate) {
       <div class="chart-card">
         <h3>Case progress</h3>
         <div class="ols-bar" role="img" aria-label="Passed ${c.passedPercent}%, not passed ${c.notPassedPercent}%, to be automated ${c.waitingPercent}%">
-          <span class="ols-seg-pass" style="width:${c.passedPercent}%"></span><span class="ols-seg-fail" style="width:${c.notPassedPercent}%"></span><span class="ols-seg-wait" style="width:${c.waitingPercent}%"></span>
+          ${seg('ols-seg-pass', c.passed)}${seg('ols-seg-fail', c.notPassed)}${seg('ols-seg-wait', c.waiting)}
         </div>
         <div class="ols-legend">
           <span><i class="ols-seg-pass"></i>Passed</span>
