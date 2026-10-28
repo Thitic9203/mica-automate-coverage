@@ -141,8 +141,13 @@ These rules replace R10–R12, R15 and R19–R22 for the page; R23–R29 still a
   old tab — while Qase allows 50 per 10 s `burst`; a run with extra load on the same token timed out 12 of 41
   pages, a quiet run passed in 6 s) The MA tab MUST NOT have more than **8** Qase requests in flight at once;
   results stay in offset order (R25).
+- **R39** — (owner 2026-10-28: "แก้ตามที่แนะนำ" / "ไม่รอใครทั้งนั้น"; measured: the old loader sent 17–18 requests for
+  project Mica on every open, and only the three hidden views — unreachable since R1 — read its data) The old
+  Qase loader (`loadFromCacheThenRefresh`, `fetchAndRender`) MUST NOT run while the MA or OLS tab is active; it
+  starts the first time a view that uses its data is shown. The MA tab neither waits for it nor shares Qase's
+  rate limit with it.
 
-Done when (R30–R38): live page equals a Node run of the same core against Qase at the same time; 28/Oct expected
+Done when (R30–R39): live page equals a Node run of the same core against Qase at the same time; 28/Oct expected
 from Qase: total 3074, automated 587, run #1 results 586 passed / 1 failed; no overflow at 1440 / 900 / 390;
 `node --test scripts/*.test.mjs` green.
 
