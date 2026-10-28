@@ -1043,8 +1043,8 @@ function renderOverview() {
   renderSuiteSummary()
 }
 
-// ── MA tab (spec docs/sdd/ma-tabs) — every number comes from /ma-progress.json, written by
-// scripts/build-ma-progress.mjs. The browser never calls Qase for this tab.
+// ── MA tab (spec docs/sdd/ma-tabs) — numbers are computed live from Qase MA through /api/qase each time
+// the tab renders (R23), by the same module the builder uses (public/ma-progress-core.mjs, R24).
 const MA_SYSTEMS = [['MICA1', 'MICA 1'], ['EVMS', 'EvMS'], ['ELMS', 'ELMS'], ['CBMS', 'CBMS']]
 function maValid(d) {
   if (!d || typeof d.measuredAt !== 'string' || !d.systems || typeof d.systems !== 'object') return false
@@ -1054,14 +1054,19 @@ function maValid(d) {
 async function renderMa() {
   const content = document.getElementById('content')
   let d
+  content.innerHTML = '<div class="loading"><div class="spinner"></div> Loading Qase MA…</div>' // R27
   try {
-    const res = await fetch('/ma-progress.json', { cache: 'no-store' })
-    if (!res.ok) throw new Error('HTTP ' + res.status)
-    d = await res.json()
+    const { buildMaProgress, retryable } = await import('/ma-progress-core.mjs')
+    const fetchJson = retryable(async path => { // R28
+      const res = await fetch('/api/qase' + path)
+      if (!res.ok) throw Object.assign(new Error('Qase HTTP ' + res.status), { status: res.status })
+      return res.json()
+    })
+    d = await buildMaProgress({ fetchJson }) // R26: measuredAt = now
     if (!maValid(d)) throw new Error('unexpected shape')
   } catch (e) {
     if (activeView !== 'ma') return
-    content.innerHTML = `<div class="error-msg">MA progress data is not available (${escapeHtml(e.message)}). Regenerate ma-progress.json and deploy again.</div>`
+    content.innerHTML = `<div class="error-msg">Could not load MA progress from Qase (${escapeHtml(e.message)}). Reload the page to try again.</div>`
     return
   }
   if (activeView !== 'ma') return

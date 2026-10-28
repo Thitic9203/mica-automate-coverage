@@ -93,7 +93,11 @@ every number" note and the "Calling Qase from the browser" out-of-scope line for
 - **R27** — While computing, the tab MUST show a loading message and no numbers; on any Qase or shape error it
   MUST show an error message and no numbers (R18). The message MUST NOT ask anyone to regenerate a file or deploy.
 
-Done when (R23–R27): page values equal a fresh builder run against Qase MA at the same time; the tab shows
+- **R28** — (measured 28/Oct: the proxy returned HTTP 521 for 3 of 31 pages in one round) A page request that
+  fails with HTTP 5xx or a network error MUST be tried again at most twice with a short back-off; a 4xx MUST
+  fail at once. If it still fails, R27 applies (error, no numbers).
+
+Done when (R23–R28): page values equal a fresh builder run against Qase MA at the same time; the tab shows
 MICA 1 2153 / CBMS 627 total cases as of 28/Oct without any JSON change; `node --test scripts/` green.
 
 ## Done when
