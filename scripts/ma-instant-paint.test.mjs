@@ -139,3 +139,14 @@ test('live R11: a zero status has no bar segment', async () => {
   assert.doesNotMatch(content.innerHTML, /<span class="ols-seg-wait"/)
   assert.match(content.innerHTML, /<span class="ols-seg-pass" style="flex:10 1 0;min-width:6px">/)
 })
+
+test('live R6: notes name the newest run and how many completed runs were used, even when one', async () => {
+  const d = { measuredAt: '2026-10-28T13:00:00.000Z', project: 'MA', runsUsed: 1,
+    cases: { total: 1, passed: 1, notPassed: 0, waiting: 0, passedPercent: 100, notPassedPercent: 0, waitingPercent: 0 },
+    breakdown: { failed: 0, skipped: 0, notRun: 0, other: {} }, types: null, typesError: 'x',
+    run: { title: 'Run X', startedAt: '2026-10-28T12:00:00Z', completedAt: '2026-10-28T12:30:00Z' } }
+  const { api, content } = load({ stored: null, live: async () => d })
+  await api.renderMa()
+  assert.match(content.innerHTML, /latest: Run X/)
+  assert.match(content.innerHTML, /1 completed run used, each case from its newest/)
+})
