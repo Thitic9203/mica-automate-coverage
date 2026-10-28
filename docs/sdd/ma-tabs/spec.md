@@ -3,6 +3,9 @@
 Status: draft for implementation · owner order 2026-10-21, corrected the same day to **one tab** holding all
 four systems (not four tabs).
 
+> 2026-10-28: run choice (R7, R31–R33) superseded by `docs/sdd/live-qase-tabs` — each case uses its newest
+> completed run.
+
 ## Source of every number
 
 `public/ma-progress.json`, written by `scripts/build-ma-progress.mjs` from the Qase API v1, project **MA**

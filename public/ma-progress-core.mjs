@@ -123,36 +123,58 @@ function shares(totals, sum) {
 }
 
 /** R31–R36: the four systems counted together, in the OLS card vocabulary. */
-export async function buildMaOverview({ fetchJson, now = new Date() }) {
-  const suites = await fetchAll(fetchJson, `/suite/${PROJECT}`)
-  const cases = await fetchAll(fetchJson, `/case/${PROJECT}`)
-  const runs = (await fetchAll(fetchJson, `/run/${PROJECT}?status=complete&include=cases`)).filter(isComplete)
+export function buildMaOverview({ fetchJson, now = new Date() }) {
+  return buildOverview({ fetchJson, now, project: PROJECT, systems: SYSTEMS })
+}
 
-  const children = new Map()
-  for (const s of suites) {
-    const p = s.parent_id || 0
-    if (!children.has(p)) children.set(p, [])
-    children.get(p).push(s.id)
+/** Spec live-qase-tabs: every case in Qase project OLS. */
+export function buildOlsOverview({ fetchJson, now = new Date() }) {
+  return buildOverview({ fetchJson, now, project: 'OLS', systems: null })
+}
+
+// Spec live-qase-tabs R2–R4: each case takes its result from the newest completed run that lists it.
+async function buildOverview({ fetchJson, now, project, systems }) {
+  const suites = systems ? await fetchAll(fetchJson, `/suite/${project}`) : []
+  const cases = await fetchAll(fetchJson, `/case/${project}`)
+  const runs = (await fetchAll(fetchJson, `/run/${project}?status=complete&include=cases`)).filter(isComplete)
+
+  let own = cases
+  if (systems) {
+    const children = new Map()
+    for (const s of suites) {
+      const p = s.parent_id || 0
+      if (!children.has(p)) children.set(p, [])
+      children.get(p).push(s.id)
+    }
+    const inSystems = new Set()
+    for (const key of systems) {
+      const root = suites.find(s => !s.parent_id && norm(s.title) === key)
+      if (!root) continue
+      const stack = [root.id]
+      while (stack.length) { const id = stack.pop(); inSystems.add(id); stack.push(...(children.get(id) || [])) }
+    }
+    own = cases.filter(c => inSystems.has(c.suite_id))
   }
-  const inSystems = new Set()
-  for (const key of SYSTEMS) {
-    const root = suites.find(s => !s.parent_id && norm(s.title) === key)
-    if (!root) continue
-    const stack = [root.id]
-    while (stack.length) { const id = stack.pop(); inSystems.add(id); stack.push(...(children.get(id) || [])) }
-  }
-  const own = cases.filter(c => inSystems.has(c.suite_id))
   const ownIds = new Set(own.map(c => c.id))
 
   runs.sort((a, b) => String(b.end_time || '').localeCompare(String(a.end_time || '')) || b.id - a.id)
-  const latest = runs.find(r => (r.cases || []).some(id => ownIds.has(id)))
-  const last = new Map()
-  if (latest) {
-    for (const res of await fetchAll(fetchJson, `/result/${PROJECT}?run=${latest.id}`)) {
-      if (!ownIds.has(res.case_id)) continue
+  const pending = new Set()
+  for (const r of runs) for (const id of r.cases || []) if (ownIds.has(id)) pending.add(id)
+  const last = new Map(), listed = new Set()
+  let latest = null, runsUsed = 0
+  for (const r of runs) {
+    if (!pending.size) break // R4
+    const mine = (r.cases || []).filter(id => pending.has(id))
+    if (!mine.length) continue
+    latest = latest || r
+    runsUsed++
+    const take = new Set(mine)
+    for (const res of await fetchAll(fetchJson, `/result/${project}?run=${r.id}`)) {
+      if (!take.has(res.case_id)) continue
       const prev = last.get(res.case_id)
       if (!prev || String(res.end_time || '') >= String(prev.end_time || '')) last.set(res.case_id, res)
     }
+    for (const id of mine) { pending.delete(id); listed.add(id) }
   }
 
   let passed = 0, waiting = 0, failed = 0, skipped = 0, notRun = 0
@@ -160,7 +182,7 @@ export async function buildMaOverview({ fetchJson, now = new Date() }) {
   const statusOf = new Map()
   for (const c of own) {
     const res = last.get(c.id)
-    if (!res && c.automation !== AUTOMATED) { waiting++; statusOf.set(c.id, 'waiting'); continue } // R32
+    if (!res && !listed.has(c.id) && c.automation !== AUTOMATED) { waiting++; statusOf.set(c.id, 'waiting'); continue } // R3
     const st = String(res?.status || '').toLowerCase()
     if (!st) { notRun++; statusOf.set(c.id, 'notPassed') }
     else if (st === 'passed') { passed++; statusOf.set(c.id, 'passed') }
@@ -196,7 +218,7 @@ export async function buildMaOverview({ fetchJson, now = new Date() }) {
   }
 
   return {
-    measuredAt: now.toISOString(), project: PROJECT,
+    measuredAt: now.toISOString(), project, runsUsed,
     cases: { total, passed, notPassed, waiting, passedPercent: pct(passed, total), notPassedPercent: pct(notPassed, total), waitingPercent: pct(waiting, total) },
     breakdown: { failed, skipped, notRun, other },
     types, typesError,

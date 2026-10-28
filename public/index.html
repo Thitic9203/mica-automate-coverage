@@ -180,6 +180,9 @@ body::-webkit-scrollbar { display: none; }
   display: flex; align-items: center; gap: 5px;
   font-size: 11px; color: var(--muted); white-space: nowrap;
 }
+.live-text { display: flex; flex-direction: column; line-height: 1.3; }
+.live-sub { font-size: 10px; opacity: .8; }
+.live-sub:empty { display: none; }
 .live-dot {
   width: 6px; height: 6px; border-radius: 50%;
   background: #62A88A; animation: pulse 2s infinite;
@@ -540,6 +543,7 @@ tr:hover td { background: rgba(0,0,0,0.013); }
   .tab { min-width: 100px; padding: 6px 10px; }
   .tab-label { font-size: 12px; }
   .page-content { padding: 20px 16px 40px; }
+  .live-sub { display: none; }
 }
   </style>
 </head>
@@ -606,7 +610,7 @@ tr:hover td { background: rgba(0,0,0,0.013); }
       <div class="chrome-meta">
         <div class="live-pill" id="live-pill">
           <span class="live-dot"></span>
-          <span id="last-updated">Loading…</span>
+          <span class="live-text"><span id="last-updated">Loading…</span><span id="live-sub" class="live-sub"></span></span>
         </div>
         <button class="signout-btn" id="logout-btn">Sign out</button>
       </div>
@@ -1065,51 +1069,96 @@ function maValid(d) {
   if (!b || [b.failed, b.skipped, b.notRun].some(v => !Number.isInteger(v)) || typeof b.other !== 'object') return false
   return b.failed + b.skipped + b.notRun + Object.values(b.other).reduce((x, y) => x + y, 0) === c.notPassed
 }
-// R41: show this browser's last computed numbers at once (labelled with their Measured time), then recompute live.
-const MA_CACHE_KEY = 'mica-ma-overview'
-let maRenderSeq = 0
-function readMaCache() {
-  try { const d = JSON.parse(localStorage.getItem(MA_CACHE_KEY) || 'null'); return maValid(d) ? d : null } catch { return null }
+// R41 / live-qase-tabs R8: show this browser's last computed numbers at once, then recompute live.
+// Both tabs share this renderer (spec docs/sdd/live-qase-tabs); each has its own cache key.
+const LIVE_TABS = {
+  ma: {
+    view: 'ma', cacheKey: 'mica-ma-overview', build: 'buildMaOverview', project: 'MA',
+    title: 'MICA · Automation progress', scope: 'MICA 1 · EvMS · ELMS · CBMS counted together',
+    source: '<strong>Qase project MA</strong>, suites MICA1 · EvMS · ELMS · CBMS counted together',
+  },
+  ols: {
+    view: 'ols', cacheKey: 'mica-ols-overview', build: 'buildOlsOverview', project: 'OLS',
+    title: 'OLS · Automation progress', scope: 'All cases in Qase project OLS',
+    source: '<strong>Qase project OLS</strong>, every case in the project',
+  },
 }
-async function renderMa() {
+const liveSeq = { ma: 0, ols: 0 }
+let olsTicketsHtml = null
+function readLiveCache(tab) {
+  try { const d = JSON.parse(localStorage.getItem(tab.cacheKey) || 'null'); return maValid(d) ? d : null } catch { return null }
+}
+// live-qase-tabs R10: the top-right pill names the time of the numbers on screen.
+function setLivePill(measuredAt, sub) {
+  if (measuredAt) document.getElementById('last-updated').textContent = 'Updated Date: ' + formatBkkTime(new Date(measuredAt))
+  document.getElementById('live-sub').textContent = sub
+}
+function renderMa() { return renderLive(LIVE_TABS.ma) }
+async function renderOls() {
+  if (olsTicketsHtml === null) olsTicketsHtml = await olsTicketsCard()
+  return renderLive(LIVE_TABS.ols)
+}
+async function renderLive(tab) {
   const content = document.getElementById('content')
-  const seq = ++maRenderSeq
-  const cached = readMaCache()
-  if (cached) paintMa(cached, 'updating', true)
-  else content.innerHTML = '<div class="loading"><div class="spinner"></div> Loading Qase MA…</div>' // R27
+  const seq = ++liveSeq[tab.view]
+  const cached = readLiveCache(tab)
+  if (cached) paintLive(tab, cached, 'updating', true)
+  else content.innerHTML = `<div class="loading"><div class="spinner"></div> Loading Qase ${tab.project}…</div>` // R27
+  setLivePill(cached && cached.measuredAt, 'Updating from Qase…')
   let d
   try {
-    const { buildMaOverview, retryable, hedged } = await import('/ma-progress-core.mjs')
-    const fetchJson = retryable(hedged(async path => { // R28 retry · R40 hedge after 4 s
+    const core = await import('/ma-progress-core.mjs')
+    const fetchJson = core.retryable(core.hedged(async path => { // R28 retry · R40 hedge after 4 s
       // no-store: the hedge must not wait behind the browser's cache lock on the same URL
       const res = await fetch('/api/qase' + path, { cache: 'no-store', signal: AbortSignal.timeout(MA_PAGE_TIMEOUT_MS) }) // R29
       if (!res.ok) throw Object.assign(new Error('Qase HTTP ' + res.status), { status: res.status })
       return res.json()
     }))
-    d = await buildMaOverview({ fetchJson }) // R26: measuredAt = now
+    d = await core[tab.build]({ fetchJson }) // R26: measuredAt = now
     if (!maValid(d)) throw new Error('unexpected shape')
   } catch (e) {
-    if (activeView !== 'ma' || seq !== maRenderSeq) return
-    if (cached) { paintMa(cached, 'failed: ' + e.message, false); return }
-    content.innerHTML = `<div class="error-msg">Could not load MA progress from Qase (${escapeHtml(e.message)}). Reload the page to try again.</div>`
+    if (activeView !== tab.view || seq !== liveSeq[tab.view]) return
+    setLivePill(cached && cached.measuredAt, 'Update failed — showing the last numbers')
+    if (cached) { paintLive(tab, cached, 'failed: ' + e.message, false); return }
+    content.innerHTML = `<div class="error-msg">Could not load ${tab.project} progress from Qase (${escapeHtml(e.message)}). Reload the page to try again.</div>`
     return
   }
-  if (activeView !== 'ma' || seq !== maRenderSeq) return
-  try { localStorage.setItem(MA_CACHE_KEY, JSON.stringify(d)) } catch {}
-  paintMa(d, null, !cached)
+  if (activeView !== tab.view || seq !== liveSeq[tab.view]) return
+  try { localStorage.setItem(tab.cacheKey, JSON.stringify(d)) } catch {}
+  setLivePill(d.measuredAt, 'Refreshes each time you open this tab')
+  paintLive(tab, d, null, !cached)
+}
+// live-qase-tabs R7: Jira figure, not in Qase — read from the export file and labelled with its own time.
+async function olsTicketsCard() {
+  try {
+    const res = await fetch('/ols-progress.json', { cache: 'no-store' })
+    if (!res.ok) return ''
+    const j = await res.json(), t = j && j.tickets
+    if (!t || ![t.done, t.withAutomatedCase, t.percent].every(Number.isFinite) || typeof j.measuredAt !== 'string') return ''
+    const link = (u, label) => t.filters && /^https:\/\/[a-z0-9.-]+\/issues\/\?filter=\d+$/.test(u || '') ? `<a class="ols-report-link ols-filter-link" href="${escapeHtml(u)}" target="_blank" rel="noopener noreferrer">${label}</a>` : ''
+    return `
+      <div class="chart-card">
+        <h3>Done tickets with an automated case</h3>
+        <div class="ols-big">${t.percent}%</div>
+        <div class="card-sub">${t.withAutomatedCase} of ${t.done} tickets · Jira, measured ${escapeHtml(formatBkkTime(new Date(j.measuredAt)))} (not live)</div>
+        ${link(t.filters && t.filters.withAutomatedCase, 'Jira filter: tickets with an automated case ↗')}
+        ${link(t.filters && t.filters.done, 'Jira filter: all Done tickets in scope ↗')}
+      </div>`
+  } catch { return '' }
 }
 // refresh: 'updating' | 'failed: …' | null (live numbers). animate once per render: the cached paint, or the live one when there was no cache.
-function paintMa(d, refresh, animate) {
+function paintLive(tab, d, refresh, animate) {
   const content = document.getElementById('content')
   const c = d.cases, b = d.breakdown
   const n = v => `<span data-count="${v}">${v}</span>`
   const other = Object.entries(b.other).map(([k, v]) => `<span>${escapeHtml(k)} <b>${v}</b></span>`).join('')
   const fmt = iso => iso ? escapeHtml(formatBkkTime(new Date(String(iso).replace(' ', 'T') + (/[zZ]|[+-]\d\d:?\d\d$/.test(iso) ? '' : 'Z')))) : '—'
   const r = d.run
+  const extra = tab.view === 'ols' ? (olsTicketsHtml || '') : ''
   content.innerHTML = `
     <div class="ols-head">
-      <h2>MICA · Automation progress</h2>
-      <span class="ols-scope">MICA 1 · EvMS · ELMS · CBMS counted together</span>
+      <h2>${tab.title}</h2>
+      <span class="ols-scope">${tab.scope}</span>
     </div>
     <div class="ols-cards">
       <div class="card">
@@ -1130,27 +1179,30 @@ function paintMa(d, refresh, animate) {
       <div class="card">
         <div class="card-label">TO BE AUTOMATED</div>
         <div class="card-value muted">${n(c.waiting)}<span class="ols-pct">${c.waitingPercent}%</span></div>
-        <div class="card-sub">not automated and not in the run</div>
+        <div class="card-sub">not automated and no run result</div>
       </div>
     </div>
-    <div class="chart-card">
-      <h3>Case progress</h3>
-      <div class="ols-bar" role="img" aria-label="Passed ${c.passedPercent}%, not passed ${c.notPassedPercent}%, to be automated ${c.waitingPercent}%">
-        <span class="ols-seg-pass" style="width:${c.passedPercent}%"></span><span class="ols-seg-fail" style="width:${c.notPassedPercent}%"></span><span class="ols-seg-wait" style="width:${c.waitingPercent}%"></span>
+    <div class="${extra ? 'ols-row' : ''}">
+      <div class="chart-card">
+        <h3>Case progress</h3>
+        <div class="ols-bar" role="img" aria-label="Passed ${c.passedPercent}%, not passed ${c.notPassedPercent}%, to be automated ${c.waitingPercent}%">
+          <span class="ols-seg-pass" style="width:${c.passedPercent}%"></span><span class="ols-seg-fail" style="width:${c.notPassedPercent}%"></span><span class="ols-seg-wait" style="width:${c.waitingPercent}%"></span>
+        </div>
+        <div class="ols-legend">
+          <span><i class="ols-seg-pass"></i>Passed</span>
+          <span><i class="ols-seg-fail"></i>Not passed</span>
+          <span><i class="ols-seg-wait"></i>To be automated</span>
+        </div>
       </div>
-      <div class="ols-legend">
-        <span><i class="ols-seg-pass"></i>Passed</span>
-        <span><i class="ols-seg-fail"></i>Not passed</span>
-        <span><i class="ols-seg-wait"></i>To be automated</span>
-      </div>
+      ${extra}
     </div>
     ${maTypesCard(d, n)}
     <div class="chart-card ols-note">
       <dl>
         <dt>Measured</dt><dd>${escapeHtml(formatBkkTime(new Date(d.measuredAt)))}${refresh === 'updating' ? ' <span class="ols-scope ma-refresh">· updating from Qase…</span>' : refresh ? ` <span class="ols-scope ma-refresh">· update ${escapeHtml(refresh)} — showing the last numbers</span>` : ''}</dd>
-        <dt>Pass results from</dt><dd>${r ? `${escapeHtml(r.title || '')} · started ${fmt(r.startedAt)} · completed ${fmt(r.completedAt)}` : 'no completed run in Qase yet — every automated case reads NOT RUN'}</dd>
-        <dt>Case source</dt><dd><strong>Qase project MA</strong>, suites MICA1 · EvMS · ELMS · CBMS counted together</dd>
-        <dt>Qase</dt><dd><a class="ols-report-link" href="https://app.qase.io/project/MA" target="_blank" rel="noopener noreferrer">Open project MA in Qase ↗</a></dd>
+        <dt>Pass results from</dt><dd>${r ? `latest: ${escapeHtml(r.title || '')} · started ${fmt(r.startedAt)} · completed ${fmt(r.completedAt)}${d.runsUsed > 1 ? ` · each case uses its newest of ${d.runsUsed} completed runs` : ''}` : 'no completed run in Qase yet — every automated case reads NOT RUN'}</dd>
+        <dt>Case source</dt><dd>${tab.source}</dd>
+        <dt>Qase</dt><dd><a class="ols-report-link" href="https://app.qase.io/project/${tab.project}" target="_blank" rel="noopener noreferrer">Open project ${tab.project} in Qase ↗</a></dd>
       </dl>
     </div>`
   if (animate) animateOls(content)
@@ -1172,109 +1224,6 @@ function maTypesCard(d, n) {
         <div class="ols-types-row ols-types-total" role="row"><span role="rowheader">Total</span><span role="cell">${n(c.total)}</span><span role="cell">${c.total ? '100.0%' : '0.0%'}</span><span role="cell" class="ols-t-pass">${n(c.passed)}</span><span role="cell" class="ols-t-fail">${n(c.notPassed)}</span><span role="cell">${n(c.waiting)}</span></div>
       </div>
       <div class="card-sub">Type = Qase “Test Case Type”; Empty = no type set in Qase.</div>
-    </div>`
-}
-
-// ── OLS tab (spec docs/sdd/ols-tab) — every number comes from /ols-progress.json ──
-async function renderOls() {
-  const content = document.getElementById('content')
-  let d
-  try {
-    const res = await fetch('/ols-progress.json', { cache: 'no-store' })
-    if (!res.ok) throw new Error('HTTP ' + res.status)
-    d = await res.json()
-    const c = d && d.cases
-    if (!c || [c.total, c.passed, c.notPassed, c.waiting].some(n => typeof n !== 'number') || c.passed + c.notPassed + c.waiting !== c.total) throw new Error('unexpected shape')
-  } catch (e) {
-    if (activeView !== 'ols') return
-    content.innerHTML = `<div class="error-msg">OLS progress data is not available (${escapeHtml(e.message)}). Regenerate ols-progress.json and deploy again.</div>`
-    return
-  }
-  if (activeView !== 'ols') return
-  const c = d.cases, b = d.notPassedBreakdown || {}, t = d.tickets || {}
-  const n = v => `<span data-count="${v}">${v}</span>`
-  content.innerHTML = `
-    <div class="ols-head">
-      <h2>OLS · Automation progress</h2>
-      <span class="ols-scope">Unique caseId from all platforms (Desktop 1440×900 · Tablet 768×1024 · Tablet landscape 1024×768 · Mobile 375×812 · Mobile landscape 844×390)</span>
-    </div>
-    <div class="ols-cards">
-      <div class="card">
-        <div class="card-label">Total cases</div>
-        <div class="card-value">${n(c.total)}<span class="ols-pct" aria-hidden="true">&nbsp;</span></div>
-        <div class="card-sub" aria-hidden="true">&nbsp;</div>
-      </div>
-      <div class="card">
-        <div class="card-label">Automated · passed</div>
-        <div class="card-value teal">${n(c.passed)}<span class="ols-pct">${c.passedPercent}%</span></div>
-        <div class="card-sub">every run of the case passed</div>
-      </div>
-      <div class="card">
-        <div class="card-label">Automated · not passed</div>
-        <div class="card-value amber">${n(c.notPassed)}<span class="ols-pct">${c.notPassedPercent}%</span></div>
-        <div class="ols-break"><span>failed <b>${b.failed ?? 0}</b></span><span>flaky <b>${b.flaky ?? 0}</b></span><span>skipped <b>${b.skipped ?? 0}</b></span><span>not run <b>${b.notRun ?? 0}</b></span></div>
-      </div>
-      <div class="card">
-        <div class="card-label">Waiting to automate</div>
-        <div class="card-value muted">${n(c.waiting)}<span class="ols-pct">${c.waitingPercent}%</span></div>
-        <div class="card-sub">case on a Done ticket with no test yet</div>
-      </div>
-    </div>
-    <div class="ols-row">
-      <div class="chart-card">
-        <h3>Case progress</h3>
-        <div class="ols-bar" role="img" aria-label="Passed ${c.passedPercent}%, not passed ${c.notPassedPercent}%, waiting ${c.waitingPercent}%">
-          <span class="ols-seg-pass" style="width:${c.passedPercent}%"></span><span class="ols-seg-fail" style="width:${c.notPassedPercent}%"></span><span class="ols-seg-wait" style="width:${c.waitingPercent}%"></span>
-        </div>
-        <div class="ols-legend">
-          <span><i class="ols-seg-pass"></i>Passed</span>
-          <span><i class="ols-seg-fail"></i>Not passed</span>
-          <span><i class="ols-seg-wait"></i>Waiting</span>
-        </div>
-      </div>
-      <div class="chart-card">
-        <h3>Done tickets with an automated case</h3>
-        <div class="ols-big">${t.percent}%</div>
-        <div class="card-sub">${t.withAutomatedCase} of ${t.done} tickets</div>
-        ${t.filters && /^https:\/\/[a-z0-9.-]+\/issues\/\?filter=\d+$/.test(t.filters.withAutomatedCase || '') ? `<a class="ols-report-link ols-filter-link" href="${escapeHtml(t.filters.withAutomatedCase)}" target="_blank" rel="noopener noreferrer">Jira filter: tickets with an automated case ↗</a>` : ''}
-        ${t.filters && /^https:\/\/[a-z0-9.-]+\/issues\/\?filter=\d+$/.test(t.filters.done || '') ? `<a class="ols-report-link ols-filter-link" href="${escapeHtml(t.filters.done)}" target="_blank" rel="noopener noreferrer">Jira filter: all Done tickets in scope ↗</a>` : ''}
-      </div>
-    </div>
-    ${olsTypesCard(d.caseTypes, c, n)}
-    <div class="chart-card ols-note">
-      <dl>
-        <dt>Measured</dt><dd>${escapeHtml(formatBkkTime(new Date(d.measuredAt)))}</dd>
-        <dt>Pass results from</dt><dd>${escapeHtml(d.round && d.round.label || '')} · started ${d.round && d.round.startedAt ? escapeHtml(formatBkkTime(new Date(d.round.startedAt))) : '—'}${d.round && /^https:\/\/claude\.ai\//.test(d.round.reportUrl || '') ? ` · <a class="ols-report-link" href="${escapeHtml(d.round.reportUrl)}" target="_blank" rel="noopener noreferrer">Open HTML report ↗</a>` : ''}</dd>
-        ${d.round && d.round.reportStats ? `<dt>Report run totals</dt><dd>${['passed','failed','skipped','flaky'].map(k => `${k} <b>${Number(d.round.reportStats[k]) || 0}</b>`).join(' · ')} <span class="ols-scope">(tests × viewports, from the report)</span></dd>` : ''}
-        <dt>Case source</dt><dd><strong>Done tickets (Story / Task / Bug)</strong>, excluding Dev_Task and QA_Task</dd>
-        <dt>Qase</dt><dd><a class="ols-report-link" href="https://app.qase.io/project/OLS" target="_blank" rel="noopener noreferrer">Open project OLS in Qase ↗</a></dd>
-      </dl>
-    </div>`
-  animateOls(content)
-}
-
-// Spec R11: one row per Qase Test Case Type + "No type", from `caseTypes` only; hidden when malformed.
-const OLS_TYPES = [['happyPath', 'Happy Path'], ['failureScenario', 'Failure Scenario'], ['edgeCase', 'Edge Case'], ['exceptionalCase', 'Exceptional Case']]
-function olsTypesCard(ct, c, n) {
-  const ok = ct && OLS_TYPES.every(([k]) => ct[k] && ['total', 'passed', 'notPassed'].every(f => Number.isInteger(ct[k][f])))
-    && ['total', 'passed', 'notPassed'].every(f => OLS_TYPES.reduce((s, [k]) => s + ct[k][f], 0) === c[f])
-  if (!ok) return ''
-  // R19: shares in tenths of a percent, largest remainder, so the type rows add to exactly 100.0%
-  const raw = OLS_TYPES.map(([k]) => c.total ? ct[k].total * 1000 / c.total : 0)
-  const tenths = raw.map(Math.floor)
-  let left = c.total ? 1000 - tenths.reduce((s, v) => s + v, 0) : 0
-  raw.map((v, i) => [v - tenths[i], i]).sort((a, b) => b[0] - a[0] || a[1] - b[1]).forEach(([, i]) => { if (left > 0) { tenths[i]++; left-- } })
-  const share = Object.fromEntries(OLS_TYPES.map(([k], i) => [k, (tenths[i] / 10).toFixed(1) + '%']))
-  const pct = v => c.total ? (v / c.total * 100).toFixed(1) + '%' : '0.0%'
-  return `
-    <div class="chart-card ols-types">
-      <h3>Cases by type</h3>
-      <div class="ols-types-grid" role="table" aria-label="Cases by test case type">
-        <div class="ols-types-head" role="row"><span role="columnheader">Type</span><span role="columnheader">Cases</span><span role="columnheader">%</span><span role="columnheader">Passed</span><span role="columnheader">Not passed</span></div>
-        ${OLS_TYPES.map(([k, label]) => `<div class="ols-types-row" role="row"><span role="rowheader">${label}</span><span role="cell">${n(ct[k].total)}</span><span role="cell">${share[k]}</span><span role="cell" class="ols-t-pass">${n(ct[k].passed)}</span><span role="cell" class="ols-t-fail">${n(ct[k].notPassed)}</span></div>`).join('')}
-        <div class="ols-types-row ols-types-total" role="row"><span role="rowheader">Total</span><span role="cell">${n(c.total)}</span><span role="cell">${pct(c.total)}</span><span role="cell" class="ols-t-pass">${n(c.passed)}</span><span role="cell" class="ols-t-fail">${n(c.notPassed)}</span></div>
-      </div>
-      <div class="card-sub">Type = Qase “Test Case Type”, Exceptional = the case tests a ticket EC item; otherwise Qase, or the agreed keyword rule. The rest of each row's cases are waiting to automate.</div>
     </div>`
 }
 
