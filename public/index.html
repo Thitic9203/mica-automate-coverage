@@ -543,15 +543,20 @@ tr:hover td { background: rgba(0,0,0,0.013); }
   .tab { min-width: 100px; padding: 6px 10px; }
   .tab-label { font-size: 12px; }
   .page-content { padding: 20px 16px 40px; }
-  .live-sub { display: none; }
-  /* header fits 390 px: date + sign out on their own row, full tab names on two lines, 44 px targets */
+  .tab-label { max-width: 112px; }
+}
+/* phones + tablets: date + sign out on their own row, full tab names (two lines when needed), 44 px targets */
+@media (max-width: 1024px) {
   .tab-bar { flex-wrap: wrap; }
   .chrome-meta { order: -1; flex-basis: 100%; justify-content: flex-end; padding: 0 12px 6px; }
   .tab-spacer { display: none; }
   .chrome-brand { padding-bottom: 0; align-self: center; }
   .tab { min-width: 0; flex-shrink: 1; min-height: 44px; white-space: normal; }
-  .tab-label { max-width: 112px; white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.2; }
+  .tab-label { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.2; }
   .signout-btn { min-height: 44px; padding: 0 12px; }
+}
+@media (pointer: coarse) {
+  .tab, .signout-btn { min-height: 44px; }
 }
   </style>
 </head>
