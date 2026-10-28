@@ -56,15 +56,36 @@ async function open(pageObj, view) {
   await expect.poll(() => pageObj.evaluate(() => document.fonts.status)).toBe('loaded')
 }
 
-for (const width of [390, 900, 1440]) {
-  for (const view of ['ma', 'ols']) {
-    test(`${view} @ ${width}px`, async ({ page: p }) => {
-      await p.setViewportSize({ width, height: 900 })
-      await open(p, view)
-      // live pill + Measured carry the wall-clock time; their text width shifts the line beside them
-      const masks = [p.locator('#live-pill'), p.locator('.ols-note dd').first()]
-      await expect(p).toHaveScreenshot(`${view}-${width}.png`, { fullPage: true, mask: masks })
-      expect(await p.evaluate(() => document.documentElement.scrollWidth)).toBe(width)
-    })
+for (const theme of ['light', 'dark']) {
+  for (const width of [390, 900, 1440]) {
+    for (const view of ['ma', 'ols']) {
+      test(`${view} @ ${width}px · ${theme}`, async ({ page: p }) => {
+        await p.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' })
+        await p.setViewportSize({ width, height: 900 })
+        await open(p, view)
+        expect(await p.evaluate(() => document.documentElement.getAttribute('data-theme'))).toBe(theme)
+        await expect(p.locator('#theme-btn')).toHaveAttribute('aria-pressed', String(theme === 'dark'))
+        // freeze the two wall-clock texts so their width cannot move anything (no masks needed)
+        await p.evaluate(() => {
+          document.getElementById('last-updated').textContent = 'Updated Date: 28/Oct/2026 12:00 PM'
+          document.querySelector('.ols-note dd').textContent = '28/Oct/2026 12:00 PM'
+        })
+        await expect(p).toHaveScreenshot(`${view}-${width}-${theme}.png`, { fullPage: true })
+        expect(await p.evaluate(() => document.documentElement.scrollWidth)).toBe(width)
+        await p.addScriptTag({ url: 'https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.9.1/axe.min.js' })
+        const v = await p.evaluate(async () => (await window.axe.run(document.getElementById('app'), { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21aa'] } })).violations.map(x => x.id + ':' + x.nodes.map(n => n.target.join(' ')).join('|')))
+        expect(v).toEqual([])
+      })
+    }
   }
 }
+
+test('theme toggle: choice beats the system and survives reload', async ({ page: p }) => {
+  await p.emulateMedia({ colorScheme: 'light' })
+  await open(p, 'ma')
+  await p.locator('#theme-btn').click()
+  await expect(p.locator('html')).toHaveAttribute('data-theme', 'dark')
+  await expect(p.locator('#theme-btn')).toHaveAttribute('aria-pressed', 'true')
+  await p.reload()
+  await expect(p.locator('html')).toHaveAttribute('data-theme', 'dark')
+})
