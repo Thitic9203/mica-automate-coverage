@@ -52,8 +52,9 @@ number", R2–R5, R10, R11, R14 for the case figures (they came from `ols-progre
   **"Updated Date: DD/Mon/YYYY hh:mm AM|PM"** (Bangkok, the `measuredAt` of the numbers the active tab shows)
   and **"Refreshes each time you open this tab"**. While the live update runs the second line reads
   "Updating from Qase…"; when it fails, "Update failed — showing the last numbers". It never stays on
-  "Loading…" once a tab has numbers. At ≤640 px the second line is hidden so the header (logo, two tabs,
-  sign out) does not overflow; the date line stays.
+  "Loading…" once a tab has numbers. At ≤1024 px the pill and Sign out take their own row above the tabs
+  so the header never overflows; tab names are never cut (they wrap); tabs and Sign out are ≥44 px tall
+  on ≤1024 px and on touch screens.
 
 ## Done when
 
