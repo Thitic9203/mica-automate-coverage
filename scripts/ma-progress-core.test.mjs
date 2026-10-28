@@ -174,3 +174,57 @@ test('R40: both attempts failing rejects', async () => {
   const bad = hedged(async () => { await new Promise(r => setTimeout(r, 70)); throw Object.assign(new Error('HTTP 521'), { status: 521 }) }, 20)
   await assert.rejects(bad('/x'), /521/)
 })
+
+// ── spec docs/sdd/live-qase-tabs ──
+import * as core from '../public/ma-progress-core.mjs'
+const run = (id, end, cases, title = 'Run ' + id) => ({ id, title, status: 1, start_time: end, end_time: end, cases })
+
+test('live R2: a case only in an older run keeps that result when the newest run omits it', async () => {
+  const cases = [kase(1, 1, 2), kase(2, 3, 2)]
+  const runs = [run(1, '2026-10-20 10:00:00', [1, 2]), run(2, '2026-10-27 10:00:00', [2])]
+  const results = { 1: [{ case_id: 1, status: 'passed' }, { case_id: 2, status: 'failed' }], 2: [{ case_id: 2, status: 'passed' }] }
+  const o = await buildMaOverview({ fetchJson: ovMock({ cases, runs, results }), now: NOW2 })
+  assert.equal(o.cases.passed, 2) // case 1 from run 1, case 2 from newer run 2
+  assert.equal(o.cases.notPassed, 0)
+  assert.equal(o.run.title, 'Run 2')
+  assert.equal(o.runsUsed, 2)
+})
+
+test('live R2: a 1-case retest run does not touch other cases', async () => {
+  const cases = [kase(1, 1, 2), kase(2, 1, 2), kase(3, 1, 2)]
+  const runs = [run(8, '2026-10-22 05:00:00', [1, 2, 3]), run(9, '2026-10-23 05:00:00', [3])]
+  const results = { 8: [{ case_id: 1, status: 'passed' }, { case_id: 2, status: 'failed' }, { case_id: 3, status: 'failed' }], 9: [{ case_id: 3, status: 'passed' }] }
+  const o = await buildMaOverview({ fetchJson: ovMock({ cases, runs, results }), now: NOW2 })
+  assert.deepEqual([o.cases.passed, o.cases.notPassed, o.cases.waiting], [2, 1, 0])
+})
+
+test('live R4: the result walk stops once the newest run covers every listed case', async () => {
+  const cases = [kase(1, 1, 2), kase(2, 1, 0)]
+  const runs = [run(1, '2026-10-20 10:00:00', [1]), run(2, '2026-10-27 10:00:00', [1])]
+  const base = ovMock({ cases, runs, results: { 1: [{ case_id: 1, status: 'failed' }], 2: [{ case_id: 1, status: 'passed' }] } })
+  const resultCalls = []
+  const o = await buildMaOverview({ fetchJson: async p => { if (p.startsWith('/result/')) resultCalls.push(p); return base(p) }, now: NOW2 })
+  assert.equal(o.cases.passed, 1)
+  assert.equal(o.cases.waiting, 1) // case 2: no run lists it, not automated
+  assert.equal(resultCalls.length, 1)
+  assert.match(resultCalls[0], /run=2/)
+})
+
+test('live R2: inside one run the latest result of a case wins; results of out-of-scope ids are ignored', async () => {
+  const cases = [kase(1, 1, 2)]
+  const runs = [run(1, '2026-10-27 10:00:00', [1, 99])]
+  const results = { 1: [{ case_id: 1, status: 'failed', end_time: '2026-10-27 09:00:00' }, { case_id: 1, status: 'passed', end_time: '2026-10-27 09:30:00' }, { case_id: 99, status: 'failed' }] }
+  const o = await buildMaOverview({ fetchJson: ovMock({ cases, runs, results }), now: NOW2 })
+  assert.deepEqual([o.cases.total, o.cases.passed], [1, 1])
+})
+
+test('live R1/R5: OLS overview counts every case in the project, typed by field 4', async () => {
+  assert.equal(typeof core.buildOlsOverview, 'function')
+  const cases = [kase(1, 1, 2, '1'), kase(2, 9, 2, '2'), kase(3, 9, 0, null)]
+  const runs = [run(6, '2026-10-21 16:11:37', [1, 2])]
+  const results = { 6: [{ case_id: 1, status: 'passed' }, { case_id: 2, status: 'failed' }] }
+  const o = await core.buildOlsOverview({ fetchJson: ovMock({ cases, runs, results }), now: NOW2 })
+  assert.equal(o.project, 'OLS')
+  assert.deepEqual([o.cases.total, o.cases.passed, o.cases.notPassed, o.cases.waiting], [3, 1, 1, 1])
+  assert.deepEqual(o.types.map(t => [t.key, t.total]), [['happyPath', 1], ['failureScenario', 1], ['edgeCase', 0], ['exceptionalCase', 0], ['empty', 1]])
+})

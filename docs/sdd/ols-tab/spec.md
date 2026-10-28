@@ -6,6 +6,9 @@ progress ลงไป … ทั้งหมดกี่เคส · automate �
 
 ## Source of every number
 
+> 2026-10-28: superseded by `docs/sdd/live-qase-tabs` — case figures are computed live from Qase project OLS;
+> only the Done-ticket card still reads `public/ols-progress.json` (live-qase-tabs R7).
+
 `public/ols-progress.json`, written by `npm run report:olsprogress` in ols-qa-e2e (spec
 `ols-qa-e2e/docs/sdd/ols-progress-export`). The page never computes or types a count of its own.
 

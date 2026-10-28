@@ -48,6 +48,13 @@ number", R2–R5, R10, R11, R14 for the case figures (they came from `ols-progre
 - **R9** — Wording: OLS header scope "All cases in Qase project OLS"; case source "Qase project OLS";
   the to-be-automated card reads "not automated and no run result" on both tabs.
 
+- **R10** — (owner order 2026-10-28, screenshot) The top-right status pill MUST read, on two lines,
+  **"Updated Date: DD/Mon/YYYY hh:mm AM|PM"** (Bangkok, the `measuredAt` of the numbers the active tab shows)
+  and **"Refreshes each time you open this tab"**. While the live update runs the second line reads
+  "Updating from Qase…"; when it fails, "Update failed — showing the last numbers". It never stays on
+  "Loading…" once a tab has numbers. At ≤640 px the second line is hidden so the header (logo, two tabs,
+  sign out) does not overflow; the date line stays.
+
 ## Done when
 
 - Tests: a case in an older run keeps its result when the newest run omits it; a 1-case retest run does
