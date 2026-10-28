@@ -91,6 +91,10 @@ number", R2–R5, R10, R11, R14 for the case figures (they came from `ols-progre
   file: every figure comes from Qase (live) or the `site-data` branch (auto-published). `ma-progress.json` and
   `ols-progress.json` are removed.
 
+- **R18** — (owner order 2026-10-28 "ถ้าไม่มี type ไหนก็ไม่ต้องโชว์สิ เช่น empty ไม่เหลือแล้ว") In "Cases by type" a type row with
+  0 cases MUST NOT be shown (Empty included); the Total row still equals the cards. When every case is untyped only
+  Empty shows.
+
 ## Done when
 
 - Tests: a case in an older run keeps its result when the newest run omits it; a 1-case retest run does

@@ -163,3 +163,19 @@ test('live R6: notes name the newest run and how many completed runs were used, 
   assert.match(content.innerHTML, /latest: Run X/)
   assert.match(content.innerHTML, /1 completed run used, each case from its newest/)
 })
+
+test('live R18: a type row with 0 cases is not shown; Total still matches', async () => {
+  const html = readFileSync(new URL('../public/index.html', import.meta.url), 'utf8')
+  const fnSrc = html.slice(html.indexOf('const MA_TYPE_LABELS'), html.indexOf('\n}\n', html.indexOf('function maTypesCard')) + 2)
+  const card = new Function('escapeHtml', `${fnSrc}; return maTypesCard`)(s => String(s))
+  const d = { cases: { total: 3, passed: 1, notPassed: 1, waiting: 1 }, types: [
+    { key: 'happyPath', total: 2, passed: 1, notPassed: 1, waiting: 0, sharePercent: 66.7 },
+    { key: 'failureScenario', total: 1, passed: 0, notPassed: 0, waiting: 1, sharePercent: 33.3 },
+    { key: 'edgeCase', total: 0, passed: 0, notPassed: 0, waiting: 0, sharePercent: 0 },
+    { key: 'exceptionalCase', total: 0, passed: 0, notPassed: 0, waiting: 0, sharePercent: 0 },
+    { key: 'empty', total: 0, passed: 0, notPassed: 0, waiting: 0, sharePercent: 0 } ] }
+  const out = card(d, v => String(v))
+  assert.match(out, /Happy Path/); assert.match(out, /Failure Scenario/)
+  assert.doesNotMatch(out, /Edge Case|Exceptional Case|>Empty</)
+  assert.match(out, /rowheader">Total/)
+})
