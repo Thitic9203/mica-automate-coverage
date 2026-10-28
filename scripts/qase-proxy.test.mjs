@@ -2,7 +2,7 @@
 // Run: node --test scripts/*.test.mjs
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { onRequest } from '../functions/api/qase/[[path]].js'
 
 const req = url => ({ request: new Request(url), env: { QASE_API_TOKEN: 'tok_from_env' } })
@@ -71,4 +71,9 @@ test('live R15: theme toggle is a square sun/moon icon button left of the date p
   assert.match(meta, /id="theme-btn"[^>]*aria-pressed="false"[^>]*aria-label="Dark mode"/)
   assert.match(meta, /class="icon-sun"/); assert.match(meta, /class="icon-moon"/)
   assert.match(meta, /id="logout-btn">\s*<svg/)
+})
+
+test('live R17: public/ ships no data file — every figure is live or auto-published', () => {
+  const files = readdirSync(new URL('../public/', import.meta.url))
+  assert.deepEqual(files.filter(f => f.endsWith('.json')), [])
 })
