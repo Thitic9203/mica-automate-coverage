@@ -8,7 +8,16 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <style>
+  <script>
+// global rule 16.2: theme before first paint; the user's choice wins over the system setting
+(function () {
+  var t = null
+  try { t = localStorage.getItem('mica-theme') } catch (e) {}
+  if (t !== 'dark' && t !== 'light') t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  document.documentElement.setAttribute('data-theme', t)
+})()
+</script>
+<style>
 /* ── Tokens ── */
 :root {
   --chrome:        #E2E2E0;
@@ -27,7 +36,46 @@
   --muted:         #5E5E5E;
   --border:        #E0E0DE;
   --radius:        8px;
+  --surface:       #FFFFFF;
+  --surface-hover: #F7F7F5;
+  --tab-text:      #595959;
+  --tab-x:         #6E6E6E;
+  --seg-wait:      #B9B9B6;
+  --danger:        #991B1B;
+  --live-dot:      #62A88A;
+  color-scheme: light;
 }
+/* dark theme (global rule 16.2) — every colour is a token; set before first paint by the head script */
+:root[data-theme="dark"] {
+  --chrome:        #1F201F;
+  --chrome-border: #3A3C3A;
+  --page:          #161716;
+  --card:          #202120;
+  --card-border:   #303230;
+  --teal:          #7CC4A2;
+  --green:         #7CC4A2;
+  --green-v:       #4F9C7B;
+  --amber:         #E3B566;
+  --amber-v:       #C4913A;
+  --blue:          #8DB5D3;
+  --blue-v:        #6899B8;
+  --text:          #ECECEA;
+  --muted:         #ABACA8;
+  --border:        #303230;
+  --surface:       #252625;
+  --surface-hover: #2C2D2C;
+  --tab-text:      #BDBEBA;
+  --tab-x:         #9A9B97;
+  --seg-wait:      #5F605D;
+  --danger:        #F2A7A7;
+  --live-dot:      #4F9C7B;
+  color-scheme: dark;
+}
+.theme-btn {
+  font-size: 11px; color: var(--muted); cursor: pointer; border: none; background: none;
+  min-height: 44px; padding: 0 12px; border-radius: 5px; font-family: inherit; white-space: nowrap;
+}
+.theme-btn:hover, .theme-btn[aria-pressed="true"] { color: var(--text); }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { height: 100%; scrollbar-width: none; }
 html::-webkit-scrollbar { display: none; }
@@ -48,7 +96,7 @@ body::-webkit-scrollbar { display: none; }
   background: var(--page);
 }
 .auth-box {
-  background: #FFFFFF;
+  background: var(--surface);
   border: 1px solid var(--card-border);
   border-radius: 12px;
   padding: 48px 44px;
@@ -74,14 +122,14 @@ body::-webkit-scrollbar { display: none; }
   display: flex; align-items: center; justify-content: center; gap: 10px;
   width: 100%; padding: 11px;
   border: 1px solid var(--card-border); border-radius: 8px;
-  background: #FFFFFF; font-size: 14px; font-weight: 500; color: var(--text);
+  background: var(--surface); font-size: 14px; font-weight: 500; color: var(--text);
   cursor: pointer; transition: background .12s, border-color .12s;
   font-family: inherit;
 }
-.btn-google:hover { background: #F7F7F5; border-color: #C4C4C0; }
+.btn-google:hover { background: var(--surface-hover); border-color: var(--chrome-border); }
 .btn-google svg { width: 18px; height: 18px; flex-shrink: 0; }
 .auth-error {
-  font-size: 12px; color: #991B1B; margin-top: 12px; display: none;
+  font-size: 12px; color: var(--danger); margin-top: 12px; display: none;
   background: rgba(153,27,27,0.05); border: 1px solid rgba(153,27,27,0.15);
   border-radius: 6px; padding: 8px 12px;
 }
@@ -134,7 +182,7 @@ body::-webkit-scrollbar { display: none; }
   border-radius: 8px 8px 0 0;
   cursor: pointer;
   font-size: 13px; font-weight: 500;
-  color: #595959; /* ≥4.5:1 on the chrome background (axe color-contrast) */
+  color: var(--tab-text); /* ≥4.5:1 on the chrome background (axe color-contrast) */
   background: transparent;
   border: 1px solid transparent;
   border-bottom: none;
@@ -161,7 +209,7 @@ body::-webkit-scrollbar { display: none; }
 .tab-x {
   width: 16px; height: 16px; border-radius: 3px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 12px; color: #999; line-height: 1;
+  font-size: 12px; color: var(--tab-x); line-height: 1;
   opacity: 0; transition: opacity .1s, background .1s;
   flex-shrink: 0; font-style: normal;
 }
@@ -185,7 +233,7 @@ body::-webkit-scrollbar { display: none; }
 .live-sub:empty { display: none; }
 .live-dot {
   width: 6px; height: 6px; border-radius: 50%;
-  background: #62A88A; animation: pulse 2s infinite;
+  background: var(--live-dot); animation: pulse 2s infinite;
 }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 @keyframes pillFlash { 0%,100%{background:transparent} 30%{background:rgba(62,122,94,0.06)} }
@@ -296,7 +344,7 @@ body::-webkit-scrollbar { display: none; }
 .ols-row { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr); gap:10px; margin-bottom:14px; }
 .ols-bar { display:flex; height:14px; border-radius:99px; overflow:hidden; background:var(--border); }
 .ols-bar span { display:block; height:100%; }
-.ols-seg-pass { background:var(--green-v); } .ols-seg-fail { background:var(--amber-v); } .ols-seg-wait { background:#B9B9B6; }
+.ols-seg-pass { background:var(--green-v); } .ols-seg-fail { background:var(--amber-v); } .ols-seg-wait { background:var(--seg-wait); }
 .ols-legend { display:grid; grid-template-columns:repeat(3, auto); justify-content:start; gap:6px 18px; margin-top:12px; font-size:12px; color:var(--muted); }
 .ols-legend i { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:6px; vertical-align:middle; }
 .ols-big { font-family:'JetBrains Mono',monospace; font-size:1.7rem; font-weight:500; color:var(--green); line-height:1; }
@@ -372,7 +420,7 @@ body::-webkit-scrollbar { display: none; }
 }
 .table-head h3 { font-size: 13px; font-weight: 600; color: var(--text); }
 .search-input {
-  background: #FFFFFF; border: 1px solid var(--border);
+  background: var(--surface); border: 1px solid var(--border);
   border-radius: 5px; padding: 5px 10px;
   color: var(--text); font-size: 12px; outline: none;
   width: 220px; transition: border-color .12s, box-shadow .12s;
@@ -388,11 +436,11 @@ body::-webkit-scrollbar { display: none; }
   padding: 5px 10px; border-radius: 5px;
   font-size: 12px; font-weight: 500; cursor: pointer;
   border: 1px solid var(--border);
-  background: #FFFFFF; color: var(--muted);
+  background: var(--surface); color: var(--muted);
   transition: all 0.1s; font-family: inherit;
 }
-.filter-tab:hover { background: #EEEEED; color: var(--text); }
-.filter-tab.active { background: #E8E8E6; color: var(--text); border-color: #C8C8C4; }
+.filter-tab:hover { background: var(--surface-hover); color: var(--text); }
+.filter-tab.active { background: var(--surface-hover); color: var(--text); border-color: var(--chrome-border); }
 .filter-tab[data-filter="Automated"].active     { background: rgba(62,122,94,0.11); color: var(--green); border-color: rgba(62,122,94,0.28); }
 .filter-tab[data-filter="To be Automated"].active { background: rgba(138,96,32,0.11); color: var(--amber); border-color: rgba(138,96,32,0.28); }
 
@@ -445,7 +493,7 @@ tr:hover td { background: rgba(0,0,0,0.013); }
 }
 .pagination-btns { display: flex; gap: 4px; align-items: center; }
 .pg-btn {
-  background: #FFFFFF; border: 1px solid var(--border);
+  background: var(--surface); border: 1px solid var(--border);
   color: var(--text); border-radius: 5px; padding: 4px 10px;
   cursor: pointer; font-size: 12px; font-family: inherit;
   transition: border-color .1s, color .1s;
@@ -457,7 +505,7 @@ tr:hover td { background: rgba(0,0,0,0.013); }
 .module-table-wrap { flex: 0 0 auto; overflow: hidden; }
 .module-pagination { flex: 0 0 auto; margin-top: auto; padding: 10px 0 0; }
 .page-size-select {
-  background: #FFFFFF; border: 1px solid var(--border);
+  background: var(--surface); border: 1px solid var(--border);
   color: var(--text); border-radius: 5px; padding: 3px 8px;
   font-size: 12px; font-family: inherit;
   display: none;
@@ -469,7 +517,7 @@ tr:hover td { background: rgba(0,0,0,0.013); }
 }
 .custom-select-trigger {
   display: flex; align-items: center; justify-content: space-between; gap: 6px;
-  background: #FFFFFF; border: 1px solid var(--border);
+  background: var(--surface); border: 1px solid var(--border);
   color: var(--text); border-radius: 5px; padding: 4px 10px;
   font-size: 12px; font-family: inherit; cursor: pointer;
   transition: border-color .12s, box-shadow .12s;
@@ -486,7 +534,7 @@ tr:hover td { background: rgba(0,0,0,0.013); }
 .custom-select.open .custom-select-arrow { transform: rotate(180deg); }
 .custom-select-options {
   position: absolute; bottom: calc(100% + 4px); left: 0; right: 0;
-  background: #FFFFFF; border: 1px solid var(--card-border);
+  background: var(--surface); border: 1px solid var(--card-border);
   border-radius: 6px; padding: 4px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.10), 0 1px 3px rgba(0,0,0,0.06);
   z-index: 50; display: none;
@@ -506,8 +554,8 @@ tr:hover td { background: rgba(0,0,0,0.013); }
 .suite-row td:first-child { font-weight: 500; }
 .suite-prog-wrap { display:flex; align-items:center; gap:10px; }
 .suite-prog-bar { flex:1; height:6px; background:var(--border); border-radius:99px; overflow:hidden; min-width:80px; position:relative; }
-.suite-prog-fill { height:100%; border-radius:99px; background:#62A88A; transition:width 0.8s ease; }
-.suite-prog-fill::after { content:''; position:absolute; right:0; top:0; width:4px; height:100%; background:#6899B8; border-radius:99px; }
+.suite-prog-fill { height:100%; border-radius:99px; background:var(--green-v); transition:width 0.8s ease; }
+.suite-prog-fill::after { content:''; position:absolute; right:0; top:0; width:4px; height:100%; background:var(--blue-v); border-radius:99px; }
 
 /* ── Utility ── */
 .hidden { display: none !important; }
@@ -527,7 +575,7 @@ tr:hover td { background: rgba(0,0,0,0.013); }
   background: rgba(153,27,27,0.04);
   border: 1px solid rgba(153,27,27,0.14);
   border-radius: 6px; padding: 14px 18px;
-  color: #991B1B; font-size: 13px; margin-bottom: 20px;
+  color: var(--danger); font-size: 13px; margin-bottom: 20px;
 }
 
 /* ── Responsive ── */
@@ -557,7 +605,7 @@ tr:hover td { background: rgba(0,0,0,0.013); }
 }
 /* rule 19: every tap target ≥ 44 px at every width */
 .tab, .signout-btn { min-height: 44px; }
-.signout-btn { padding: 0 12px; }
+.signout-btn { padding: 0 12px; white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -598,7 +646,7 @@ tr:hover td { background: rgba(0,0,0,0.013); }
       <!-- Overview, By Suite, All Test Cases: hidden (spec docs/sdd/ma-tabs R1); their render code stays below -->
       <div class="tab active" data-view="ma">
         <!-- four squares: four systems in Qase project MA -->
-        <svg class="tab-icon" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" style="color:#2E6B4F">
+        <svg class="tab-icon" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" style="color:var(--teal)">
           <rect x="1.5" y="1.5" width="4.5" height="4.5" rx="1" fill="currentColor"/>
           <rect x="8" y="1.5" width="4.5" height="4.5" rx="1" fill="currentColor" opacity="0.72"/>
           <rect x="1.5" y="8" width="4.5" height="4.5" rx="1" fill="currentColor" opacity="0.5"/>
@@ -609,7 +657,7 @@ tr:hover td { background: rgba(0,0,0,0.013); }
       </div>
       <div class="tab" data-view="ols">
         <!-- rising steps: OLS automation progress -->
-        <svg class="tab-icon" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" style="color:#2E6B4F">
+        <svg class="tab-icon" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" style="color:var(--teal)">
           <path d="M2 11.5h3V8.5h3V5.5h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
           <circle cx="12" cy="5.5" r="1.3" fill="currentColor"/>
         </svg>
@@ -625,6 +673,7 @@ tr:hover td { background: rgba(0,0,0,0.013); }
           <span class="live-dot"></span>
           <span class="live-text"><span id="last-updated">Loading…</span><span id="live-sub" class="live-sub"></span></span>
         </div>
+        <button class="theme-btn" id="theme-btn" type="button" aria-pressed="false" aria-label="Dark mode">Dark</button>
         <button class="signout-btn" id="logout-btn">Sign out</button>
       </div>
 
@@ -889,6 +938,15 @@ function showApp() {
   setupNav()
   if (activeView === 'ma') renderView() // MA tab reads its own JSON; it does not wait for the old Qase loader
   document.getElementById('logout-btn').addEventListener('click', () => signOut(auth))
+  const themeBtn = document.getElementById('theme-btn')
+  const syncTheme = () => themeBtn.setAttribute('aria-pressed', String(document.documentElement.getAttribute('data-theme') === 'dark'))
+  syncTheme()
+  themeBtn.addEventListener('click', () => {
+    const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'
+    document.documentElement.setAttribute('data-theme', next)
+    try { localStorage.setItem('mica-theme', next) } catch {}
+    syncTheme()
+  })
   document.addEventListener('click', () => {
     document.querySelectorAll('.custom-select.open').forEach(el => el.classList.remove('open'))
   })

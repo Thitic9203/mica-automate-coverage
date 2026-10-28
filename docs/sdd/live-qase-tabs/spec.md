@@ -71,8 +71,11 @@ number", R2–R5, R10, R11, R14 for the case figures (they came from `ols-progre
   390 / 900 / 1440 px against committed baselines (Firebase stubbed, Qase fixtures, motion off, web fonts
   loaded, live pill and Measured masked), 0 differing pixels allowed, plus no horizontal scroll. Run:
   `NODE_PATH=<ols-qa-e2e>/node_modules <ols-qa-e2e>/node_modules/.bin/playwright test -c
-  playwright.visual.config.cjs`. The site has one (light) theme; dark mode stays out of scope (ma-tabs spec,
-  owner).
+  playwright.visual.config.cjs`. Both themes are shot (12 baselines) and each shot also runs axe (wcag2a/aa, wcag21aa) → 0 violations.
+- **R15** — (owner order 2026-10-28 "ทำเสร็จทั้งหมด", global rule 16.2; supersedes ma-tabs "dark mode out of
+  scope") Light and dark themes: every CSS colour is a `:root` token with a `[data-theme="dark"]` set; the theme
+  is applied by a head script before first paint; a saved choice (`localStorage` `mica-theme`) wins over the
+  system setting; the header "Dark" button toggles it and carries `aria-pressed`.
 
 ## Done when
 
