@@ -1045,6 +1045,8 @@ function renderOverview() {
 
 // ── MA tab (spec docs/sdd/ma-tabs) — numbers are computed live from Qase MA through /api/qase each time
 // the tab renders (R23), by the same module the builder uses (public/ma-progress-core.mjs, R24).
+// R29: measured 28/Oct — proxy→Qase pages normally answer in ~2–3 s (p90 3.0 s) but some hang 29–39 s.
+const MA_PAGE_TIMEOUT_MS = 10000
 const MA_SYSTEMS = [['MICA1', 'MICA 1'], ['EVMS', 'EvMS'], ['ELMS', 'ELMS'], ['CBMS', 'CBMS']]
 function maValid(d) {
   if (!d || typeof d.measuredAt !== 'string' || !d.systems || typeof d.systems !== 'object') return false
@@ -1058,7 +1060,7 @@ async function renderMa() {
   try {
     const { buildMaProgress, retryable } = await import('/ma-progress-core.mjs')
     const fetchJson = retryable(async path => { // R28
-      const res = await fetch('/api/qase' + path)
+      const res = await fetch('/api/qase' + path, { signal: AbortSignal.timeout(MA_PAGE_TIMEOUT_MS) }) // R29
       if (!res.ok) throw Object.assign(new Error('Qase HTTP ' + res.status), { status: res.status })
       return res.json()
     })

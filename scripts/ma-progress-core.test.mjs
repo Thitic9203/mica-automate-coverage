@@ -57,3 +57,10 @@ test('R28: retryable() retries 5xx/network failures up to 2 more times, never 4x
   const auth = retryable(async () => { k++; const e = new Error('HTTP 401'); e.status = 401; throw e }, 0)
   await assert.rejects(auth('/x'), /401/); assert.equal(k, 1)
 })
+
+test('R29: an aborted (timed-out) request has no status and is retried', async () => {
+  const { retryable } = await import('../public/ma-progress-core.mjs')
+  let n = 0
+  const slowOnce = retryable(async () => { n++; if (n === 1) throw new DOMException('signal timed out', 'TimeoutError'); return 'ok' }, 0)
+  assert.equal(await slowOnce('/x'), 'ok'); assert.equal(n, 2)
+})
