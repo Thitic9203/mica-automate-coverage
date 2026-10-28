@@ -19,3 +19,4 @@
 | T15 | Completed-run rule fix | R30 | test: run status 3 with end_time is picked | tests green |
 | T16 | `buildMaOverview` core | R31–R33, R35 | tests: waiting/notRun/other/types/Empty/sum | tests green |
 | T17 | OLS-style `renderMa()` | R33–R37 | page text vs Node run | equal; overflow 0 at 1440/900/390 |
+| T18 | Cap in-flight Qase requests at 8 | R38 | test: 31 pages → max in flight ≤ 8, order kept | tests green; production load: 0 timeouts |

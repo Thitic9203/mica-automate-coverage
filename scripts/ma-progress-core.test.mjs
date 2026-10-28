@@ -130,3 +130,22 @@ test('R32: no run at all → run null, every automated case NOT RUN', async () =
   assert.equal(o.run, null)
   assert.deepEqual(o.breakdown, { failed: 0, skipped: 0, notRun: 1, other: {} })
 })
+
+test('R38: at most 8 requests in flight, pages still in offset order', async () => {
+  const suites = [{ id: 1, title: 'MICA1', parent_id: null }]
+  const cases = Array.from({ length: 3100 }, (_, i) => ({ id: i + 1, suite_id: 1, automation: 0, custom_fields: [] }))
+  let inFlight = 0, maxInFlight = 0
+  const fetchJson = async path => {
+    const url = new URL('http://x' + path)
+    const limit = Number(url.searchParams.get('limit')), offset = Number(url.searchParams.get('offset'))
+    const all = url.pathname.startsWith('/suite/') ? suites : url.pathname.startsWith('/case/') ? cases : []
+    inFlight++; maxInFlight = Math.max(maxInFlight, inFlight)
+    await new Promise(r => setTimeout(r, 30 - (offset / 3100) * 25)) // later pages answer first
+    inFlight--
+    return { status: true, result: { total: all.length, entities: all.slice(offset, offset + limit) } }
+  }
+  const o = await buildMaOverview({ fetchJson, now: NOW2 })
+  assert.equal(o.cases.total, 3100)
+  assert.ok(maxInFlight <= 8, `max in flight was ${maxInFlight}`)
+  assert.ok(maxInFlight >= 6, `expected near the cap, was ${maxInFlight}`)
+})
