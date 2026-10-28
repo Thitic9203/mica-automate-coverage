@@ -876,8 +876,17 @@ function showApp() {
   document.addEventListener('click', () => {
     document.querySelectorAll('.custom-select.open').forEach(el => el.classList.remove('open'))
   })
+  if (usesOldData(activeView)) ensureOldLoader() // R39: MA and OLS never trigger the old Qase loader
+  setInterval(() => { if (oldLoaderStarted && usesOldData(activeView)) fetchAndRender() }, 60 * 60 * 1000)
+}
+
+// Spec ma-tabs R39: only the hidden Overview / By Suite / All Test Cases views read the old loader's data.
+let oldLoaderStarted = false
+function usesOldData(view) { return view !== 'ma' && view !== 'ols' }
+function ensureOldLoader() {
+  if (oldLoaderStarted) return
+  oldLoaderStarted = true
   loadFromCacheThenRefresh()
-  setInterval(fetchAndRender, 60 * 60 * 1000)
 }
 
 const CACHE_KEY = 'mica-ac-data'
@@ -933,6 +942,7 @@ function setupNav() {
       activeView = el.dataset.view
       document.querySelectorAll('.tab[data-view]').forEach(t => t.classList.remove('active'))
       el.classList.add('active')
+      if (usesOldData(activeView)) ensureOldLoader()
       renderView()
     })
   })
