@@ -722,15 +722,14 @@ document.getElementById('btnGoogle').addEventListener('click', async () => {
 
 // ── Qase API ──────────────────────────────────────────────────────────────────
 
-const QASE_BASE = '/api/qase'
-const QASE_TOKEN = '50c6e3fb93f0d51bd387d50d91f2282b1cec3d9aab0c44f4b64c4cf02b02e71f'
+const QASE_BASE = '/api/qase' // the proxy adds the Qase token (docs/sdd/qase-proxy-token R6)
 const PROJECT = 'Mica'
 const PLAN_NAME = 'E2E Testing'
 const STATUS_VALUES = ['Automated', 'To be Automated', 'Manual']
 
 async function qaseFetch(path) {
   const res = await fetch(`${QASE_BASE}${path}`, {
-    headers: { 'Token': QASE_TOKEN, 'Accept': 'application/json' }
+    headers: { 'Accept': 'application/json' }
   })
   if (!res.ok) throw new Error(`Qase API error ${res.status}: ${path}`)
   return res.json()

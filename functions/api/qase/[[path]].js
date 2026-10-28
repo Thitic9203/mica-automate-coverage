@@ -1,5 +1,11 @@
 // Qase proxy — spec docs/sdd/qase-proxy-token. The token lives only in the Pages secret QASE_API_TOKEN.
 export async function onRequest(context) {
+  const method = context.request.method
+  if (method !== 'GET' && method !== 'HEAD') { // R5: public proxy, write-capable token
+    return new Response(JSON.stringify({ status: false, errorMessage: 'Method not allowed: the Qase proxy is read-only' }), {
+      status: 405, headers: { 'Content-Type': 'application/json', 'Allow': 'GET, HEAD', 'Cache-Control': 'no-store' }
+    })
+  }
   const token = context.env && context.env.QASE_API_TOKEN
   if (!token) {
     return new Response(JSON.stringify({ status: false, errorMessage: 'Proxy misconfigured: QASE_API_TOKEN secret is not set' }), {
@@ -11,7 +17,7 @@ export async function onRequest(context) {
   const qaseUrl = `https://api.qase.io/v1${path}${url.search}`
 
   const response = await fetch(qaseUrl, {
-    method: context.request.method,
+    method,
     headers: {
       'Token': token,
       'Accept': 'application/json',
