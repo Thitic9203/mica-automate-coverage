@@ -148,16 +148,13 @@ export async function buildMaOverview({ fetchJson, now = new Date() }) {
     }
   }
 
-  let passed = 0, waiting = 0, failed = 0, skipped = 0, notRun = 0, resultsOnNotAutomated = 0
+  let passed = 0, waiting = 0, failed = 0, skipped = 0, notRun = 0
   const other = {}
   const statusOf = new Map()
   for (const c of own) {
-    if (c.automation !== AUTOMATED) {
-      waiting++; statusOf.set(c.id, 'waiting')
-      if (last.has(c.id)) resultsOnNotAutomated++
-      continue
-    }
-    const st = String(last.get(c.id)?.status || '').toLowerCase()
+    const res = last.get(c.id)
+    if (!res && c.automation !== AUTOMATED) { waiting++; statusOf.set(c.id, 'waiting'); continue } // R32
+    const st = String(res?.status || '').toLowerCase()
     if (!st) { notRun++; statusOf.set(c.id, 'notPassed') }
     else if (st === 'passed') { passed++; statusOf.set(c.id, 'passed') }
     else {
@@ -196,6 +193,6 @@ export async function buildMaOverview({ fetchJson, now = new Date() }) {
     cases: { total, passed, notPassed, waiting, passedPercent: pct(passed, total), notPassedPercent: pct(notPassed, total), waitingPercent: pct(waiting, total) },
     breakdown: { failed, skipped, notRun, other },
     types, typesError,
-    run: latest ? { title: latest.title, startedAt: latest.start_time || null, completedAt: latest.end_time, resultsOnNotAutomated } : null,
+    run: latest ? { title: latest.title, startedAt: latest.start_time || null, completedAt: latest.end_time } : null,
   }
 }

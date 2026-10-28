@@ -1094,7 +1094,7 @@ async function renderMa() {
       <div class="card">
         <div class="card-label">PASSED</div>
         <div class="card-value teal">${n(c.passed)}<span class="ols-pct">${c.passedPercent}%</span></div>
-        <div class="card-sub">automated, latest result passed</div>
+        <div class="card-sub">latest run result passed</div>
       </div>
       <div class="card">
         <div class="card-label">NOT PASSED</div>
@@ -1104,7 +1104,7 @@ async function renderMa() {
       <div class="card">
         <div class="card-label">TO BE AUTOMATED</div>
         <div class="card-value muted">${n(c.waiting)}<span class="ols-pct">${c.waitingPercent}%</span></div>
-        <div class="card-sub">cases not automated yet</div>
+        <div class="card-sub">not automated and not in the run</div>
       </div>
     </div>
     <div class="chart-card">
@@ -1123,7 +1123,6 @@ async function renderMa() {
       <dl>
         <dt>Measured</dt><dd>${escapeHtml(formatBkkTime(new Date(d.measuredAt)))}</dd>
         <dt>Pass results from</dt><dd>${r ? `${escapeHtml(r.title || '')} · started ${fmt(r.startedAt)} · completed ${fmt(r.completedAt)}` : 'no completed run in Qase yet — every automated case reads NOT RUN'}</dd>
-        ${r && r.resultsOnNotAutomated ? `<dt>Not counted</dt><dd>${r.resultsOnNotAutomated} results in that run belong to cases not marked automated; those cases stay TO BE AUTOMATED</dd>` : ''}
         <dt>Case source</dt><dd><strong>Qase project MA</strong>, suites MICA1 · EvMS · ELMS · CBMS counted together</dd>
         <dt>Qase</dt><dd><a class="ols-report-link" href="https://app.qase.io/project/MA" target="_blank" rel="noopener noreferrer">Open project MA in Qase ↗</a></dd>
       </dl>

@@ -97,7 +97,7 @@ test('R30: a completed run with status 3 (failed) and an end_time is used', asyn
   assert.equal(o.cases.notPassed, 1)
 })
 
-test('R31/R32/R33: systems counted together; not automated → waiting; statuses by name', async () => {
+test('R31/R32/R33: systems counted together; a result in the run wins; no result → NOT RUN or waiting', async () => {
   const cases = [kase(1, 1, 2), kase(2, 2, 2), kase(3, 3, 2), kase(4, 3, 2), kase(5, 3, 2), kase(6, 1, 0), kase(7, 3, 1), kase(8, 9, 2)]
   const runs = [{ id: 1, title: 'R', status: 1, end_time: '2026-10-27 10:00:00', start_time: '2026-10-27 09:00:00', cases: [1, 2, 3, 4, 6] }]
   const results = { 1: [
@@ -106,13 +106,12 @@ test('R31/R32/R33: systems counted together; not automated → waiting; statuses
   ] }
   const o = await buildMaOverview({ fetchJson: ovMock({ cases, runs, results }), now: NOW2 })
   assert.equal(o.cases.total, 7) // case 8 is in "Other", not a system
-  assert.equal(o.cases.waiting, 2) // 6 and 7
-  assert.equal(o.cases.passed, 1)
+  assert.equal(o.cases.waiting, 1) // 7 (no result, not automated); case 6 has a passed result → PASSED
+  assert.equal(o.cases.passed, 2) // 1 and 6
   assert.equal(o.cases.notPassed, 4) // failed 1 + skipped 1 + blocked 1 + not run 1 (case 5)
   assert.deepEqual(o.breakdown, { failed: 1, skipped: 1, notRun: 1, other: { blocked: 1 } })
   assert.equal(o.cases.passed + o.cases.notPassed + o.cases.waiting, o.cases.total)
-  assert.equal(o.run.resultsOnNotAutomated, 1)
-  assert.equal(o.cases.passedPercent, 14.3)
+  assert.equal(o.cases.passedPercent, 28.6)
 })
 
 test('R35: types from custom field 4 with Empty row; shares add to exactly 100.0; bad value hides card', async () => {
