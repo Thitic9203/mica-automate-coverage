@@ -137,8 +137,12 @@ These rules replace R10–R12, R15 and R19–R22 for the page; R23–R29 still a
   CBMS counted together) · Qase link. No report link, no report totals, no ticket filters.
 - **R37** — Every render (tab switch, reload, URL open) recomputes from Qase (R23); no redeploy is ever needed
   for numbers.
+- **R38** — (measured 28/Oct: opening the page sends ~58 Qase requests at once — 40 for MA plus 17 from the hidden
+  old tab — while Qase allows 50 per 10 s `burst`; a run with extra load on the same token timed out 12 of 41
+  pages, a quiet run passed in 6 s) The MA tab MUST NOT have more than **8** Qase requests in flight at once;
+  results stay in offset order (R25).
 
-Done when (R30–R37): live page equals a Node run of the same core against Qase at the same time; 28/Oct expected
+Done when (R30–R38): live page equals a Node run of the same core against Qase at the same time; 28/Oct expected
 from Qase: total 3074, automated 587, run #1 results 586 passed / 1 failed; no overflow at 1440 / 900 / 390;
 `node --test scripts/*.test.mjs` green.
 

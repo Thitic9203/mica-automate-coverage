@@ -5,6 +5,7 @@ const PROJECT = 'MA'
 const SYSTEMS = ['MICA1', 'EVMS', 'ELMS', 'CBMS'] // display order; keys in the JSON
 const AUTOMATED = 2 // Qase case.automation: 0 not automated, 1 to be automated, 2 automated
 const PAGE = 100
+const MAX_IN_FLIGHT = 8 // R38: Qase allows 50 requests per 10 s; the page also runs the old tab's loader
 
 const norm = s => String(s || '').replace(/\s+/g, '').toUpperCase()
 const pct = (n, d) => (d ? Math.round((n / d) * 1000) / 10 : 0)
@@ -25,7 +26,13 @@ async function fetchAll(fetchJson, path) {
   if (!out.length || out.length >= total) return out
   const offsets = []
   for (let o = PAGE; o < total; o += PAGE) offsets.push(o)
-  for (const r of await Promise.all(offsets.map(page))) out.push(...(r.entities || []))
+  const pages = new Array(offsets.length)
+  let next = 0
+  const worker = async () => {
+    while (next < offsets.length) { const i = next++; pages[i] = await page(offsets[i]) }
+  }
+  await Promise.all(Array.from({ length: Math.min(MAX_IN_FLIGHT, offsets.length) }, worker))
+  for (const r of pages) out.push(...(r.entities || []))
   return out
 }
 
