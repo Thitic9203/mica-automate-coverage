@@ -1066,10 +1066,19 @@ function maValid(d) {
   if (!b || [b.failed, b.skipped, b.notRun].some(v => !Number.isInteger(v)) || typeof b.other !== 'object') return false
   return b.failed + b.skipped + b.notRun + Object.values(b.other).reduce((x, y) => x + y, 0) === c.notPassed
 }
+// R41: show this browser's last computed numbers at once (labelled with their Measured time), then recompute live.
+const MA_CACHE_KEY = 'mica-ma-overview'
+let maRenderSeq = 0
+function readMaCache() {
+  try { const d = JSON.parse(localStorage.getItem(MA_CACHE_KEY) || 'null'); return maValid(d) ? d : null } catch { return null }
+}
 async function renderMa() {
   const content = document.getElementById('content')
+  const seq = ++maRenderSeq
+  const cached = readMaCache()
+  if (cached) paintMa(cached, 'updating', true)
+  else content.innerHTML = '<div class="loading"><div class="spinner"></div> Loading Qase MA…</div>' // R27
   let d
-  content.innerHTML = '<div class="loading"><div class="spinner"></div> Loading Qase MA…</div>' // R27
   try {
     const { buildMaOverview, retryable, hedged } = await import('/ma-progress-core.mjs')
     const fetchJson = retryable(hedged(async path => { // R28 retry · R40 hedge after 4 s
@@ -1081,11 +1090,18 @@ async function renderMa() {
     d = await buildMaOverview({ fetchJson }) // R26: measuredAt = now
     if (!maValid(d)) throw new Error('unexpected shape')
   } catch (e) {
-    if (activeView !== 'ma') return
+    if (activeView !== 'ma' || seq !== maRenderSeq) return
+    if (cached) { paintMa(cached, 'failed: ' + e.message, false); return }
     content.innerHTML = `<div class="error-msg">Could not load MA progress from Qase (${escapeHtml(e.message)}). Reload the page to try again.</div>`
     return
   }
-  if (activeView !== 'ma') return
+  if (activeView !== 'ma' || seq !== maRenderSeq) return
+  try { localStorage.setItem(MA_CACHE_KEY, JSON.stringify(d)) } catch {}
+  paintMa(d, null, !cached)
+}
+// refresh: 'updating' | 'failed: …' | null (live numbers). animate once per render: the cached paint, or the live one when there was no cache.
+function paintMa(d, refresh, animate) {
+  const content = document.getElementById('content')
   const c = d.cases, b = d.breakdown
   const n = v => `<span data-count="${v}">${v}</span>`
   const other = Object.entries(b.other).map(([k, v]) => `<span>${escapeHtml(k)} <b>${v}</b></span>`).join('')
@@ -1132,13 +1148,13 @@ async function renderMa() {
     ${maTypesCard(d, n)}
     <div class="chart-card ols-note">
       <dl>
-        <dt>Measured</dt><dd>${escapeHtml(formatBkkTime(new Date(d.measuredAt)))}</dd>
+        <dt>Measured</dt><dd>${escapeHtml(formatBkkTime(new Date(d.measuredAt)))}${refresh === 'updating' ? ' <span class="ols-scope ma-refresh">· updating from Qase…</span>' : refresh ? ` <span class="ols-scope ma-refresh">· update ${escapeHtml(refresh)} — showing the last numbers</span>` : ''}</dd>
         <dt>Pass results from</dt><dd>${r ? `${escapeHtml(r.title || '')} · started ${fmt(r.startedAt)} · completed ${fmt(r.completedAt)}` : 'no completed run in Qase yet — every automated case reads NOT RUN'}</dd>
         <dt>Case source</dt><dd><strong>Qase project MA</strong>, suites MICA1 · EvMS · ELMS · CBMS counted together</dd>
         <dt>Qase</dt><dd><a class="ols-report-link" href="https://app.qase.io/project/MA" target="_blank" rel="noopener noreferrer">Open project MA in Qase ↗</a></dd>
       </dl>
     </div>`
-  animateOls(content)
+  if (animate) animateOls(content)
 }
 
 // Spec ma-tabs R35: cases by Qase "Test Case Type" plus Empty; hidden with the reason when a value is unknown.
