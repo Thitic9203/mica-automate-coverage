@@ -67,6 +67,13 @@ number", R2–R5, R10, R11, R14 for the case figures (they came from `ols-progre
 - **R13** — The proxy MUST cache each Qase GET at the Cloudflare edge for 60 s (`cf.cacheTtl`), so viewers
   opening the board together share one Qase call per page; a run completed in Qase shows within 60 s.
 
+- **R14** — (global rule 19) Visual regression: `tests/visual/tabs.visual.spec.cjs` screenshots both tabs at
+  390 / 900 / 1440 px against committed baselines (Firebase stubbed, Qase fixtures, motion off, web fonts
+  loaded, live pill and Measured masked), 0 differing pixels allowed, plus no horizontal scroll. Run:
+  `NODE_PATH=<ols-qa-e2e>/node_modules <ols-qa-e2e>/node_modules/.bin/playwright test -c
+  playwright.visual.config.cjs`. The site has one (light) theme; dark mode stays out of scope (ma-tabs spec,
+  owner).
+
 ## Done when
 
 - Tests: a case in an older run keeps its result when the newest run omits it; a 1-case retest run does
