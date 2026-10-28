@@ -555,9 +555,9 @@ tr:hover td { background: rgba(0,0,0,0.013); }
   .tab-label { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.2; }
   .signout-btn { min-height: 44px; padding: 0 12px; }
 }
-@media (pointer: coarse) {
-  .tab, .signout-btn { min-height: 44px; }
-}
+/* rule 19: every tap target ≥ 44 px at every width */
+.tab, .signout-btn { min-height: 44px; }
+.signout-btn { padding: 0 12px; }
   </style>
 </head>
 <body>
