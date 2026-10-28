@@ -63,3 +63,12 @@ test('live R12/R13: GET is edge-cached 60 s and Retry-After is passed through', 
   assert.equal(res.status, 429)
   assert.equal(res.headers.get('Retry-After'), '7')
 })
+
+test('live R15: theme toggle is a square sun/moon icon button left of the date pill; Sign out has an icon', () => {
+  const html = readFileSync(new URL('../public/index.html', import.meta.url), 'utf8')
+  const meta = html.slice(html.indexOf('<div class="chrome-meta">'), html.indexOf('</div>', html.indexOf('id="logout-btn"')))
+  assert.ok(meta.indexOf('id="theme-btn"') < meta.indexOf('id="live-pill"'), 'theme button sits left of the pill')
+  assert.match(meta, /id="theme-btn"[^>]*aria-pressed="false"[^>]*aria-label="Dark mode"/)
+  assert.match(meta, /class="icon-sun"/); assert.match(meta, /class="icon-moon"/)
+  assert.match(meta, /id="logout-btn">\s*<svg/)
+})
