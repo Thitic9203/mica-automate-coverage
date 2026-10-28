@@ -28,3 +28,19 @@
   JSON and page together (same `public/` upload), never the page alone.
 - Deploy: staging first (`wrangler pages deploy public/ --project-name mica-automate-coverage --branch staging`),
   verify, then the same `public/` to `--branch main`.
+
+## Plan — live data in the browser (R23–R27, owner order 2026-10-28)
+
+- `public/ma-progress-core.mjs` (new): `buildMaProgress({ fetchJson, now })` moved here unchanged except
+  `fetchAll` — first page, then the rest with `Promise.all`, results kept in offset order (R25).
+- `scripts/build-ma-progress.mjs`: imports and re-exports `buildMaProgress` from the core; CLI unchanged (R24).
+  Existing tests keep importing from the builder and must pass untouched.
+- `public/index.html` `renderMa()`: dynamic `import('/ma-progress-core.mjs')`, `fetchJson = path =>
+  fetch('/api/qase' + path)`, loading message, then the same `maValid()` + render. Error text no longer says
+  "regenerate and deploy" (R27).
+- `public/ma-progress.json`: no longer read by the page; left in place (removal is a separate decision).
+- Weighed: Pages Function + cache (over free-plan CPU 10 ms / 50 subrequests — measured 19.3 ms parse,
+  33+ subrequests and growing); GitHub Actions daily build + deploy (needs two new secrets, up to 1 day stale).
+- Cost: none — same proxy, about 35 proxy calls per open (free plan 100,000 requests/day). Other repos: none.
+- Risk: opening the tab costs ~3–5 s of loading (measured 3.4 s for 31 parallel pages from Node). The proxy's
+  hardcoded Qase token is a separate, pre-existing security issue — not changed here.

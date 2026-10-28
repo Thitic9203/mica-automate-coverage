@@ -74,6 +74,28 @@ the owner expects the cases that exist in Qase to be visible.
 - **R22** — The page MUST treat JSON without a numeric `totalCases`, or with `totalAutomated > totalCases`,
   as malformed (R18).
 
+## Rules — live data, no redeploy (owner order 2026-10-28)
+
+Source: owner chat 28/Oct — "มันควรจะอัตโนมัตินะ ทำไมต้องให้ดีพอยใหม่ตลอดเลย" after the 22/Oct snapshot showed
+MICA 1 1349 / CBMS 317 total cases while Qase MA held 2153 / 627. Owner picked "ดึงสดในเบราว์เซอร์" after a
+server-side Pages Function was measured over the free plan (case pages 7.51 MB, `JSON.parse` 19.3 ms vs the
+10 ms CPU limit, Cloudflare Workers Limits page, updated 12 Oct 2026). This section supersedes the "Source of
+every number" note and the "Calling Qase from the browser" out-of-scope line for this tab.
+
+- **R23** — The MA tab MUST compute its numbers in the browser each time the tab renders, from Qase project MA
+  through the existing proxy `/api/qase/*`, with the same rules as the builder (R5–R7, R19). No snapshot file
+  and no deploy are needed for the numbers to change.
+- **R24** — The counting logic MUST live in one module, `public/ma-progress-core.mjs` (no Node-only imports),
+  used by both the page and `scripts/build-ma-progress.mjs`; the builder's exports stay as they are.
+- **R25** — Paging MUST fetch the first page, then the remaining pages of the same list concurrently, and keep
+  the entities in offset order.
+- **R26** — `measuredAt` is the time the browser finished the computation; the notes row shows it (R14).
+- **R27** — While computing, the tab MUST show a loading message and no numbers; on any Qase or shape error it
+  MUST show an error message and no numbers (R18). The message MUST NOT ask anyone to regenerate a file or deploy.
+
+Done when (R23–R27): page values equal a fresh builder run against Qase MA at the same time; the tab shows
+MICA 1 2153 / CBMS 627 total cases as of 28/Oct without any JSON change; `node --test scripts/` green.
+
 ## Done when
 
 - The tab bar reads "MICA 1 · EvMS · ELMS · CBMS", "OLS" and nothing else; the page opens on the MA tab.
