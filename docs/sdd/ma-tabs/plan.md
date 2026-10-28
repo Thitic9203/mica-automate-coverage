@@ -44,3 +44,14 @@
 - Cost: none — same proxy, about 35 proxy calls per open (free plan 100,000 requests/day). Other repos: none.
 - Risk: opening the tab costs ~3–5 s of loading (measured 3.4 s for 31 parallel pages from Node). The proxy's
   hardcoded Qase token is a separate, pre-existing security issue — not changed here.
+
+## Plan — OLS layout, all systems together (R30–R37)
+
+- `public/ma-progress-core.mjs`: new pure `buildMaOverview({ fetchJson, now })` → `{ measuredAt, cases {total,
+  passed, notPassed, waiting, *Percent}, breakdown {failed, skipped, notRun, other{}}, types | null, typesError,
+  run {title, startedAt, completedAt, resultsOnNotAutomated} | null }`; `buildMaProgress` gets the R30 fix (same
+  completed-run helper). Results paged like cases (R25, R28, R29).
+- `public/index.html` `renderMa()`: OLS markup and classes (`.ols-cards`, `.ols-bar`, `.ols-note`, `animateOls`);
+  `olsTypesCard()` gains optional `types` / `note` parameters (defaults keep the OLS tab byte-identical).
+- Tests: known answers for R30–R35 in `scripts/ma-progress-core.test.mjs`.
+- Cost: none. Repos: this one only. Risk: 6 more proxy calls per open (results pages).

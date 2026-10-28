@@ -16,3 +16,6 @@
 | T12 | Deploy staging → verify → production | R23 | staging MA tab shows MICA 1 2153 / CBMS 627 | production shows the live totals with no JSON change |
 | T13 | Retry transient page failures | R28 | test: 521 twice then ok → ok; 521 always → rejects after 3; 401 → 1 call | `node --test scripts/` green |
 | T14 | Abort a page request after 10 s, retry under R28 | R29 | production page stuck > 40 s on 8 pages | MA tab renders in production; no page waits > 10 s per attempt |
+| T15 | Completed-run rule fix | R30 | test: run status 3 with end_time is picked | tests green |
+| T16 | `buildMaOverview` core | R31–R33, R35 | tests: waiting/notRun/other/types/Empty/sum | tests green |
+| T17 | OLS-style `renderMa()` | R33–R37 | page text vs Node run | equal; overflow 0 at 1440/900/390 |

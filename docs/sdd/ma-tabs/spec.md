@@ -104,6 +104,44 @@ every number" note and the "Calling Qase from the browser" out-of-scope line for
 Done when (R23–R29): page values equal a fresh builder run against Qase MA at the same time; the tab shows
 MICA 1 2153 / CBMS 627 total cases as of 28/Oct without any JSON change; `node --test scripts/` green.
 
+## Rules — OLS layout, all systems together (owner order 2026-10-28)
+
+Source: owner chat 28/Oct — "ปรับ tab MICA 1 · EvMS · ELMS · CBMS ให้มีเนื้อหาและรูปแบบเหมือน tab OLS ยกเว้นแค่ไม่มี
+Playwright report"; answers: "Mica1/EvMS, ELMS, CBMS พวกนี้นับสถิติรวมกัน ไม่แยก", TO BE AUTOMATED = every case not
+automated, statuses "เอาตามสถานะของ Playwright report", parts with no MA source are dropped; "ทุกข้อมูลจะอัปเดต
+อัตโนมัติ รีเฟรชทุกครั้งที่มีการสลับ tab หรือรีเฟรชหน้า … แบบที่ไม่ต้องดีพอยใหม่". The OLS tab as served on
+28/Oct (cards, bar, tickets card, cases-by-type card, notes; no case table — that is open PR #11) is the model.
+These rules replace R10–R12, R15 and R19–R22 for the page; R23–R29 still apply.
+
+- **R30** — Defect fix (measured 28/Oct): run #1 "MICA1 & MICA2" is returned by `GET /run/MA?status=complete` with
+  `status: 3` / `status_text: "failed"`, and the old `status === 1` re-check dropped it, so the tab said "No test
+  run yet" while Qase held 586 passed / 1 failed. A run counts as completed when the API's `status=complete`
+  filter returns it **and** it has an `end_time`; no other status check.
+- **R31** — The four systems (R5) are counted **together** as one case set: the union of their suite trees.
+- **R32** — Per case: `automation ≠ 2` → **waiting** (TO BE AUTOMATED), whatever results exist. Otherwise the
+  case's latest result in the **pass-results run** (the latest completed run, R30, containing any counted case):
+  `passed` → PASSED; `failed` → FAILED; `skipped` → SKIPPED; no result → NOT RUN; any other Qase status →
+  counted under not passed under its own Qase name (never folded into another word). FLAKY has no Qase source
+  and shows "—", never a number (global rule 20).
+- **R33** — Cards as the OLS tab: Total cases · Automated · passed · Automated · not passed (failed / flaky /
+  skipped / not run, plus any other status by name) · Waiting to automate; percents of total to one decimal;
+  `passed + notPassed + waiting = total` or the tab shows its error (R27).
+- **R34** — "Case progress" bar (passed / not passed / waiting) as OLS R3, full width (no ticket card: MA has no
+  Jira source).
+- **R35** — "Cases by type" card as OLS R11/R19 from Qase custom field 4 ("Test Case Type": 1 Happy Path,
+  2 Failure Scenario, 3 Edge Case, 4 Exceptional Case) plus an **Empty** row for cases with no value (counted
+  normally — owner rule for dashboards); shares by largest remainder to exactly 100.0%; Total row; a value that is
+  not one of 1–4 (or several values) hides the card and says why.
+- **R36** — Notes: Measured · Pass results from (run title, started, completed) · when results exist for cases
+  not marked automated, the count of those results, stated · Case source (Qase project MA, MICA 1 · EvMS · ELMS ·
+  CBMS counted together) · Qase link. No report link, no report totals, no ticket filters.
+- **R37** — Every render (tab switch, reload, URL open) recomputes from Qase (R23); no redeploy is ever needed
+  for numbers.
+
+Done when (R30–R37): live page equals a Node run of the same core against Qase at the same time; 28/Oct expected
+from Qase: total 3074, automated 587, run #1 results 586 passed / 1 failed; no overflow at 1440 / 900 / 390;
+`node --test scripts/*.test.mjs` green.
+
 ## Done when
 
 - The tab bar reads "MICA 1 · EvMS · ELMS · CBMS", "OLS" and nothing else; the page opens on the MA tab.
