@@ -302,6 +302,7 @@ body::-webkit-scrollbar { display: none; }
 .ols-note dl { display:grid; grid-template-columns:max-content minmax(0,1fr); gap:4px 14px; }
 .ols-types { margin-bottom:14px; }
 .ols-types-grid { display:grid; grid-template-columns:minmax(0,1fr) repeat(4, minmax(64px, max-content)); column-gap:24px; margin:4px 0 10px; }
+.ols-types-grid.ols-types-5 { grid-template-columns:minmax(0,1fr) repeat(5, minmax(56px, max-content)); }
 .ols-types-head, .ols-types-row { display:contents; }
 .ols-types-head span { font-size:10px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; padding:6px 0; border-bottom:1px solid var(--border); }
 .ols-types-row span { font-size:13px; padding:8px 0; border-bottom:1px solid var(--border); overflow-wrap:anywhere; }
@@ -310,7 +311,7 @@ body::-webkit-scrollbar { display: none; }
 .ols-types-total span { font-weight:600; border-bottom:none; border-top:1px solid var(--text); }
 .ols-types-row .ols-t-pass { color:var(--green); } .ols-types-row .ols-t-fail { color:var(--amber); }
 @media (max-width:1024px){ .ols-cards { grid-template-columns:repeat(2, minmax(0,1fr)); } .ols-row { grid-template-columns:minmax(0,1fr); } }
-@media (max-width:430px){ .ols-cards { grid-template-columns:minmax(0,1fr); } .ols-legend { grid-template-columns:minmax(0,1fr); } .ols-note dl { grid-template-columns:minmax(0,1fr); } .ols-types-grid { grid-template-columns:minmax(0,1fr) repeat(4, max-content); column-gap:10px; } }
+@media (max-width:430px){ .ols-cards { grid-template-columns:minmax(0,1fr); } .ols-legend { grid-template-columns:minmax(0,1fr); } .ols-note dl { grid-template-columns:minmax(0,1fr); } .ols-types-grid { grid-template-columns:minmax(0,1fr) repeat(4, max-content); column-gap:10px; } .ols-types-grid.ols-types-5 { grid-template-columns:minmax(0,1fr) repeat(5, max-content); column-gap:8px; } .ols-types-grid.ols-types-5 span { font-size:11px; } }
 
 /* ── Progress bar ── */
 .progress-bar { height: 4px; background: var(--border); border-radius: 99px; overflow: hidden; margin: 6px 0; }
@@ -1047,24 +1048,26 @@ function renderOverview() {
 // the tab renders (R23), by the same module the builder uses (public/ma-progress-core.mjs, R24).
 // R29: measured 28/Oct — proxy→Qase pages normally answer in ~2–3 s (p90 3.0 s) but some hang 29–39 s.
 const MA_PAGE_TIMEOUT_MS = 10000
-const MA_SYSTEMS = [['MICA1', 'MICA 1'], ['EVMS', 'EvMS'], ['ELMS', 'ELMS'], ['CBMS', 'CBMS']]
 function maValid(d) {
-  if (!d || typeof d.measuredAt !== 'string' || !d.systems || typeof d.systems !== 'object') return false
-  return Object.values(d.systems).every(s => s && typeof s.totalCases === 'number' && typeof s.totalAutomated === 'number' && s.totalAutomated <= s.totalCases && (s.run === null ||
-    (s.run && ['cases', 'passed', 'notPassed', 'passedPercent', 'notPassedPercent'].every(k => typeof s.run[k] === 'number') && s.run.passed + s.run.notPassed === s.run.cases)))
+  const c = d && d.cases
+  if (!d || typeof d.measuredAt !== 'string' || !c) return false
+  if ([c.total, c.passed, c.notPassed, c.waiting].some(v => !Number.isInteger(v)) || c.passed + c.notPassed + c.waiting !== c.total) return false
+  const b = d.breakdown
+  if (!b || [b.failed, b.skipped, b.notRun].some(v => !Number.isInteger(v)) || typeof b.other !== 'object') return false
+  return b.failed + b.skipped + b.notRun + Object.values(b.other).reduce((x, y) => x + y, 0) === c.notPassed
 }
 async function renderMa() {
   const content = document.getElementById('content')
   let d
   content.innerHTML = '<div class="loading"><div class="spinner"></div> Loading Qase MA…</div>' // R27
   try {
-    const { buildMaProgress, retryable } = await import('/ma-progress-core.mjs')
+    const { buildMaOverview, retryable } = await import('/ma-progress-core.mjs')
     const fetchJson = retryable(async path => { // R28
       const res = await fetch('/api/qase' + path, { signal: AbortSignal.timeout(MA_PAGE_TIMEOUT_MS) }) // R29
       if (!res.ok) throw Object.assign(new Error('Qase HTTP ' + res.status), { status: res.status })
       return res.json()
     })
-    d = await buildMaProgress({ fetchJson }) // R26: measuredAt = now
+    d = await buildMaOverview({ fetchJson }) // R26: measuredAt = now
     if (!maValid(d)) throw new Error('unexpected shape')
   } catch (e) {
     if (activeView !== 'ma') return
@@ -1072,38 +1075,79 @@ async function renderMa() {
     return
   }
   if (activeView !== 'ma') return
+  const c = d.cases, b = d.breakdown
   const n = v => `<span data-count="${v}">${v}</span>`
-  const pad = '<span class="ols-pct" aria-hidden="true">&nbsp;</span>'
-  const noRun = label => `<div class="card"><div class="card-label">${label}</div><div class="card-value"><span class="ma-empty">No test run yet</span>${pad}</div></div>`
-  const section = ([key, name]) => {
-    const s = d.systems[key]
-    if (!s) return `<section class="ma-sys" data-system="${key}"><h3>${name}</h3><div class="ols-cards ma-cards">
-      <div class="card ma-none"><div class="card-value"><span class="ma-empty">No data in Qase yet</span></div></div></div></section>`
-    const r = s.run
-    return `<section class="ma-sys" data-system="${key}"><h3>${name}</h3><div class="ols-cards ma-cards">
-      <div class="card"><div class="card-label">Total cases</div><div class="card-value">${n(s.totalCases)}${pad}</div></div>
-      <div class="card"><div class="card-label">Total automated</div><div class="card-value">${n(s.totalAutomated)}${pad}</div></div>
-      ${r ? `<div class="card"><div class="card-label">Automated · passed</div><div class="card-value teal">${n(r.passed)}<span class="ols-pct">${r.passedPercent}%</span></div></div>
-      <div class="card"><div class="card-label">Automated · not passed</div><div class="card-value amber">${n(r.notPassed)}<span class="ols-pct">${r.notPassedPercent}%</span></div></div>`
-        : noRun('Automated · passed') + noRun('Automated · not passed')}
-    </div></section>`
-  }
-  const runs = MA_SYSTEMS.filter(([k]) => d.systems[k] && d.systems[k].run).map(([k, name]) => {
-    const r = d.systems[k].run
-    const when = r.completedAt ? formatBkkTime(new Date(String(r.completedAt).replace(' ', 'T') + (/[zZ]|[+-]\d\d:?\d\d$/.test(r.completedAt) ? '' : 'Z'))) : '—'
-    return `<dt>Latest run · ${name}</dt><dd>${escapeHtml(r.title || '')} · completed ${escapeHtml(when)} · ${r.cases} cases</dd>`
-  }).join('')
+  const other = Object.entries(b.other).map(([k, v]) => `<span>${escapeHtml(k)} <b>${v}</b></span>`).join('')
+  const fmt = iso => iso ? escapeHtml(formatBkkTime(new Date(String(iso).replace(' ', 'T') + (/[zZ]|[+-]\d\d:?\d\d$/.test(iso) ? '' : 'Z')))) : '—'
+  const r = d.run
   content.innerHTML = `
-    <div class="ols-head"><h2>MICA · Automation progress</h2></div>
-    ${MA_SYSTEMS.map(section).join('')}
+    <div class="ols-head">
+      <h2>MICA · Automation progress</h2>
+      <span class="ols-scope">MICA 1 · EvMS · ELMS · CBMS counted together</span>
+    </div>
+    <div class="ols-cards">
+      <div class="card">
+        <div class="card-label">Total cases</div>
+        <div class="card-value">${n(c.total)}<span class="ols-pct" aria-hidden="true">&nbsp;</span></div>
+        <div class="card-sub" aria-hidden="true">&nbsp;</div>
+      </div>
+      <div class="card">
+        <div class="card-label">PASSED</div>
+        <div class="card-value teal">${n(c.passed)}<span class="ols-pct">${c.passedPercent}%</span></div>
+        <div class="card-sub">automated, latest result passed</div>
+      </div>
+      <div class="card">
+        <div class="card-label">NOT PASSED</div>
+        <div class="card-value amber">${n(c.notPassed)}<span class="ols-pct">${c.notPassedPercent}%</span></div>
+        <div class="ols-break"><span>failed <b>${b.failed}</b></span><span>flaky <b>—</b></span><span>skipped <b>${b.skipped}</b></span><span>not run <b>${b.notRun}</b></span>${other}</div>
+      </div>
+      <div class="card">
+        <div class="card-label">TO BE AUTOMATED</div>
+        <div class="card-value muted">${n(c.waiting)}<span class="ols-pct">${c.waitingPercent}%</span></div>
+        <div class="card-sub">cases not automated yet</div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <h3>Case progress</h3>
+      <div class="ols-bar" role="img" aria-label="Passed ${c.passedPercent}%, not passed ${c.notPassedPercent}%, to be automated ${c.waitingPercent}%">
+        <span class="ols-seg-pass" style="width:${c.passedPercent}%"></span><span class="ols-seg-fail" style="width:${c.notPassedPercent}%"></span><span class="ols-seg-wait" style="width:${c.waitingPercent}%"></span>
+      </div>
+      <div class="ols-legend">
+        <span><i class="ols-seg-pass"></i>Passed</span>
+        <span><i class="ols-seg-fail"></i>Not passed</span>
+        <span><i class="ols-seg-wait"></i>To be automated</span>
+      </div>
+    </div>
+    ${maTypesCard(d, n)}
     <div class="chart-card ols-note">
       <dl>
         <dt>Measured</dt><dd>${escapeHtml(formatBkkTime(new Date(d.measuredAt)))}</dd>
-        <dt>Source</dt><dd>Qase project MA · one top-level suite per system · <a class="ols-report-link" href="https://app.qase.io/project/MA" target="_blank" rel="noopener noreferrer">Open in Qase ↗</a></dd>
-        ${runs}
+        <dt>Pass results from</dt><dd>${r ? `${escapeHtml(r.title || '')} · started ${fmt(r.startedAt)} · completed ${fmt(r.completedAt)}` : 'no completed run in Qase yet — every automated case reads NOT RUN'}</dd>
+        ${r && r.resultsOnNotAutomated ? `<dt>Not counted</dt><dd>${r.resultsOnNotAutomated} results in that run belong to cases not marked automated; those cases stay TO BE AUTOMATED</dd>` : ''}
+        <dt>Case source</dt><dd><strong>Qase project MA</strong>, suites MICA1 · EvMS · ELMS · CBMS counted together</dd>
+        <dt>Qase</dt><dd><a class="ols-report-link" href="https://app.qase.io/project/MA" target="_blank" rel="noopener noreferrer">Open project MA in Qase ↗</a></dd>
       </dl>
     </div>`
   animateOls(content)
+}
+
+// Spec ma-tabs R35: cases by Qase "Test Case Type" plus Empty; hidden with the reason when a value is unknown.
+const MA_TYPE_LABELS = { happyPath: 'Happy Path', failureScenario: 'Failure Scenario', edgeCase: 'Edge Case', exceptionalCase: 'Exceptional Case', empty: 'Empty' }
+function maTypesCard(d, n) {
+  if (!d.types) return `<div class="chart-card ols-types"><h3>Cases by type</h3><div class="card-sub">Not shown: ${escapeHtml(d.typesError || 'no type data')}</div></div>`
+  const c = d.cases
+  const sum = f => d.types.reduce((s, t) => s + t[f], 0)
+  if (sum('total') !== c.total || sum('passed') !== c.passed || sum('notPassed') !== c.notPassed || sum('waiting') !== c.waiting) return ''
+  return `
+    <div class="chart-card ols-types">
+      <h3>Cases by type</h3>
+      <div class="ols-types-grid ols-types-5" role="table" aria-label="Cases by test case type">
+        <div class="ols-types-head" role="row"><span role="columnheader">Type</span><span role="columnheader">Cases</span><span role="columnheader">%</span><span role="columnheader">Passed</span><span role="columnheader">Not passed</span><span role="columnheader">To be automated</span></div>
+        ${d.types.map(t => `<div class="ols-types-row" role="row"><span role="rowheader">${MA_TYPE_LABELS[t.key]}</span><span role="cell">${n(t.total)}</span><span role="cell">${t.sharePercent.toFixed(1)}%</span><span role="cell" class="ols-t-pass">${n(t.passed)}</span><span role="cell" class="ols-t-fail">${n(t.notPassed)}</span><span role="cell">${n(t.waiting)}</span></div>`).join('')}
+        <div class="ols-types-row ols-types-total" role="row"><span role="rowheader">Total</span><span role="cell">${n(c.total)}</span><span role="cell">${c.total ? '100.0%' : '0.0%'}</span><span role="cell" class="ols-t-pass">${n(c.passed)}</span><span role="cell" class="ols-t-fail">${n(c.notPassed)}</span><span role="cell">${n(c.waiting)}</span></div>
+      </div>
+      <div class="card-sub">Type = Qase “Test Case Type”; Empty = no type set in Qase.</div>
+    </div>`
 }
 
 // ── OLS tab (spec docs/sdd/ols-tab) — every number comes from /ols-progress.json ──
