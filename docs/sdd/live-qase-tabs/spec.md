@@ -87,6 +87,10 @@ number", R2–R5, R10, R11, R14 for the case figures (they came from `ols-progre
   when that time is more than 2 h old it adds "publisher has not reported for over 2 h". When the file is missing or
   malformed the card says so and shows no number. No deployed file is read for it any more.
 
+- **R17** — (owner 2026-10-28 "แดชบอร์ด … ต้องอัตโนมัติ ไม่ใช่จะเปลี่ยนค่าทีต้องดีพอยใหม่") `public/` MUST NOT ship any data
+  file: every figure comes from Qase (live) or the `site-data` branch (auto-published). `ma-progress.json` and
+  `ols-progress.json` are removed.
+
 ## Done when
 
 - Tests: a case in an older run keeps its result when the newest run omits it; a 1-case retest run does
