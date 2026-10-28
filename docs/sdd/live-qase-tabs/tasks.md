@@ -8,3 +8,5 @@
 | T4 | Deploy production; verify both tabs | all | — | production numbers in PR | Done — 76c55bb deployed 21:48; 12 views (3 widths × 2 tabs × 2 themes) live, axe 0 |
 | T5 | 429 retry + 60 s edge cache | R12, R13 | tests failed before | 4 concurrent-load rounds (6–12 views) all live | Done — PR #33 |
 | T6 | Visual regression + light/dark themes | R14, R15 | — | 13/13 × 3 reruns, 0 px | Done — PRs #35 #36 |
+| T7 | OLS ticket card from `site-data` (auto, every open) | R16 | test: card read `ols-progress.json` | 292/684 "updated automatically" on production | Done — PR #38 |
+| T8 | No data file in `public/` | R17 | test fails while files exist | 52 tests green, files gone | Done — PR #39 |
