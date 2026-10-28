@@ -92,7 +92,7 @@ test('live R16: OLS ticket card reads the published site-data file on every open
   const tickets = { measuredAt: new Date().toISOString(), done: 684, withAutomatedCase: 292, percent: 42.7 }
   const { api, content, urls } = load({ view: 'ols', key: 'mica-ols-overview', stored: null, tickets, live: async () => ({ ...sample(4, '2026-10-28T11:00:00.000Z'), project: 'OLS' }) })
   await api.renderOls()
-  assert.match(content.innerHTML, /292 of 684 tickets · updated automatically/)
+  assert.match(content.innerHTML, /292 of 684 tickets<\/div>[\s\S]*updated automatically/) // R19: second line
   assert.doesNotMatch(content.innerHTML, /not live|over 2 h/)
   await api.renderOls()
   assert.equal(urls.filter(u => /site-data\/ols-tickets\.json$/.test(u)).length, 2)
@@ -178,4 +178,30 @@ test('live R18: a type row with 0 cases is not shown; Total still matches', asyn
   assert.match(out, /Happy Path/); assert.match(out, /Failure Scenario/)
   assert.doesNotMatch(out, /Edge Case|Exceptional Case|>Empty</)
   assert.match(out, /rowheader">Total/)
+})
+
+test('live R19: wording, legend shares, zero sub-statuses hidden', async () => {
+  const d = { measuredAt: '2026-10-28T13:00:00.000Z', project: 'OLS', runsUsed: 2,
+    cases: { total: 639, passed: 235, notPassed: 199, waiting: 205, passedPercent: 36.8, notPassedPercent: 31.1, waitingPercent: 32.1 },
+    breakdown: { failed: 61, skipped: 0, notRun: 80, other: { blocked: 58 } }, types: null, typesError: 'x', run: null }
+  const { api, content } = load({ view: 'ols', key: 'mica-ols-overview', stored: null, live: async () => d })
+  await api.renderOls()
+  const h = content.innerHTML
+  assert.match(h, /All cases of project OLS on Qase\.io/)
+  assert.match(h, /no automated test script yet/)
+  assert.match(h, /not run \(script ready\) <b>80<\/b>/)
+  assert.match(h, /failed <b>61<\/b>/); assert.match(h, /blocked <b>58<\/b>/)
+  assert.doesNotMatch(h, /flaky/); assert.doesNotMatch(h, /skipped <b>0<\/b>/)
+  assert.match(h, /Passed \(36\.8%\)/); assert.match(h, /Not passed \(31\.1%\)/); assert.match(h, /To be automated \(32\.1%\)/)
+})
+test('live R19: MA scope wording', async () => {
+  const { api, content } = load({ stored: null, live: async () => sample(5, '2026-10-28T11:00:00.000Z') })
+  await api.renderMa()
+  assert.match(content.innerHTML, /All cases of project MA on Qase\.io/)
+})
+test('live R19: ticket card puts "updated automatically" on its own line', async () => {
+  const tickets = { measuredAt: new Date().toISOString(), done: 684, withAutomatedCase: 292, percent: 42.7 }
+  const { api, content } = load({ view: 'ols', key: 'mica-ols-overview', stored: null, tickets, live: async () => ({ ...sample(4, '2026-10-28T11:00:00.000Z'), project: 'OLS' }) })
+  await api.renderOls()
+  assert.match(content.innerHTML, /292 of 684 tickets<\/div>\s*<div class="card-sub">updated automatically, measured/)
 })

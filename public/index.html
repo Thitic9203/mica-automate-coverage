@@ -1158,12 +1158,12 @@ function maValid(d) {
 const LIVE_TABS = {
   ma: {
     view: 'ma', cacheKey: 'mica-ma-overview', build: 'buildMaOverview', project: 'MA',
-    title: 'MICA · Automation progress', scope: 'MICA 1 · EvMS · ELMS · CBMS counted together',
+    title: 'MICA · Automation progress', scope: 'All cases of project MA on Qase.io',
     source: '<strong>Qase project MA</strong>, suites MICA1 · EvMS · ELMS · CBMS counted together',
   },
   ols: {
     view: 'ols', cacheKey: 'mica-ols-overview', build: 'buildOlsOverview', project: 'OLS',
-    title: 'OLS · Automation progress', scope: 'All cases in Qase project OLS',
+    title: 'OLS · Automation progress', scope: 'All cases of project OLS on Qase.io',
     source: '<strong>Qase project OLS</strong>, every case in the project',
   },
 }
@@ -1233,7 +1233,8 @@ async function olsTicketsCard() {
     const stale = Date.now() - at.getTime() > OLS_TICKETS_STALE_MS ? ' · publisher has not reported for over 2 h' : ''
     return shell(`
         <div class="ols-big">${t.percent}%</div>
-        <div class="card-sub">${t.withAutomatedCase} of ${t.done} tickets · updated automatically, measured ${escapeHtml(formatBkkTime(at))}${stale}</div>`)
+        <div class="card-sub">${t.withAutomatedCase} of ${t.done} tickets</div>
+        <div class="card-sub">updated automatically, measured ${escapeHtml(formatBkkTime(at))}${stale}</div>`)
   } catch (e) {
     return shell(`<div class="card-sub">Ticket figure not available (${escapeHtml(e.message)}).</div>`)
   }
@@ -1243,7 +1244,6 @@ function paintLive(tab, d, refresh, animate) {
   const content = document.getElementById('content')
   const c = d.cases, b = d.breakdown
   const n = v => `<span data-count="${v}">${v}</span>`
-  const other = Object.entries(b.other).map(([k, v]) => `<span>${escapeHtml(k)} <b>${v}</b></span>`).join('')
   const fmt = iso => iso ? escapeHtml(formatBkkTime(new Date(String(iso).replace(' ', 'T') + (/[zZ]|[+-]\d\d:?\d\d$/.test(iso) ? '' : 'Z')))) : '—'
   const r = d.run
   const extra = tab.view === 'ols' ? (olsTicketsHtml || '') : ''
@@ -1269,12 +1269,12 @@ function paintLive(tab, d, refresh, animate) {
       <div class="card">
         <div class="card-label">NOT PASSED</div>
         <div class="card-value amber">${n(c.notPassed)}<span class="ols-pct">${pl(c.notPassed, c.notPassedPercent)}</span></div>
-        <div class="ols-break"><span>failed <b>${b.failed}</b></span><span>flaky <b>—</b></span><span>skipped <b>${b.skipped}</b></span><span>not run <b>${b.notRun}</b></span>${other}</div>
+        <div class="ols-break">${[['failed', b.failed], ['skipped', b.skipped], ['not run (script ready)', b.notRun], ...Object.entries(b.other)].filter(([, v]) => v > 0).map(([k, v]) => `<span>${escapeHtml(k)} <b>${v}</b></span>`).join('')}</div>
       </div>
       <div class="card">
         <div class="card-label">TO BE AUTOMATED</div>
         <div class="card-value muted">${n(c.waiting)}<span class="ols-pct">${pl(c.waiting, c.waitingPercent)}</span></div>
-        <div class="card-sub">not automated and no run result</div>
+        <div class="card-sub">no automated test script yet</div>
       </div>
     </div>
     <div class="${extra ? 'ols-row' : ''}">
@@ -1284,9 +1284,9 @@ function paintLive(tab, d, refresh, animate) {
           ${seg('ols-seg-pass', c.passed)}${seg('ols-seg-fail', c.notPassed)}${seg('ols-seg-wait', c.waiting)}
         </div>
         <div class="ols-legend">
-          <span><i class="ols-seg-pass"></i>Passed</span>
-          <span><i class="ols-seg-fail"></i>Not passed</span>
-          <span><i class="ols-seg-wait"></i>To be automated</span>
+          <span><i class="ols-seg-pass"></i>Passed (${pl(c.passed, c.passedPercent)})</span>
+          <span><i class="ols-seg-fail"></i>Not passed (${pl(c.notPassed, c.notPassedPercent)})</span>
+          <span><i class="ols-seg-wait"></i>To be automated (${pl(c.waiting, c.waitingPercent)})</span>
         </div>
       </div>
       ${extra}

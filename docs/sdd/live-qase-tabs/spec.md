@@ -95,6 +95,14 @@ number", R2–R5, R10, R11, R14 for the case figures (they came from `ols-progre
   0 cases MUST NOT be shown (Empty included); the Total row still equals the cards. When every case is untyped only
   Empty shows.
 
+- **R19** — (owner orders 2026-10-28) Wording and display, both tabs:
+  - header scope reads "All cases of project MA on Qase.io" / "All cases of project OLS on Qase.io" (supersedes R9 scope);
+  - the To be automated card reads "no automated test script yet"; the Not passed breakdown names the scripted-but-not-run
+    status "not run (script ready)" (owner rule: no script → To be automated; script but no run → Not passed);
+  - a Not passed sub-status with 0 or no value (e.g. flaky, which Qase does not report) is not shown;
+  - the Case progress legend shows each share, e.g. "Passed (36.8%)", with "<0.1%" for a non-zero share under 0.05 % (R11);
+  - in the Done-ticket card "updated automatically, measured …" starts on its own line.
+
 ## Done when
 
 - Tests: a case in an older run keeps its result when the newest run omits it; a 1-case retest run does
