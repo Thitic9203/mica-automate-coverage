@@ -152,8 +152,12 @@ These rules replace R10–R12, R15 and R19–R22 for the page; R23–R29 still a
   R29 / R38 / R39 did not address it. Owner chose "ยิงสำรองหน้าที่ช้า".) A page request still unanswered after
   **4 s** MUST be sent once more in parallel; the first successful answer is used. If both fail, the request fails
   (then R28 retries apply). The 4 s threshold is a judgment from the measured median (~2.2 s), not a standard.
+- **R41** — (owner 2026-10-28 "ไม่รอ … ให้แก้มาเลย" after loads of 40–60 s) Each render MUST first paint this
+  browser's last successfully computed numbers (localStorage, validated by `maValid`), with "updating from Qase…"
+  next to Measured, then recompute live (R23) and repaint. If the live load fails, the last numbers stay with the
+  failure stated; with no saved numbers, R27 applies. A newer render supersedes an older one still in flight.
 
-Done when (R30–R40): live page equals a Node run of the same core against Qase at the same time; 28/Oct expected
+Done when (R30–R41): live page equals a Node run of the same core against Qase at the same time; 28/Oct expected
 from Qase: total 3074, automated 587, run #1 results 586 passed / 1 failed; no overflow at 1440 / 900 / 390;
 `node --test scripts/*.test.mjs` green.
 
