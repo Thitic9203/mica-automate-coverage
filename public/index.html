@@ -1221,8 +1221,8 @@ async function olsTicketsCard() {
       <div class="chart-card">
         <h3>Done tickets with an automated case</h3>
         ${body}
-        <a class="ols-report-link ols-filter-link" href="https://skilllane.atlassian.net/issues/?filter=23932" target="_blank" rel="noopener noreferrer">Jira filter: tickets with an automated case (saved list) ↗</a>
-        <a class="ols-report-link ols-filter-link" href="https://skilllane.atlassian.net/issues/?filter=23931" target="_blank" rel="noopener noreferrer">Jira filter: all Done tickets in scope (saved list) ↗</a>
+        <a class="ols-report-link ols-filter-link" href="https://skilllane.atlassian.net/issues/?filter=23932" target="_blank" rel="noopener noreferrer">Jira filter: tickets with an automated case ↗</a>
+        <a class="ols-report-link ols-filter-link" href="https://skilllane.atlassian.net/issues/?filter=23931" target="_blank" rel="noopener noreferrer">Jira filter: all Done tickets in scope ↗</a>
       </div>`
   try {
     const res = await fetch(OLS_TICKETS_URL, { cache: 'no-store' })

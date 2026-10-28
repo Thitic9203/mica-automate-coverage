@@ -103,6 +103,9 @@ number", R2–R5, R10, R11, R14 for the case figures (they came from `ols-progre
   - the Case progress legend shows each share, e.g. "Passed (36.8%)", with "<0.1%" for a non-zero share under 0.05 % (R11);
   - in the Done-ticket card "updated automatically, measured …" starts on its own line.
 
+- **R20** — The card's two Jira filter links (23932, 23931) are kept equal to the card's numbers by the publisher every
+  30 min (ols-qa-e2e ols-tickets-publish R7), so they carry no "(saved list)" caveat.
+
 ## Done when
 
 - Tests: a case in an older run keeps its result when the newest run omits it; a 1-case retest run does
