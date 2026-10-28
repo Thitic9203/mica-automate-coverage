@@ -1179,7 +1179,7 @@ function setLivePill(measuredAt, sub) {
 }
 function renderMa() { return renderLive(LIVE_TABS.ma) }
 async function renderOls() {
-  if (olsTicketsHtml === null) olsTicketsHtml = await olsTicketsCard()
+  olsTicketsHtml = await olsTicketsCard() // R16: re-read on every open of the tab
   return renderLive(LIVE_TABS.ols)
 }
 async function renderLive(tab) {
@@ -1213,22 +1213,30 @@ async function renderLive(tab) {
   paintLive(tab, d, null, !cached)
 }
 // live-qase-tabs R7: Jira figure, not in Qase — read from the export file and labelled with its own time.
+// live-qase-tabs R16: published every 30 min by ols-qa-e2e (gate:tickets figure) to the site-data branch; no deploy.
+const OLS_TICKETS_URL = 'https://raw.githubusercontent.com/Thitic9203/mica-automate-coverage/site-data/ols-tickets.json'
+const OLS_TICKETS_STALE_MS = 2 * 60 * 60 * 1000
 async function olsTicketsCard() {
-  try {
-    const res = await fetch('/ols-progress.json', { cache: 'no-store' })
-    if (!res.ok) return ''
-    const j = await res.json(), t = j && j.tickets
-    if (!t || ![t.done, t.withAutomatedCase, t.percent].every(Number.isFinite) || typeof j.measuredAt !== 'string') return ''
-    const link = (u, label) => t.filters && /^https:\/\/[a-z0-9.-]+\/issues\/\?filter=\d+$/.test(u || '') ? `<a class="ols-report-link ols-filter-link" href="${escapeHtml(u)}" target="_blank" rel="noopener noreferrer">${label}</a>` : ''
-    return `
+  const shell = body => `
       <div class="chart-card">
         <h3>Done tickets with an automated case</h3>
-        <div class="ols-big">${t.percent}%</div>
-        <div class="card-sub">${t.withAutomatedCase} of ${t.done} tickets · Jira, measured ${escapeHtml(formatBkkTime(new Date(j.measuredAt)))} (not live)</div>
-        ${link(t.filters && t.filters.withAutomatedCase, 'Jira filter: tickets with an automated case ↗')}
-        ${link(t.filters && t.filters.done, 'Jira filter: all Done tickets in scope ↗')}
+        ${body}
+        <a class="ols-report-link ols-filter-link" href="https://skilllane.atlassian.net/issues/?filter=23932" target="_blank" rel="noopener noreferrer">Jira filter: tickets with an automated case (saved list) ↗</a>
+        <a class="ols-report-link ols-filter-link" href="https://skilllane.atlassian.net/issues/?filter=23931" target="_blank" rel="noopener noreferrer">Jira filter: all Done tickets in scope (saved list) ↗</a>
       </div>`
-  } catch { return '' }
+  try {
+    const res = await fetch(OLS_TICKETS_URL, { cache: 'no-store' })
+    if (!res.ok) throw new Error('HTTP ' + res.status)
+    const t = await res.json()
+    if (!t || ![t.done, t.withAutomatedCase, t.percent].every(Number.isFinite) || t.withAutomatedCase > t.done || typeof t.measuredAt !== 'string') throw new Error('unexpected shape')
+    const at = new Date(t.measuredAt)
+    const stale = Date.now() - at.getTime() > OLS_TICKETS_STALE_MS ? ' · publisher has not reported for over 2 h' : ''
+    return shell(`
+        <div class="ols-big">${t.percent}%</div>
+        <div class="card-sub">${t.withAutomatedCase} of ${t.done} tickets · updated automatically, measured ${escapeHtml(formatBkkTime(at))}${stale}</div>`)
+  } catch (e) {
+    return shell(`<div class="card-sub">Ticket figure not available (${escapeHtml(e.message)}).</div>`)
+  }
 }
 // refresh: 'updating' | 'failed: …' | null (live numbers). animate once per render: the cached paint, or the live one when there was no cache.
 function paintLive(tab, d, refresh, animate) {

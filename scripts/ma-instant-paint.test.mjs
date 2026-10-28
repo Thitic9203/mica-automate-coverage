@@ -19,6 +19,7 @@ const sample = (passed, at) => ({
 function load({ stored, live, view = 'ma', key = 'mica-ma-overview', tickets = null }) {
   const content = { innerHTML: '', dataset: {} }
   const els = {}
+  const urls = []
   const store = new Map(stored ? [[key, JSON.stringify(stored)]] : [])
   const snapshots = []
   const env = {
@@ -28,12 +29,12 @@ function load({ stored, live, view = 'ma', key = 'mica-ma-overview', tickets = n
     animateOls: () => {}, maTypesCard: () => '', activeView: view,
     MA_PAGE_TIMEOUT_MS: 10000, AbortSignal: { timeout: () => undefined },
     importCore: async () => ({ retryable: f => f, hedged: f => f, buildMaOverview: live, buildOlsOverview: live }),
-    fetch: async () => tickets ? { ok: true, json: async () => tickets } : { ok: false, status: 404 },
+    fetch: async u => { urls.push(u); return tickets ? { ok: true, json: async () => tickets } : { ok: false, status: 404 } },
   }
   const src = block.replace("await import('/ma-progress-core.mjs')", 'await importCore()')
   const fn = new Function(...Object.keys(env), `${src}; return { renderMa, renderOls, snap: () => 0 }`)
   const api = fn(...Object.values(env))
-  return { api, content, store, snapshots, els }
+  return { api, content, store, snapshots, els, urls }
 }
 
 test('R41: saved numbers paint before Qase answers, then live numbers replace them', async () => {
@@ -87,12 +88,24 @@ test('live R1/R8: OLS tab is computed live, saved under its own key, MA cache un
   assert.equal(store.has('mica-ma-overview'), false)
 })
 
-test('live R7: OLS ticket card comes from ols-progress.json with that file\'s own measured time', async () => {
-  const tickets = { measuredAt: '2026-10-22T05:17:06.324Z', tickets: { done: 660, withAutomatedCase: 244, percent: 37 } }
-  const { api, content } = load({ view: 'ols', key: 'mica-ols-overview', stored: null, tickets, live: async () => ({ ...sample(4, '2026-10-28T11:00:00.000Z'), project: 'OLS' }) })
+test('live R16: OLS ticket card reads the published site-data file on every open', async () => {
+  const tickets = { measuredAt: new Date().toISOString(), done: 684, withAutomatedCase: 292, percent: 42.7 }
+  const { api, content, urls } = load({ view: 'ols', key: 'mica-ols-overview', stored: null, tickets, live: async () => ({ ...sample(4, '2026-10-28T11:00:00.000Z'), project: 'OLS' }) })
   await api.renderOls()
-  assert.match(content.innerHTML, /244 of 660 tickets/)
-  assert.match(content.innerHTML, /2026-10-22T05:17:06\.324Z/)
+  assert.match(content.innerHTML, /292 of 684 tickets · updated automatically/)
+  assert.doesNotMatch(content.innerHTML, /not live|over 2 h/)
+  await api.renderOls()
+  assert.equal(urls.filter(u => /site-data\/ols-tickets\.json$/.test(u)).length, 2)
+})
+
+test('live R16: a stale or missing ticket file says so and shows no number', async () => {
+  const old = { measuredAt: '2026-10-01T00:00:00.000Z', done: 10, withAutomatedCase: 5, percent: 50 }
+  const a = load({ view: 'ols', key: 'mica-ols-overview', stored: null, tickets: old, live: async () => ({ ...sample(4, '2026-10-28T11:00:00.000Z'), project: 'OLS' }) })
+  await a.api.renderOls()
+  assert.match(a.content.innerHTML, /publisher has not reported for over 2 h/)
+  const b = load({ view: 'ols', key: 'mica-ols-overview', stored: null, tickets: null, live: async () => ({ ...sample(4, '2026-10-28T11:00:00.000Z'), project: 'OLS' }) })
+  await b.api.renderOls()
+  assert.match(b.content.innerHTML, /Ticket figure not available \(HTTP 404\)/)
 })
 
 test('live R10: the top-right pill shows Updated Date and the refresh line', async () => {

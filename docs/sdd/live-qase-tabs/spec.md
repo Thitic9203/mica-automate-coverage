@@ -79,6 +79,14 @@ number", R2–R5, R10, R11, R14 for the case figures (they came from `ols-progre
   (owner screenshot 2026-10-28: sun icon in light theme, moon icon in dark theme, 1 px border, ≥44 px,
   `aria-label` "Dark mode", `aria-pressed`); Sign out shows a log-out icon before its label.
 
+- **R16** — (owner order 2026-10-28 "ตรงนี้ต้องคำนวณและปรับอัตโนมัติเสมอ ตามจริง โดยไม่ดีพอยใหม่"; supersedes R7)
+  The OLS "Done tickets with an automated case" card MUST read
+  `https://raw.githubusercontent.com/Thitic9203/mica-automate-coverage/site-data/ols-tickets.json`
+  (`{ measuredAt, done, withAutomatedCase, percent }`, published every 30 min by ols-qa-e2e spec ols-tickets-publish,
+  same figure as gate:tickets and the Slack notify). The card shows "updated automatically" and the measured time;
+  when that time is more than 2 h old it adds "publisher has not reported for over 2 h". When the file is missing or
+  malformed the card says so and shows no number. No deployed file is read for it any more.
+
 ## Done when
 
 - Tests: a case in an older run keeps its result when the newest run omits it; a 1-case retest run does
