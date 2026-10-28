@@ -1315,7 +1315,7 @@ function maTypesCard(d, n) {
       <h3>Cases by type</h3>
       <div class="ols-types-grid ols-types-5" role="table" aria-label="Cases by test case type">
         <div class="ols-types-head" role="row"><span role="columnheader">Type</span><span role="columnheader">Cases</span><span role="columnheader">%</span><span role="columnheader">Passed</span><span role="columnheader">Not passed</span><span role="columnheader">To be automated</span></div>
-        ${d.types.map(t => `<div class="ols-types-row" role="row"><span role="rowheader">${MA_TYPE_LABELS[t.key]}</span><span role="cell">${n(t.total)}</span><span role="cell">${t.sharePercent.toFixed(1)}%</span><span role="cell" class="ols-t-pass">${n(t.passed)}</span><span role="cell" class="ols-t-fail">${n(t.notPassed)}</span><span role="cell">${n(t.waiting)}</span></div>`).join('')}
+        ${d.types.filter(t => t.total > 0 /* R18: no row for a type with 0 cases */).map(t => `<div class="ols-types-row" role="row"><span role="rowheader">${MA_TYPE_LABELS[t.key]}</span><span role="cell">${n(t.total)}</span><span role="cell">${t.sharePercent.toFixed(1)}%</span><span role="cell" class="ols-t-pass">${n(t.passed)}</span><span role="cell" class="ols-t-fail">${n(t.notPassed)}</span><span role="cell">${n(t.waiting)}</span></div>`).join('')}
         <div class="ols-types-row ols-types-total" role="row"><span role="rowheader">Total</span><span role="cell">${n(c.total)}</span><span role="cell">${c.total ? '100.0%' : '0.0%'}</span><span role="cell" class="ols-t-pass">${n(c.passed)}</span><span role="cell" class="ols-t-fail">${n(c.notPassed)}</span><span role="cell">${n(c.waiting)}</span></div>
       </div>
       <div class="card-sub">Type = Qase “Test Case Type”; Empty = no type set in Qase.</div>
