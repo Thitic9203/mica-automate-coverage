@@ -106,7 +106,7 @@ for (const theme of ['light', 'dark']) {
         await p.setViewportSize({ width, height: Math.max(900, docH) })
         await p.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))))
         await expect(p).toHaveScreenshot(`${view}-${width}-${theme}.png`)
-        await p.addScriptTag({ url: 'https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.9.1/axe.min.js' })
+        await p.addScriptTag({ path: path.join(__dirname, 'vendor', 'axe-4.9.1.min.js') }) // visual-flake R4: no network
         const v = await p.evaluate(async () => (await window.axe.run(document.getElementById('app'), { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21aa'] } })).violations.map(x => x.id + ':' + x.nodes.map(n => n.target.join(' ')).join('|')))
         expect(v).toEqual([])
       })
