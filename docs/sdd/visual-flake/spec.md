@@ -22,3 +22,13 @@ Source: owner 2026-11-28 ("Do this task here: แก้ visual suite ภาพ�
 ## Done when
 
 - `--repeat-each 5` passes twice in a row; R-003 marked resolved.
+
+## Revision 2 (2026-11-29)
+
+- The per-worker font cache still let the first test in each worker wait on the network (page.goto timeouts).
+  **R1 rev 2**: fonts are served from `tests/visual/fonts/` (Google Fonts CSS + 13 woff2, OFL, owner-approved download).
+- **R3**: GSAP (cdnjs) is stubbed in the test — the page's motion guard makes it a no-op under reduced motion.
+- **R4**: axe-core 4.9.1 is loaded from `tests/visual/vendor/` (owner-approved download), not the CDN.
+- Remaining timeouts (locator.click / toHaveText at 30 s) were measured only while the Mac's load average was 13–16 on
+  8 cores (other sessions' runs; suite took 1.1–1.5 min instead of 46 s). On the same code with load ~3:
+  `--repeat-each 5` 95/95 three times in a row. No timeout or retry was raised. Run the gate on a quiet machine.
