@@ -82,8 +82,17 @@ for (const theme of ['light', 'dark']) {
           document.getElementById('last-updated').textContent = 'Updated Date: 28/Oct/2026 12:00 PM'
           document.querySelector('.ols-note dd').textContent = '28/Oct/2026 12:00 PM'
         })
-        await expect(p).toHaveScreenshot(`${view}-${width}-${theme}.png`, { fullPage: true })
         expect(await p.evaluate(() => document.documentElement.scrollWidth)).toBe(width)
+        // spec docs/sdd/ui-scale-70 R1: whole page at 70%; R3: #app still fills the window height
+        expect(await p.evaluate(() => getComputedStyle(document.body).zoom)).toBe('0.7')
+        const appH = await p.evaluate(() => document.getElementById('app').getBoundingClientRect().height)
+        expect(appH).toBeGreaterThanOrEqual(899)
+        // fullPage sizes the shot in unzoomed px under CSS zoom (900 px wide page -> 1286 px shot, unstable pixels
+        // beyond the rendered area), so grow the viewport to the real document height and shoot the viewport.
+        const docH = await p.evaluate(() => Math.ceil(document.documentElement.getBoundingClientRect().height))
+        await p.setViewportSize({ width, height: Math.max(900, docH) })
+        await p.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))))
+        await expect(p).toHaveScreenshot(`${view}-${width}-${theme}.png`)
         await p.addScriptTag({ url: 'https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.9.1/axe.min.js' })
         const v = await p.evaluate(async () => (await window.axe.run(document.getElementById('app'), { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21aa'] } })).violations.map(x => x.id + ':' + x.nodes.map(n => n.target.join(' ')).join('|')))
         expect(v).toEqual([])

@@ -43,6 +43,7 @@
   --seg-wait:      #B9B9B6;
   --danger:        #991B1B;
   --live-dot:      #62A88A;
+  --ui-scale:      0.7; /* spec docs/sdd/ui-scale-70 R1, R2 */
   color-scheme: light;
 }
 /* dark theme (global rule 16.2) — every colour is a token; set before first paint by the head script */
@@ -92,6 +93,7 @@ body {
   -webkit-font-smoothing: antialiased;
   min-height: 100%;
   scrollbar-width: none;
+  zoom: var(--ui-scale); /* ui-scale-70 R1: on body, not html, so the document size stays in real px */
 }
 body::-webkit-scrollbar { display: none; }
 
@@ -255,7 +257,7 @@ body::-webkit-scrollbar { display: none; }
 /* ══════════════════════════════════════════
    PAGE CONTENT
 ══════════════════════════════════════════ */
-#app { display: flex; flex-direction: column; min-height: 100vh; }
+#app { display: flex; flex-direction: column; min-height: calc(100vh / var(--ui-scale)); /* ui-scale-70 R3 */ }
 .page-content {
   flex: 1 1 auto;
   display: flex; flex-direction: column;
