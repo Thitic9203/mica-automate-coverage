@@ -4,9 +4,11 @@
 
 - **Platform: Cloudflare Pages** — NOT Netlify
 - **Manual deploy** — no git auto-deploy configured
-- Deploy command: `wrangler pages deploy public/ --project-name mica-automate-coverage --branch main`
+- Deploy command: `wrangler pages deploy public/ --project-name pluton-automate-coverage --branch main` (spec docs/sdd/pyrite-tab-pluton R8; run from the repo root so `functions/` and `lib/` are bundled)
+- Old project `mica-automate-coverage` serves only `redirect/_redirects` (301 to the new host): `wrangler pages deploy redirect/ --project-name mica-automate-coverage --branch main`
+- Pages secrets on `pluton-automate-coverage` (set by the owner): `QASE_API_TOKEN`, `JIRA_BASIC` (`email:token`), `GITHUB_TOKEN` (read-only contents of pyrite-qa-e2e)
 - `--branch main` = production deploy → stable production URL (not per-deploy hash URL)
-- **Production only** (owner 2026-10-28): no staging/preview environment, branch, deploy or secret. Deploy straight to `--branch main` and verify on https://mica-automate-coverage.pages.dev. This overrides the global staging-first rules for this repo.
+- **Production only** (owner 2026-10-28): no staging/preview environment, branch, deploy or secret. Deploy straight to `--branch main` and verify on https://pluton-automate-coverage.pages.dev. This overrides the global staging-first rules for this repo.
 - Always commit + push + deploy when user says "ดีพอย"
 - `netlify.toml` exists but is legacy/unused — do not reference Netlify
 - Cloudflare Pages Functions in `functions/` directory

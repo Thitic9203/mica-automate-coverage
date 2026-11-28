@@ -229,6 +229,16 @@ test('live R1/R5: OLS overview counts every case in the project, typed by field 
   assert.deepEqual(o.types.map(t => [t.key, t.total]), [['happyPath', 1], ['failureScenario', 1], ['edgeCase', 0], ['exceptionalCase', 0], ['empty', 1]])
 })
 
+test('pyrite-tab-pluton R2: Pyrite overview reads Qase project Pyrite, every case', async () => {
+  assert.equal(typeof core.buildPyriteOverview, 'function')
+  const paths = []
+  const mock = ovMock({ cases: [kase(1, 1, 0, '1'), kase(2, 9, 0, null)], runs: [run(3, '2026-11-27 10:00:00', [1])], results: { 3: [{ case_id: 1, status: 'passed' }] } })
+  const o = await core.buildPyriteOverview({ fetchJson: p => { paths.push(p); return mock(p) }, now: NOW2 })
+  assert.equal(o.project, 'Pyrite')
+  assert.ok(paths.every(p => !/\/(case|run|result|suite)\//.test(p) || /\/(case|run|result|suite)\/Pyrite\b/.test(p)), paths.join(' '))
+  assert.deepEqual([o.cases.total, o.cases.passed, o.cases.notPassed, o.cases.waiting], [2, 1, 0, 1])
+})
+
 test('live R12: HTTP 429 is retried up to 3 more times, honouring Retry-After', async () => {
   const waits = []
   const realST = globalThis.setTimeout

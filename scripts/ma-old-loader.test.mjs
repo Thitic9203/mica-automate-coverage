@@ -16,5 +16,5 @@ test('R39: showApp does not start the old loader for the MA or OLS tab', () => {
 test('R39: switching to a view that uses the old data starts the loader once', () => {
   const nav = html.slice(html.indexOf('function setupNav()'), html.indexOf('function renderView'))
   assert.match(nav, /ensureOldLoader\(\)/)
-  assert.match(html, /function usesOldData\(view\) \{ return view !== 'ma' && view !== 'ols' \}/)
+  assert.match(html, /function usesOldData\(view\) \{ return view !== 'ma' && view !== 'ols' && view !== 'pyrite' \}/) // pyrite-tab-pluton R2: Pyrite is a live tab too
 })
