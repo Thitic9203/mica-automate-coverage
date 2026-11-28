@@ -6,7 +6,7 @@ import { execFileSync } from 'node:child_process'
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { parseTar, annotatedKeys, automatedJql, ticketFigure } from '../lib/pyrite-tickets-core.mjs'
+import { parseTar, annotatedKeys, automatedJql, ticketFigure, automatedCaseIds } from '../lib/pyrite-tickets-core.mjs'
 
 function tarOf(files) {
   const dir = mkdtempSync(join(tmpdir(), 'pyr-tar-'))
@@ -46,4 +46,15 @@ test('R4c: figure counts Done keys that are annotated; percent has one decimal',
   assert.deepEqual([f.done, f.withAutomatedCase, f.percent], [3, 2, 66.7])
   assert.deepEqual(f.automatedKeys, ['PYR-2', 'PYR-3'])
   assert.equal(ticketFigure([], new Set()).percent, 0)
+})
+
+// ── spec docs/sdd/pyrite-automation-only ──
+test('pyrite-automation-only R1: case ids come from `PYRITE-<id> — ` test titles in tests/**/*.spec.ts, ascending, unique', () => {
+  const files = parseTar(tarOf({
+    'tests/a/x.spec.ts': "test(`PYRITE-2754 — ${tc('PYRITE-2754').title} (PYR-789)`, async () => {})\n  test(`PYRITE-12 — ${tc('PYRITE-12').title}`, () => {})",
+    'tests/b/y.spec.ts': "test.describe('g', () => { test(`PYRITE-2754 — again`, () => {}) })\ntest(`PYR-951-AC05 — no case`, () => {})",
+    'tests/data/notes.ts': "`PYRITE-999 — not a spec file`",
+    'README.md': "`PYRITE-998 — readme`",
+  }))
+  assert.deepEqual(automatedCaseIds(files), [12, 2754])
 })

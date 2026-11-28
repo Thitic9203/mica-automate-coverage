@@ -1181,7 +1181,7 @@ const LIVE_TABS = {
     source: '<strong>Qase project OLS</strong>, every case in the project',
   },
   pyrite: { // spec docs/sdd/pyrite-tab-pluton R2, R3
-    view: 'pyrite', cacheKey: 'pluton-pyrite-overview', build: 'buildPyriteOverview', project: 'Pyrite',
+    view: 'pyrite', cacheKey: 'pluton-pyrite-overview-v2', build: 'buildPyriteOverview', project: 'Pyrite', args: () => ({ automatedIds: pyriteAutomatedIds() }), // v2: pyrite-automation-only
     title: 'Pyrite · Automation progress', scope: 'All cases of project Pyrite on Qase.io',
     source: '<strong>Qase project Pyrite</strong>, every case in the project',
   },
@@ -1223,7 +1223,7 @@ async function renderLive(tab, card = null) {
       if (!res.ok) throw Object.assign(new Error('Qase HTTP ' + res.status), { status: res.status, retryAfter: res.headers.get('Retry-After') }) // R12
       return res.json()
     }))
-    d = await core[tab.build]({ fetchJson }) // R26: measuredAt = now
+    d = await core[tab.build]({ fetchJson, ...(tab.args ? tab.args() : {}) }) // R26: measuredAt = now
     if (!maValid(d)) throw new Error('unexpected shape')
   } catch (e) {
     await card
@@ -1253,6 +1253,14 @@ function ticketsShell(automatedFilter, allFilter) {
       </div>`
 }
 const ticketsValid = t => t && [t.done, t.withAutomatedCase, t.percent].every(Number.isFinite) && t.withAutomatedCase <= t.done && typeof t.measuredAt === 'string'
+// pyrite-automation-only R1, R2, R5: scripted case ids, read live from pyrite-qa-e2e by the Pages Function.
+async function pyriteAutomatedIds() {
+  const res = await fetch('/api/pyrite-automated', { cache: 'no-store' })
+  const t = await res.json().catch(() => null)
+  if (!res.ok) throw new Error((t && t.errorMessage) || 'HTTP ' + res.status)
+  if (!t || !Array.isArray(t.caseIds) || !t.caseIds.every(Number.isInteger)) throw new Error('unexpected shape')
+  return t.caseIds
+}
 // pyrite-tab-pluton R4–R6: computed live by the Pages Function (Jira filter 24025 × tickets annotations), filter 24026 kept equal.
 async function pyriteTicketsCard() {
   const shell = ticketsShell(24026, 24025)

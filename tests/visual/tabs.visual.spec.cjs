@@ -29,7 +29,7 @@ const DATA = {
   Pyrite: { // spec docs/sdd/pyrite-tab-pluton R10
     suites: [],
     cases: [...Array(10)].map((_, i) => kase(200 + i, 5, 0, i < 6 ? (i % 4) + 1 : null)),
-    runs: [{ id: 9, title: 'Fixture Pyrite run', start_time: '2026-11-28T10:00:00+07:00', end_time: '2026-11-28T10:20:00+07:00', cases: [200, 201, 202, 203] }],
+    runs: [{ id: 9, title: 'Pyrite Automate · fixture run', start_time: '2026-11-28T10:00:00+07:00', end_time: '2026-11-28T10:20:00+07:00', cases: [200, 201, 202, 203] }],
     results: { 9: [{ case_id: 200, status: 'passed' }, { case_id: 201, status: 'passed' }, { case_id: 202, status: 'failed' }, { case_id: 203, status: 'blocked' }] },
   },
 }
@@ -46,6 +46,8 @@ async function open(pageObj, view) {
   await pageObj.route('https://www.gstatic.com/firebasejs/**/firebase-auth.js', r => r.fulfill({ contentType: 'text/javascript', body: AUTH }))
   await pageObj.route('https://raw.githubusercontent.com/**/ols-tickets.json', r => r.fulfill({ contentType: 'application/json',
     body: JSON.stringify({ measuredAt: '2026-10-28T15:31:20.353Z', done: 684, withAutomatedCase: 292, percent: 42.7 }) }))
+  await pageObj.route('**/api/pyrite-automated', r => r.fulfill({ contentType: 'application/json', // pyrite-automation-only R2
+    body: JSON.stringify({ measuredAt: '2026-11-28T15:00:00.000Z', caseIds: [200, 201, 202, 203, 204] }) }))
   await pageObj.route('**/api/pyrite-tickets', r => r.fulfill({ contentType: 'application/json',
     body: JSON.stringify({ measuredAt: '2026-10-28T15:40:00.000Z', done: 33, withAutomatedCase: 32, percent: 97, filters: { automated: 24026, all: 24025 } }) }))
   await pageObj.route('**/api/qase/**', r => {

@@ -154,19 +154,28 @@ export function buildOlsOverview({ fetchJson, now = new Date() }) {
 }
 
 /** Spec pyrite-tab-pluton R2: every case in Qase project Pyrite. */
-export function buildPyriteOverview({ fetchJson, now = new Date() }) {
-  return buildOverview({ fetchJson, now, project: 'Pyrite', systems: null })
+// pyrite-automation-only R1–R5: results only from automated runs; "automated" = id named by a pyrite-qa-e2e test title.
+const PYRITE_AUTOMATED_RUN = /^Pyrite Automate ·/
+export async function buildPyriteOverview({ fetchJson, now = new Date(), automatedIds }) {
+  const ids = Promise.resolve(automatedIds).then(list => {
+    if (!Array.isArray(list)) throw new Error('Pyrite automated ids: not available')
+    return new Set(list.map(Number))
+  }, e => { throw new Error('Pyrite automated ids: ' + (e && e.message || e)) })
+  ids.catch(() => {}) // awaited below; avoid an unhandled rejection while Qase loads
+  return buildOverview({ fetchJson, now, project: 'Pyrite', systems: null, runFilter: r => PYRITE_AUTOMATED_RUN.test(r.title || ''), automated: ids })
 }
 
 // Spec live-qase-tabs R2–R4: each case takes its result from the newest completed run that lists it.
-async function buildOverview({ fetchJson: rawFetch, now, project, systems }) {
+async function buildOverview({ fetchJson: rawFetch, now, project, systems, runFilter = null, automated = null }) {
   const fetchJson = limited(rawFetch, MAX_IN_FLIGHT) // tab-load-5s R4: one in-flight cap for the whole tab load
   const [suites, cases, allRuns] = await Promise.all([ // tab-load-5s R2
     systems ? fetchAll(fetchJson, `/suite/${project}`) : [],
     fetchAll(fetchJson, `/case/${project}`),
     fetchAll(fetchJson, `/run/${project}?status=complete&include=cases`),
   ])
-  const runs = allRuns.filter(isComplete)
+  const runs = allRuns.filter(r => isComplete(r) && (!runFilter || runFilter(r)))
+  const automatedSet = automated ? await automated : null
+  const isAutomated = c => automatedSet ? automatedSet.has(c.id) : c.automation === AUTOMATED
 
   let own = cases
   if (systems) {
@@ -217,7 +226,7 @@ async function buildOverview({ fetchJson: rawFetch, now, project, systems }) {
   const statusOf = new Map()
   for (const c of own) {
     const res = last.get(c.id)
-    if (!res && !listed.has(c.id) && c.automation !== AUTOMATED) { waiting++; statusOf.set(c.id, 'waiting'); continue } // R3
+    if (!res && !listed.has(c.id) && !isAutomated(c)) { waiting++; statusOf.set(c.id, 'waiting'); continue } // R3
     const st = String(res?.status || '').toLowerCase()
     if (!st) { notRun++; statusOf.set(c.id, 'notPassed') }
     else if (st === 'passed') { passed++; statusOf.set(c.id, 'passed') }
