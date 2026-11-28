@@ -332,3 +332,12 @@ test('pyrite-automation-only R5: no automated id list -> the build rejects (no p
   await assert.rejects(core.buildPyriteOverview({ fetchJson: base, now: NOW2, automatedIds: Promise.reject(new Error('Pyrite automated ids: HTTP 502')) }), /automated ids/)
   await assert.rejects(core.buildPyriteOverview({ fetchJson: base, now: NOW2 }), /automated ids/)
 })
+
+test('live-qase-tabs R3a: OLS reads "Automation Status" custom field 97, not the system automation field', async () => {
+  const k = (id, auto, f97) => ({ id, suite_id: 9, automation: auto, custom_fields: f97 === null ? [] : [{ id: 97, value: f97 }] })
+  const cases = [k(1, 0, '2'), k(2, 0, '2'), k(3, 2, '1'), k(4, 0, '2')]
+  const runs = [run(5, '2026-11-27 10:00:00', [4])]
+  const o = await core.buildOlsOverview({ fetchJson: ovMock({ cases, runs, results: { 5: [{ case_id: 4, status: 'passed' }] } }), now: NOW2 })
+  // 1, 2: field 97 Automated, no result -> not run; 3: system field says automated but field 97 Manual -> to be automated; 4: passed
+  assert.deepEqual([o.cases.passed, o.cases.notPassed, o.cases.waiting, o.breakdown.notRun], [1, 2, 1, 2])
+})

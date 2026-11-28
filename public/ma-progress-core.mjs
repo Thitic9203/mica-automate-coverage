@@ -149,8 +149,11 @@ export function buildMaOverview({ fetchJson, now = new Date() }) {
 }
 
 /** Spec live-qase-tabs: every case in Qase project OLS. */
+// live-qase-tabs R3a: OLS "automated" = custom field 97 "Automation Status" is "2" (Automated).
+const AUTOMATION_STATUS_FIELD = 97
+const automationStatusAutomated = c => (c.custom_fields || []).some(f => Number(f.id) === AUTOMATION_STATUS_FIELD && String(f.value) === '2')
 export function buildOlsOverview({ fetchJson, now = new Date() }) {
-  return buildOverview({ fetchJson, now, project: 'OLS', systems: null })
+  return buildOverview({ fetchJson, now, project: 'OLS', systems: null, automatedIf: automationStatusAutomated })
 }
 
 /** Spec pyrite-tab-pluton R2: every case in Qase project Pyrite. */
@@ -166,7 +169,7 @@ export async function buildPyriteOverview({ fetchJson, now = new Date(), automat
 }
 
 // Spec live-qase-tabs R2–R4: each case takes its result from the newest completed run that lists it.
-async function buildOverview({ fetchJson: rawFetch, now, project, systems, runFilter = null, automated = null }) {
+async function buildOverview({ fetchJson: rawFetch, now, project, systems, runFilter = null, automated = null, automatedIf = null }) {
   const fetchJson = limited(rawFetch, MAX_IN_FLIGHT) // tab-load-5s R4: one in-flight cap for the whole tab load
   const [suites, cases, allRuns] = await Promise.all([ // tab-load-5s R2
     systems ? fetchAll(fetchJson, `/suite/${project}`) : [],
@@ -175,7 +178,7 @@ async function buildOverview({ fetchJson: rawFetch, now, project, systems, runFi
   ])
   const runs = allRuns.filter(r => isComplete(r) && (!runFilter || runFilter(r)))
   const automatedSet = automated ? await automated : null
-  const isAutomated = c => automatedSet ? automatedSet.has(c.id) : c.automation === AUTOMATED
+  const isAutomated = c => automatedSet ? automatedSet.has(c.id) : automatedIf ? automatedIf(c) : c.automation === AUTOMATED
 
   let own = cases
   if (systems) {

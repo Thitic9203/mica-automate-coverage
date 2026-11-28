@@ -12,7 +12,8 @@ export const setPersistence = async () => {}
 export const browserLocalPersistence = {}
 export const onAuthStateChanged = (a, cb) => { setTimeout(() => cb({ email: 'thitichaya@skilllane.com' }), 0); return () => {} }`
 
-const kase = (id, suite_id, automation, type) => ({ id, suite_id, automation, custom_fields: type ? [{ id: 4, value: String(type) }] : [] })
+// live-qase-tabs R3a: an automated fixture case also carries Automation Status (custom field 97) = Automated
+const kase = (id, suite_id, automation, type) => ({ id, suite_id, automation, custom_fields: [...(type ? [{ id: 4, value: String(type) }] : []), ...(automation === 2 ? [{ id: 97, value: '2' }] : [])] })
 const DATA = {
   MA: {
     suites: [{ id: 1, title: 'MICA1', parent_id: null }, { id: 2, title: 'EVMS', parent_id: null }],

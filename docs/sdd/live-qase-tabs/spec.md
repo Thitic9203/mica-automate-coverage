@@ -33,6 +33,11 @@ number", R2–R5, R10, R11, R14 for the case figures (they came from `ols-progre
 - **R3** — Classification (ma-tabs R32, unchanged): result `passed` → passed; any other result status →
   not passed (failed / skipped / other); listed in its run with no result, or no run lists it while
   Qase `automation` = automated → not passed · not run; otherwise → to be automated.
+  - **R3a** (owner 2026-11-28 "จัดมา", amends R3 for OLS only) — For the OLS tab "automated" means the case custom
+    field 97 "Automation Status" = "2" (Automated), the field Qase shows and ols-qa-e2e R6 keeps in step with the
+    scripts every 30 min. Qase no longer applies writes to the system `automation` field (stuck since 29 Oct 2026), so
+    OLS must not read it. MA keeps the system field (field 97 is not enabled for project MA); Pyrite follows
+    pyrite-automation-only R1.
   `passed + notPassed + waiting = total` MUST hold, else the tab shows an error and no numbers.
 - **R4** — Results are fetched run by run, newest first, and the walk MUST stop once every case listed by
   any completed run has its result; cases no run lists need no result fetch.
