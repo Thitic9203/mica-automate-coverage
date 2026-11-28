@@ -5,4 +5,4 @@
 | T1 | `automatedCaseIds` + `/api/pyrite-automated` | R1, R2 | ids from fixture tar | tests green | Done |
 | T2 | Builder: run filter + automated set; page wiring | R3–R5 | manual run ignored; scripted no-result = not run | tests green | Done |
 | T3 | Qase automation = 2 for scripted cases | R6 | — | 135 read back as 2 | Done 2026-11-28 — written to custom field 97 \"Automation Status\" (the system `automation` field is never applied by Qase); read back 135 × \"2\" |
-| T4 | Deploy, verify production numbers | all | — | numbers match evidence | Pending |
+| T4 | Deploy, verify production numbers | all | — | numbers match evidence | Done 2026-11-29 — PR #48 (1c36b83) deployed; deployed core on prod data: 2,283 total · passed 135 · not passed 0 · to be automated 2,148 (round 2 at 23:38 also ran 2696/2697); /api/pyrite-automated 135 ids |
