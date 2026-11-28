@@ -22,7 +22,7 @@ async function fetchAll(fetchJson, path) {
   }
   const first = await page(0)
   const out = [...(first.entities || [])]
-  const total = first.total ?? out.length
+  const total = first.filtered ?? first.total ?? out.length // tab-load-5s R1: on /result?run=X "total" is project-wide
   if (!out.length || out.length >= total) return out
   const offsets = []
   for (let o = PAGE; o < total; o += PAGE) offsets.push(o)
@@ -34,6 +34,20 @@ async function fetchAll(fetchJson, path) {
   await Promise.all(Array.from({ length: Math.min(MAX_IN_FLIGHT, offsets.length) }, worker))
   for (const r of pages) out.push(...(r.entities || []))
   return out
+}
+
+// tab-load-5s R4: at most `max` calls of fetchJson running at once; the rest wait in arrival order.
+function limited(fetchJson, max) {
+  let active = 0
+  const queue = []
+  const pump = () => { while (active < max && queue.length) queue.shift()() }
+  return path => new Promise((resolve, reject) => {
+    queue.push(() => {
+      active++
+      Promise.resolve().then(() => fetchJson(path)).then(resolve, reject).finally(() => { active--; pump() })
+    })
+    pump()
+  })
 }
 
 /** Pure builder: fetchJson(path) → parsed Qase v1 JSON. Returns the ma-progress object (R8). */
@@ -145,10 +159,14 @@ export function buildPyriteOverview({ fetchJson, now = new Date() }) {
 }
 
 // Spec live-qase-tabs R2–R4: each case takes its result from the newest completed run that lists it.
-async function buildOverview({ fetchJson, now, project, systems }) {
-  const suites = systems ? await fetchAll(fetchJson, `/suite/${project}`) : []
-  const cases = await fetchAll(fetchJson, `/case/${project}`)
-  const runs = (await fetchAll(fetchJson, `/run/${project}?status=complete&include=cases`)).filter(isComplete)
+async function buildOverview({ fetchJson: rawFetch, now, project, systems }) {
+  const fetchJson = limited(rawFetch, MAX_IN_FLIGHT) // tab-load-5s R4: one in-flight cap for the whole tab load
+  const [suites, cases, allRuns] = await Promise.all([ // tab-load-5s R2
+    systems ? fetchAll(fetchJson, `/suite/${project}`) : [],
+    fetchAll(fetchJson, `/case/${project}`),
+    fetchAll(fetchJson, `/run/${project}?status=complete&include=cases`),
+  ])
+  const runs = allRuns.filter(isComplete)
 
   let own = cases
   if (systems) {
@@ -172,22 +190,27 @@ async function buildOverview({ fetchJson, now, project, systems }) {
   runs.sort((a, b) => String(b.end_time || '').localeCompare(String(a.end_time || '')) || b.id - a.id)
   const pending = new Set()
   for (const r of runs) for (const id of r.cases || []) if (ownIds.has(id)) pending.add(id)
-  const last = new Map(), listed = new Set()
-  let latest = null, runsUsed = 0
+  // tab-load-5s R3: the R4 walk depends only on run.cases, so plan it first, then fetch the planned results together
+  const plan = []
   for (const r of runs) {
     if (!pending.size) break // R4
     const mine = (r.cases || []).filter(id => pending.has(id))
     if (!mine.length) continue
-    latest = latest || r
-    runsUsed++
+    plan.push({ r, mine })
+    for (const id of mine) pending.delete(id)
+  }
+  const planned = await Promise.all(plan.map(({ r }) => fetchAll(fetchJson, `/result/${project}?run=${r.id}`)))
+  const last = new Map(), listed = new Set()
+  const latest = plan.length ? plan[0].r : null, runsUsed = plan.length
+  plan.forEach(({ mine }, i) => { // newest first, as before
     const take = new Set(mine)
-    for (const res of await fetchAll(fetchJson, `/result/${project}?run=${r.id}`)) {
+    for (const res of planned[i]) {
       if (!take.has(res.case_id)) continue
       const prev = last.get(res.case_id)
       if (!prev || String(res.end_time || '') >= String(prev.end_time || '')) last.set(res.case_id, res)
     }
-    for (const id of mine) { pending.delete(id); listed.add(id) }
-  }
+    for (const id of mine) listed.add(id)
+  })
 
   let passed = 0, waiting = 0, failed = 0, skipped = 0, notRun = 0
   const other = {}
