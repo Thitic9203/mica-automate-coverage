@@ -38,6 +38,7 @@ const page = (all, u) => {
   return { status: true, result: { total: all.length, entities: all.slice(offset, offset + limit) } }
 }
 
+const FONT_CACHE = new Map()
 async function open(pageObj, view) {
   // fixed wall clock: the ticket card's 2 h staleness check and the pill time must not depend on when tests run
   await pageObj.clock.setFixedTime(new Date('2026-10-28T16:00:00.000Z'))
@@ -54,6 +55,11 @@ async function open(pageObj, view) {
     const body = kind === 'suite' ? page(d.suites, u) : kind === 'case' ? page(d.cases, u) : kind === 'run' ? page(d.runs, u)
       : kind === 'result' ? page(d.results[u.searchParams.get('run')] || [], u) : { status: false }
     return r.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
+  })
+  await pageObj.route(/fonts\.(googleapis|gstatic)\.com/, async r => {
+    const u = r.request().url()
+    if (!FONT_CACHE.has(u)) { const res = await r.fetch(); FONT_CACHE.set(u, { status: res.status(), headers: res.headers(), body: await res.body() }) }
+    return r.fulfill(FONT_CACHE.get(u))
   })
   await pageObj.goto('/')
   if (view !== 'ma') await pageObj.locator(`.tab[data-view="${view}"]`).click()
