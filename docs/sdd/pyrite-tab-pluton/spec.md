@@ -41,6 +41,8 @@ Production only (CLAUDE.md, memory mica-coverage-no-staging).
   it says "Ticket figure not available (<reason>)" and shows no number.
 - **R7** — Brand: the top-left chrome name reads **Pluton** (was "Mica"); the browser title reads "Pluton · Automate
   Coverage". Tab titles/eyebrows of MA and OLS stay as they are (ols-tab R13).
+  The sign-in card reads "PLUTON · QA" / "Pluton Automation Coverage" (owner 2026-11-28: "ปรับมาจ้า" on the
+  sign-in heading still reading "Mica Automation Coverage").
 - **R8** — URL: the site is served at `https://pluton-automate-coverage.pages.dev/` (new Cloudflare Pages project,
   free tier; a Pages project cannot be renamed). `https://mica-automate-coverage.pages.dev/<path>` answers a 301 to the
   same path on the new host. Sign-in MUST work on the new host (Firebase authorized domain).
