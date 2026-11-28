@@ -26,6 +26,12 @@ const DATA = {
     runs: [{ id: 8, title: 'Fixture OLS run', start_time: '2026-10-28T10:00:00+07:00', end_time: '2026-10-28T10:40:00+07:00', cases: [100, 101, 102, 103, 104, 105] }],
     results: { 8: [{ case_id: 100, status: 'passed' }, { case_id: 101, status: 'passed' }, { case_id: 102, status: 'failed' }, { case_id: 103, status: 'skipped' }, { case_id: 104, status: 'passed' }, { case_id: 105, status: 'blocked' }] },
   },
+  Pyrite: { // spec docs/sdd/pyrite-tab-pluton R10
+    suites: [],
+    cases: [...Array(10)].map((_, i) => kase(200 + i, 5, 0, i < 6 ? (i % 4) + 1 : null)),
+    runs: [{ id: 9, title: 'Fixture Pyrite run', start_time: '2026-11-28T10:00:00+07:00', end_time: '2026-11-28T10:20:00+07:00', cases: [200, 201, 202, 203] }],
+    results: { 9: [{ case_id: 200, status: 'passed' }, { case_id: 201, status: 'passed' }, { case_id: 202, status: 'failed' }, { case_id: 203, status: 'blocked' }] },
+  },
 }
 const page = (all, u) => {
   const limit = Number(u.searchParams.get('limit') || 100), offset = Number(u.searchParams.get('offset') || 0)
@@ -39,6 +45,8 @@ async function open(pageObj, view) {
   await pageObj.route('https://www.gstatic.com/firebasejs/**/firebase-auth.js', r => r.fulfill({ contentType: 'text/javascript', body: AUTH }))
   await pageObj.route('https://raw.githubusercontent.com/**/ols-tickets.json', r => r.fulfill({ contentType: 'application/json',
     body: JSON.stringify({ measuredAt: '2026-10-28T15:31:20.353Z', done: 684, withAutomatedCase: 292, percent: 42.7 }) }))
+  await pageObj.route('**/api/pyrite-tickets', r => r.fulfill({ contentType: 'application/json',
+    body: JSON.stringify({ measuredAt: '2026-10-28T15:40:00.000Z', done: 33, withAutomatedCase: 32, percent: 97, filters: { automated: 24026, all: 24025 } }) }))
   await pageObj.route('**/api/qase/**', r => {
     const u = new URL(r.request().url())
     const [, , , kind, project] = u.pathname.split('/')
@@ -48,7 +56,7 @@ async function open(pageObj, view) {
     return r.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
   })
   await pageObj.goto('/')
-  if (view === 'ols') await pageObj.locator('.tab[data-view="ols"]').click()
+  if (view !== 'ma') await pageObj.locator(`.tab[data-view="${view}"]`).click()
   await expect(pageObj.locator('#live-sub')).toHaveText('Refreshes each time you open this tab')
   // rule 21: never shoot before every web font face in use has finished loading
   await pageObj.waitForLoadState('networkidle')
@@ -62,7 +70,7 @@ async function open(pageObj, view) {
 
 for (const theme of ['light', 'dark']) {
   for (const width of [390, 900, 1440]) {
-    for (const view of ['ma', 'ols']) {
+    for (const view of ['ma', 'ols', 'pyrite']) {
       test(`${view} @ ${width}px · ${theme}`, async ({ page: p }) => {
         await p.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' })
         await p.setViewportSize({ width, height: 900 })

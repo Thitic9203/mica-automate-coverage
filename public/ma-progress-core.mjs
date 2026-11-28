@@ -139,6 +139,11 @@ export function buildOlsOverview({ fetchJson, now = new Date() }) {
   return buildOverview({ fetchJson, now, project: 'OLS', systems: null })
 }
 
+/** Spec pyrite-tab-pluton R2: every case in Qase project Pyrite. */
+export function buildPyriteOverview({ fetchJson, now = new Date() }) {
+  return buildOverview({ fetchJson, now, project: 'Pyrite', systems: null })
+}
+
 // Spec live-qase-tabs R2–R4: each case takes its result from the newest completed run that lists it.
 async function buildOverview({ fetchJson, now, project, systems }) {
   const suites = systems ? await fetchAll(fetchJson, `/suite/${project}`) : []

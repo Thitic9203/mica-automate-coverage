@@ -31,11 +31,11 @@ Production only (CLAUDE.md, memory mica-coverage-no-staging).
   - **R4c** returns `{ measuredAt, done, withAutomatedCase, percent, filters: { automated, all } }` where
     `done` = keys of ALL, `withAutomatedCase` = keys of ALL also annotated, `percent` = one decimal;
   - **R4d** when the JQL of filter **AUTOMATED** (R5) is not `filter = <ALL> AND issuekey in (<sorted keys>)`
-    (no keys: `filter = <ALL> AND issuekey is EMPTY`), rewrites it, so the filter always equals the card;
+    (no keys: `filter = <ALL> AND created < "1970-01-01"`; Jira rejects `issuekey is EMPTY`), rewrites it, so the filter always equals the card;
   - **R4e** answers only GET/HEAD (405 otherwise); with a secret missing or an upstream error it answers 502/500 with
     the reason and no number; it never returns a token or a ticket summary.
 - **R5** — Two Jira saved filters MUST exist, owned by the owner's account, shared to project PYR:
-  **ALL** "Pyrite Automate · Done tickets (board scope)" JQL `filter = 24024`, and **AUTOMATED** "Pyrite Automate · Done
+  **ALL** = 24025 "Pyrite Automate · Done tickets (board scope)" JQL `filter = 24024`, and **AUTOMATED** = 24026 "Pyrite Automate · Done
   tickets with an automated case" (JQL written by R4d). The card links both, one per line.
 - **R6** — The card shows the percent, "x of y tickets" and "updated automatically, measured <Bangkok time>"; on error
   it says "Ticket figure not available (<reason>)" and shows no number.

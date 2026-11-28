@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mica · Automate Coverage</title>
+  <title>Pluton · Automate Coverage</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzBGNzY2RSIvPjxjaXJjbGUgY3g9IjE2IiBjeT0iMTYiIHI9IjguNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMjUpIiBzdHJva2Utd2lkdGg9IjIiLz48cGF0aCBkPSJNMTYgNy41IEE4LjUgOC41IDAgMSAxIDguMSAyMSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwYXRoIGQ9Ik0xMi41IDE2IEwxNSAxOC41IEwyMC41IDEzIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgZmlsbD0ibm9uZSIvPjwvc3ZnPgo=">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -646,7 +646,7 @@ tr:hover td { background: rgba(0,0,0,0.013); }
             <path d="M3 5l1.5 1.5L7.5 3" stroke="white" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
-        <span class="chrome-brand-name">Mica</span>
+        <span class="chrome-brand-name">Pluton</span>
       </div>
 
       <!-- Tabs -->
@@ -669,6 +669,15 @@ tr:hover td { background: rgba(0,0,0,0.013); }
           <circle cx="12" cy="5.5" r="1.3" fill="currentColor"/>
         </svg>
         <span class="tab-label">OLS</span>
+        <span class="tab-x">×</span>
+      </div>
+      <div class="tab" data-view="pyrite">
+        <!-- faceted crystal: Pyrite automation progress (spec docs/sdd/pyrite-tab-pluton R1) -->
+        <svg class="tab-icon" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" style="color:var(--teal)">
+          <path d="M7 1.5l4.5 3v5L7 12.5l-4.5-3v-5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+          <path d="M2.5 4.5L7 7.5l4.5-3M7 7.5v5" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round" opacity="0.6"/>
+        </svg>
+        <span class="tab-label">Pyrite</span>
         <span class="tab-x">×</span>
       </div>
 
@@ -969,7 +978,7 @@ function showApp() {
 
 // Spec ma-tabs R39: only the hidden Overview / By Suite / All Test Cases views read the old loader's data.
 let oldLoaderStarted = false
-function usesOldData(view) { return view !== 'ma' && view !== 'ols' }
+function usesOldData(view) { return view !== 'ma' && view !== 'ols' && view !== 'pyrite' }
 function ensureOldLoader() {
   if (oldLoaderStarted) return
   oldLoaderStarted = true
@@ -1041,15 +1050,18 @@ function renderView(resetState = true) {
     tableSearch = ''; tablePage = 1; tablePageSize = 10
     suiteSort = { col: 'automated', dir: 'desc' }; modulePage = 1
   }
-  const ols = activeView === 'ols'
+  // ols-tab R13 · pyrite-tab-pluton R3: title and eyebrow follow the active tab
+  const heads = { ols: ['OLS Automation Coverage', 'OLS · QA'], pyrite: ['Pyrite Automation Coverage', 'PYRITE · QA'] }
+  const [title, eyebrow] = heads[activeView] || ['Mica Automation Coverage', 'MICA · QA']
   const pt = document.querySelector('.page-title'), pe = document.querySelector('.page-eyebrow')
-  if (pt) pt.textContent = ols ? 'OLS Automation Coverage' : 'Mica Automation Coverage'
-  if (pe) pe.textContent = ols ? 'OLS · QA' : 'MICA · QA'
+  if (pt) pt.textContent = title
+  if (pe) pe.textContent = eyebrow
   const c = document.getElementById('content')
   if (activeView === 'overview') { c.className = 'view-scroll'; renderOverview() }
   else if (activeView === 'suites') { c.className = 'view-scroll'; renderSuites() }
   else if (activeView === 'ols') { c.className = 'view-scroll'; renderOls() }
   else if (activeView === 'ma') { c.className = 'view-scroll'; renderMa() }
+  else if (activeView === 'pyrite') { c.className = 'view-scroll'; renderPyrite() }
   else { c.className = 'view-scroll'; renderTable() }
 }
 
@@ -1166,9 +1178,15 @@ const LIVE_TABS = {
     title: 'OLS · Automation progress', scope: 'All cases of project OLS on Qase.io',
     source: '<strong>Qase project OLS</strong>, every case in the project',
   },
+  pyrite: { // spec docs/sdd/pyrite-tab-pluton R2, R3
+    view: 'pyrite', cacheKey: 'pluton-pyrite-overview', build: 'buildPyriteOverview', project: 'Pyrite',
+    title: 'Pyrite · Automation progress', scope: 'All cases of project Pyrite on Qase.io',
+    source: '<strong>Qase project Pyrite</strong>, every case in the project',
+  },
 }
-const liveSeq = { ma: 0, ols: 0 }
+const liveSeq = { ma: 0, ols: 0, pyrite: 0 }
 let olsTicketsHtml = null
+let pyriteTicketsHtml = null
 function readLiveCache(tab) {
   try { const d = JSON.parse(localStorage.getItem(tab.cacheKey) || 'null'); return maValid(d) ? d : null } catch { return null }
 }
@@ -1181,6 +1199,10 @@ function renderMa() { return renderLive(LIVE_TABS.ma) }
 async function renderOls() {
   olsTicketsHtml = await olsTicketsCard() // R16: re-read on every open of the tab
   return renderLive(LIVE_TABS.ols)
+}
+async function renderPyrite() {
+  pyriteTicketsHtml = await pyriteTicketsCard() // pyrite-tab-pluton R4: live on every open of the tab
+  return renderLive(LIVE_TABS.pyrite)
 }
 async function renderLive(tab) {
   const content = document.getElementById('content')
@@ -1216,19 +1238,39 @@ async function renderLive(tab) {
 // live-qase-tabs R16: published every 30 min by ols-qa-e2e (gate:tickets figure) to the site-data branch; no deploy.
 const OLS_TICKETS_URL = 'https://raw.githubusercontent.com/Thitic9203/mica-automate-coverage/site-data/ols-tickets.json'
 const OLS_TICKETS_STALE_MS = 2 * 60 * 60 * 1000
-async function olsTicketsCard() {
-  const shell = body => `
+function ticketsShell(automatedFilter, allFilter) {
+  return body => `
       <div class="chart-card">
         <h3>Done tickets with an automated case</h3>
         ${body}
-        <a class="ols-report-link ols-filter-link" href="https://skilllane.atlassian.net/issues/?filter=23932" target="_blank" rel="noopener noreferrer">Jira filter: tickets with an automated case ↗</a>
-        <a class="ols-report-link ols-filter-link" href="https://skilllane.atlassian.net/issues/?filter=23931" target="_blank" rel="noopener noreferrer">Jira filter: all Done tickets in scope ↗</a>
+        <a class="ols-report-link ols-filter-link" href="https://skilllane.atlassian.net/issues/?filter=${automatedFilter}" target="_blank" rel="noopener noreferrer">Jira filter: tickets with an automated case ↗</a>
+        <a class="ols-report-link ols-filter-link" href="https://skilllane.atlassian.net/issues/?filter=${allFilter}" target="_blank" rel="noopener noreferrer">Jira filter: all Done tickets in scope ↗</a>
       </div>`
+}
+const ticketsValid = t => t && [t.done, t.withAutomatedCase, t.percent].every(Number.isFinite) && t.withAutomatedCase <= t.done && typeof t.measuredAt === 'string'
+// pyrite-tab-pluton R4–R6: computed live by the Pages Function (Jira filter 24025 × tickets annotations), filter 24026 kept equal.
+async function pyriteTicketsCard() {
+  const shell = ticketsShell(24026, 24025)
+  try {
+    const res = await fetch('/api/pyrite-tickets', { cache: 'no-store' })
+    const t = await res.json().catch(() => null)
+    if (!res.ok) throw new Error((t && t.errorMessage) || 'HTTP ' + res.status)
+    if (!ticketsValid(t)) throw new Error('unexpected shape')
+    return shell(`
+        <div class="ols-big">${t.percent}%</div>
+        <div class="card-sub">${t.withAutomatedCase} of ${t.done} tickets</div>
+        <div class="card-sub">updated automatically, measured ${escapeHtml(formatBkkTime(new Date(t.measuredAt)))}</div>`)
+  } catch (e) {
+    return shell(`<div class="card-sub">Ticket figure not available (${escapeHtml(e.message)}).</div>`)
+  }
+}
+async function olsTicketsCard() {
+  const shell = ticketsShell(23932, 23931)
   try {
     const res = await fetch(OLS_TICKETS_URL, { cache: 'no-store' })
     if (!res.ok) throw new Error('HTTP ' + res.status)
     const t = await res.json()
-    if (!t || ![t.done, t.withAutomatedCase, t.percent].every(Number.isFinite) || t.withAutomatedCase > t.done || typeof t.measuredAt !== 'string') throw new Error('unexpected shape')
+    if (!ticketsValid(t)) throw new Error('unexpected shape')
     const at = new Date(t.measuredAt)
     const stale = Date.now() - at.getTime() > OLS_TICKETS_STALE_MS ? ' · publisher has not reported for over 2 h' : ''
     return shell(`
@@ -1246,7 +1288,7 @@ function paintLive(tab, d, refresh, animate) {
   const n = v => `<span data-count="${v}">${v}</span>`
   const fmt = iso => iso ? escapeHtml(formatBkkTime(new Date(String(iso).replace(' ', 'T') + (/[zZ]|[+-]\d\d:?\d\d$/.test(iso) ? '' : 'Z')))) : '—'
   const r = d.run
-  const extra = tab.view === 'ols' ? (olsTicketsHtml || '') : ''
+  const extra = tab.view === 'ols' ? (olsTicketsHtml || '') : tab.view === 'pyrite' ? (pyriteTicketsHtml || '') : ''
   // live-qase-tabs R11: widths follow counts; any non-zero status stays visible; tiny shares read <0.1%
   const seg = (cls, v) => v > 0 ? `<span class="${cls}" style="flex:${v} 1 0;min-width:6px"></span>` : ''
   const pl = (v, p) => v > 0 && p === 0 ? '&lt;0.1%' : `${p}%`
