@@ -38,7 +38,9 @@ const page = (all, u) => {
   return { status: true, result: { total: all.length, entities: all.slice(offset, offset + limit) } }
 }
 
-const FONT_CACHE = new Map()
+const fs = require('fs'), path = require('path')
+const FONT_DIR = path.join(__dirname, 'fonts')
+const FONT_CSS = fs.readFileSync(path.join(FONT_DIR, 'fonts.css'), 'utf8')
 async function open(pageObj, view) {
   // fixed wall clock: the ticket card's 2 h staleness check and the pill time must not depend on when tests run
   await pageObj.clock.setFixedTime(new Date('2026-10-28T16:00:00.000Z'))
@@ -58,10 +60,13 @@ async function open(pageObj, view) {
       : kind === 'result' ? page(d.results[u.searchParams.get('run')] || [], u) : { status: false }
     return r.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
   })
-  await pageObj.route(/fonts\.(googleapis|gstatic)\.com/, async r => {
-    const u = r.request().url()
-    if (!FONT_CACHE.has(u)) { const res = await r.fetch(); FONT_CACHE.set(u, { status: res.status(), headers: res.headers(), body: await res.body() }) }
-    return r.fulfill(FONT_CACHE.get(u))
+  // visual-flake R3: GSAP is a no-op under reduced motion (index.html motion guard), so it is not fetched from the CDN
+  await pageObj.route('https://cdnjs.cloudflare.com/ajax/libs/gsap/**', r => r.fulfill({ contentType: 'text/javascript', body: '' }))
+  // spec docs/sdd/visual-flake R1 (rev 2): web fonts come from tests/visual/fonts, never the network
+  await pageObj.route('https://fonts.googleapis.com/**', r => r.fulfill({ contentType: 'text/css', body: FONT_CSS }))
+  await pageObj.route('https://fonts.gstatic.com/**', r => {
+    const file = path.join(FONT_DIR, new URL(r.request().url()).pathname.slice(1).replace(/\//g, '_'))
+    return fs.existsSync(file) ? r.fulfill({ contentType: 'font/woff2', body: fs.readFileSync(file) }) : r.abort()
   })
   await pageObj.goto('/')
   if (view !== 'ma') await pageObj.locator(`.tab[data-view="${view}"]`).click()
