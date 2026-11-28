@@ -232,8 +232,8 @@ test('live R1/R5: OLS overview counts every case in the project, typed by field 
 test('pyrite-tab-pluton R2: Pyrite overview reads Qase project Pyrite, every case', async () => {
   assert.equal(typeof core.buildPyriteOverview, 'function')
   const paths = []
-  const mock = ovMock({ cases: [kase(1, 1, 0, '1'), kase(2, 9, 0, null)], runs: [run(3, '2026-11-27 10:00:00', [1])], results: { 3: [{ case_id: 1, status: 'passed' }] } })
-  const o = await core.buildPyriteOverview({ fetchJson: p => { paths.push(p); return mock(p) }, now: NOW2 })
+  const mock = ovMock({ cases: [kase(1, 1, 0, '1'), kase(2, 9, 0, null)], runs: [run(3, '2026-11-27 10:00:00', [1], 'Pyrite Automate · fixture')], results: { 3: [{ case_id: 1, status: 'passed' }] } })
+  const o = await core.buildPyriteOverview({ fetchJson: p => { paths.push(p); return mock(p) }, now: NOW2, automatedIds: [1] }) // pyrite-automation-only
   assert.equal(o.project, 'Pyrite')
   assert.ok(paths.every(p => !/\/(case|run|result|suite)\//.test(p) || /\/(case|run|result|suite)\/Pyrite\b/.test(p)), paths.join(' '))
   assert.deepEqual([o.cases.total, o.cases.passed, o.cases.notPassed, o.cases.waiting], [2, 1, 0, 1])
@@ -307,4 +307,37 @@ test('tab-load-5s R3/R4: planned run results load concurrently (max 8 in flight)
   assert.equal(o.runsUsed, N)
   assert.equal(o.cases.passed, runs.filter(r => r.id % 3).length)
   assert.equal(o.cases.notPassed, runs.filter(r => !(r.id % 3)).length)
+})
+
+// ── spec docs/sdd/pyrite-automation-only ──
+test('pyrite-automation-only R3/R4: only "Pyrite Automate ·" runs count; scripted case with no result = not run; others = to be automated', async () => {
+  const cases = [kase(1, 1, 0), kase(2, 1, 0), kase(3, 1, 0), kase(4, 1, 2)]
+  const runs = [
+    run(10, '2026-11-20 10:00:00', [1, 3], 'PYR-779 manual retest'),
+    run(11, '2026-11-28 20:59:53', [1], 'Pyrite Automate · dev · filter 24024 first round · 28 Nov 2026 20:57'),
+  ]
+  const results = { 10: [{ case_id: 1, status: 'failed' }, { case_id: 3, status: 'passed' }], 11: [{ case_id: 1, status: 'passed' }] }
+  const resultCalls = []
+  const base = ovMock({ cases, runs, results })
+  const o = await core.buildPyriteOverview({ fetchJson: p => { if (p.startsWith('/result/')) resultCalls.push(p); return base(p) }, now: NOW2, automatedIds: Promise.resolve([1, 2]) })
+  // case 1 passed (automated run), case 2 scripted but not run, case 3 only manual -> to be automated, case 4 automation=2 ignored
+  assert.deepEqual([o.cases.passed, o.cases.notPassed, o.cases.waiting], [1, 1, 2])
+  assert.equal(o.breakdown.notRun, 1)
+  assert.equal(o.run.title.startsWith('Pyrite Automate ·'), true)
+  assert.ok(resultCalls.every(p => /run=11/.test(p)), resultCalls.join(' '))
+})
+
+test('pyrite-automation-only R5: no automated id list -> the build rejects (no partial numbers)', async () => {
+  const base = ovMock({ cases: [kase(1, 1, 0)], runs: [] })
+  await assert.rejects(core.buildPyriteOverview({ fetchJson: base, now: NOW2, automatedIds: Promise.reject(new Error('Pyrite automated ids: HTTP 502')) }), /automated ids/)
+  await assert.rejects(core.buildPyriteOverview({ fetchJson: base, now: NOW2 }), /automated ids/)
+})
+
+test('live-qase-tabs R3a: OLS reads "Automation Status" custom field 97, not the system automation field', async () => {
+  const k = (id, auto, f97) => ({ id, suite_id: 9, automation: auto, custom_fields: f97 === null ? [] : [{ id: 97, value: f97 }] })
+  const cases = [k(1, 0, '2'), k(2, 0, '2'), k(3, 2, '1'), k(4, 0, '2')]
+  const runs = [run(5, '2026-11-27 10:00:00', [4])]
+  const o = await core.buildOlsOverview({ fetchJson: ovMock({ cases, runs, results: { 5: [{ case_id: 4, status: 'passed' }] } }), now: NOW2 })
+  // 1, 2: field 97 Automated, no result -> not run; 3: system field says automated but field 97 Manual -> to be automated; 4: passed
+  assert.deepEqual([o.cases.passed, o.cases.notPassed, o.cases.waiting, o.breakdown.notRun], [1, 2, 1, 2])
 })
