@@ -253,3 +253,58 @@ test('live R12: HTTP 429 is retried up to 3 more times, honouring Retry-After', 
     await assert.rejects(always('/x'), /429/); assert.equal(m, 4)
   } finally { globalThis.setTimeout = realST }
 })
+
+// ── spec docs/sdd/tab-load-5s ──
+test('tab-load-5s R1: a run result list is sized by Qase "filtered", not the project-wide "total"', async () => {
+  const cases = [kase(1, 1, 2), kase(2, 1, 2)]
+  const runs = [run(50, '2026-10-27 10:00:00', [1, 2])]
+  const resultCalls = []
+  const fetchJson = async path => {
+    const url = new URL('http://x' + path)
+    if (url.pathname.startsWith('/result/')) {
+      resultCalls.push(path)
+      const offset = Number(url.searchParams.get('offset'))
+      const ents = offset === 0 ? [{ case_id: 1, status: 'passed' }, { case_id: 2, status: 'failed' }] : []
+      return { status: true, result: { total: 1019, filtered: 2, count: ents.length, entities: ents } }
+    }
+    return ovMock({ cases, runs })(path)
+  }
+  const o = await buildMaOverview({ fetchJson, now: NOW2 })
+  assert.equal(resultCalls.length, 1, `result requests: ${resultCalls.length}`)
+  assert.deepEqual([o.cases.passed, o.cases.notPassed], [1, 1])
+})
+
+test('tab-load-5s R2: suites, cases and runs are requested together', async () => {
+  const base = ovMock({ cases: [kase(1, 1, 2)], runs: [] })
+  const started = []
+  let release
+  const gate = new Promise(r => { release = r })
+  const p = buildMaOverview({ fetchJson: async path => { started.push(path.split('?')[0].split('/')[1]); await gate; return base(path) }, now: NOW2 })
+  await new Promise(r => setTimeout(r, 10))
+  assert.deepEqual([...new Set(started)].sort(), ['case', 'run', 'suite'])
+  release(); await p
+})
+
+test('tab-load-5s R3/R4: planned run results load concurrently (max 8 in flight) and equal the serial walk', async () => {
+  const N = 30
+  const cases = Array.from({ length: N }, (_, i) => kase(i + 1, 1, 2))
+  // run k (newer = higher k) lists case k only, so all 30 runs are needed
+  const runs = Array.from({ length: N }, (_, i) => run(i + 1, `2026-10-${String(1 + (i % 27)).padStart(2, '0')} ${String(10 + Math.floor(i / 27)).padStart(2, '0')}:00:00`, [i + 1]))
+  const results = Object.fromEntries(runs.map(r => [r.id, [{ case_id: r.id, status: r.id % 3 ? 'passed' : 'failed' }]]))
+  const base = ovMock({ cases, runs, results })
+  let inFlight = 0, max = 0, maxResults = 0, resultsInFlight = 0
+  const fetchJson = async path => {
+    const isRes = path.startsWith('/result/')
+    inFlight++; max = Math.max(max, inFlight)
+    if (isRes) { resultsInFlight++; maxResults = Math.max(maxResults, resultsInFlight) }
+    await new Promise(r => setTimeout(r, 5))
+    inFlight--; if (isRes) resultsInFlight--
+    return base(path)
+  }
+  const o = await buildMaOverview({ fetchJson, now: NOW2 })
+  assert.ok(max <= 8, `max in flight ${max}`)
+  assert.ok(maxResults >= 6, `results should overlap, max ${maxResults}`)
+  assert.equal(o.runsUsed, N)
+  assert.equal(o.cases.passed, runs.filter(r => r.id % 3).length)
+  assert.equal(o.cases.notPassed, runs.filter(r => !(r.id % 3)).length)
+})

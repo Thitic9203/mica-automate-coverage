@@ -1198,15 +1198,16 @@ function setLivePill(measuredAt, sub) {
   document.getElementById('live-sub').textContent = sub
 }
 function renderMa() { return renderLive(LIVE_TABS.ma) }
-async function renderOls() {
-  olsTicketsHtml = await olsTicketsCard() // R16: re-read on every open of the tab
-  return renderLive(LIVE_TABS.ols)
+// tab-load-5s R5: the ticket card loads beside the Qase numbers; the cached paint never waits for it
+function renderOls() {
+  const card = olsTicketsCard().then(h => { olsTicketsHtml = h }) // R16: re-read on every open of the tab
+  return renderLive(LIVE_TABS.ols, card)
 }
-async function renderPyrite() {
-  pyriteTicketsHtml = await pyriteTicketsCard() // pyrite-tab-pluton R4: live on every open of the tab
-  return renderLive(LIVE_TABS.pyrite)
+function renderPyrite() {
+  const card = pyriteTicketsCard().then(h => { pyriteTicketsHtml = h }) // pyrite-tab-pluton R4: live on every open
+  return renderLive(LIVE_TABS.pyrite, card)
 }
-async function renderLive(tab) {
+async function renderLive(tab, card = null) {
   const content = document.getElementById('content')
   const seq = ++liveSeq[tab.view]
   const cached = readLiveCache(tab)
@@ -1225,12 +1226,14 @@ async function renderLive(tab) {
     d = await core[tab.build]({ fetchJson }) // R26: measuredAt = now
     if (!maValid(d)) throw new Error('unexpected shape')
   } catch (e) {
+    await card
     if (activeView !== tab.view || seq !== liveSeq[tab.view]) return
     setLivePill(cached && cached.measuredAt, 'Update failed — showing the last numbers')
     if (cached) { paintLive(tab, cached, 'failed: ' + e.message, false); return }
     content.innerHTML = `<div class="error-msg">Could not load ${tab.project} progress from Qase (${escapeHtml(e.message)}). Reload the page to try again.</div>`
     return
   }
+  await card // arrives long before the Qase numbers; awaited so the live paint carries the fresh card
   if (activeView !== tab.view || seq !== liveSeq[tab.view]) return
   try { localStorage.setItem(tab.cacheKey, JSON.stringify(d)) } catch {}
   setLivePill(d.measuredAt, 'Refreshes each time you open this tab')
